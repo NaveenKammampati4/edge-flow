@@ -145,17 +145,7 @@ const applyConfigToFile = () => {
     let time = "";
     let info = line;
 
-    // Try extracting a datetime from the line
-    // let match =
-    //   line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/) || // YYYY-MM-DD HH:mm:ss
-    //   line.match(/(\d{2}\/\d{2}\/\d{4}) (\d{2}:\d{2})/) || // MM/DD/YYYY HH:mm
-    //   line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2}:\d{2})/); // DD-MM-YYYY HH:mm:ss
-
-    // if (match) {
-    //   date = match[1];
-    //   time = match[2];
-    //   info = line.replace(match[0], "").trim();
-    // }
+  
 
     if (configData.timeFormat === "%Y-%m-%d %H:%M:%S") {
       const match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
