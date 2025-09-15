@@ -1,5 +1,6 @@
 import React from "react";
 import { useState, useEffect } from "react";
+import TransformsConfig from "./TransformsConfig";
 
 const PropsConfigPerSource = () => {
   const [file, setFile] = useState(null);
@@ -9,6 +10,7 @@ const PropsConfigPerSource = () => {
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
   const[transformConfig, setTransformConfig]=useState(false);
+  const[transforms, setTransforms]=useState([]);
   const [configData, setConfigData] = useState({
     timeFormat: "",
     dateTime: "",
@@ -287,8 +289,9 @@ const applyConfigToFile = () => {
     const newData = { key: newKey, value: newValue };
     setNewKeys([...newKeys, newData]);
 
-    if(newKey.toLowerCase()==="transform-"){
+    if(newKey.toLowerCase().startsWith("transform-")){
       setTransformConfig(true);
+      setTransforms([...transforms,{key: newKey, regex:"", format:"", destKey:""}]);
     }
     setNewKey("");
     setNewValue("");
@@ -555,6 +558,8 @@ const applyConfigToFile = () => {
           </div>
         </div>
       </div>
+
+      {transformConfig && <TransformsConfig transforms={transforms} setTransforms={setTransforms} />}
     </div>
   );
 };
