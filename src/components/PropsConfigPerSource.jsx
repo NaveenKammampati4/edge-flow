@@ -2,7 +2,7 @@ import React from "react";
 import { useState, useEffect } from "react";
 import TransformsConfig from "./TransformsConfig";
 
-const PropsConfigPerSource = () => {
+const PropsConfigPerSource = ({sourceType, inputsFormat, setInputsFormat, each}) => {
   const [file, setFile] = useState(null);
   const [fileText, setFileText] = useState("");
   const [fileLines, setFileLines] = useState([]);
@@ -20,99 +20,26 @@ const PropsConfigPerSource = () => {
   });
   const [isCopyConfig, setIsCopyConfig]=useState(false);
 
-//   const applyConfigToFile = () => {
-//   let delimiter = /\r?/; // default = new line
+  const item=inputsFormat.props[each-1];
+  console.log(inputsFormat);
 
-//   // 1. Handle LINE_BREAKER according to props.conf doc
-//   switch (configData.lineBreaker) {
-//     case "double":
-//       delimiter = /\n\n/;
-//       break;
-//     case "windowsDouble":
-//       delimiter = /\r\n\r\n/;
-//       break;
-//     case "date":
-//       delimiter = /(([\r\n]+)\d{4}-\d{2}-\d{2})/; // YYYY-MM-DD
-//       break;
-//     case "newline":
-//     default:
-//       delimiter = /\r?\n/;
-//       break;
-//   }
+  const updateIputs=(e)=>{
+    const {name, value}=e.target;
+    console.log("name", name);
+    console.log("value", value);
+     setInputsFormat((prev) => {
+    const updated = [...prev.props];
+    updated[each-1] = { ...updated[each-1], [name]: value }; // update only sourceType
+    return { ...prev, props: updated };
+  });
+  }
 
-//   // 2. Split events
-//   let events = fileText.split(delimiter).filter(Boolean);
-
-//   // 3. Handle SHOULD_LINEMERGE
-//   if (configData.shouldLine === "true") {
-//     // Merge all lines into a single event
-//     events = [events.join(" ")];
-//   }
-
-//   // 4. Handle TRUNCATE (limit event size)
-//   if (configData.truncate && Number(configData.truncate) > 0) {
-//     events = events.map((ev) => ev.slice(0, Number(configData.truncate)));
-//   }
-
-//   // 5. Handle TIME_FORMAT (match based on selected pattern)
-//   const processed = events.map((line) => {
-//     let date = "";
-//     let time = "";
-//     let info = line;
-
-//     if (configData.timeFormat === "%Y-%m-%d %H:%M:%S") {
-//       const match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
-//       if (match) {
-//         date = match[1];
-//         time = match[2];
-//         info = line.replace(match[0], "").trim();
-//       }
-//     } else if (configData.timeFormat === "%m/%d/%Y %H:%M") {
-//       const match = line.match(/(\d{2}\/\d{2}\/\d{4}) (\d{2}:\d{2})/);
-//       if (match) {
-//         date = match[1];
-//         time = match[2];
-//         info = line.replace(match[0], "").trim();
-//       }
-//     } else if (configData.timeFormat === "%d-%m-%Y %H:%M:%S") {
-//       const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2}:\d{2})/);
-//       if (match) {
-//         date = match[1];
-//         time = match[2];
-//         info = line.replace(match[0], "").trim();
-//       }
-//     }
-
-//     // 6. Handle DATETIME_CONFIG (simplified simulation)
-//     if (configData.dateTime === "UTC") {
-//       date = date ? `${date} (UTC)` : date;
-//     } else if (configData.dateTime === "GMT") {
-//       date = date ? `${date} (GMT)` : date;
-//     } else if (configData.dateTime === "AUTO") {
-//       // AUTO means Splunk guesses → just leave unchanged
-//     } else if (configData.dateTime === "NONE") {
-//       // NONE means Splunk doesn’t extract → wipe out date/time
-//       date = "";
-//       time = "";
-//     } else if (configData.dateTime === "CURRENT") {
-     
-//         const now = new Date();
-//         date = now.toISOString().split("T")[0];
-//         time = now.toTimeString().split(" ")[0];
-     
-//     }
-
-//     return { date, time, info };
-//   });
-
-//   setFileLines(processed);
-// };
 
 const applyConfigToFile = () => {
   let delimiter = /\r?\n/; // default: newline
-
+console.log("item : ", item);
   // ✅ 1. Handle LINE_BREAKER
-  switch (configData.lineBreaker) {
+  switch (item.lineBreaker) {
     case "double":
       delimiter = /\n\n/;
       break;
@@ -132,13 +59,13 @@ const applyConfigToFile = () => {
   let lines = fileText.split(delimiter).filter(Boolean);
 
   // ✅ 3. Handle SHOULD_LINE
-  if (configData.shouldLine === "true") {
+  if (item.shouldLine === "true") {
     lines = [lines.join(" ")];
   }
 
   // ✅ 4. Handle TRUNCATE
-  if (configData.truncate && Number(configData.truncate) > 0) {
-    lines = lines.map((line) => line.substring(0, Number(configData.truncate)));
+  if (item.truncate && Number(item.truncate) > 0) {
+    lines = lines.map((line) => line.substring(0, Number(item.truncate)));
   }
 
   // ✅ 5. Handle TIME_FORMAT + DATETIME_CONFIG
@@ -149,21 +76,21 @@ const applyConfigToFile = () => {
 
   
 
-    if (configData.timeFormat === "%Y-%m-%d %H:%M:%S") {
+    if (item.timeFormat === "%Y-%m-%d %H:%M:%S") {
       const match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
       if (match) {
         date = match[1];
         time = match[2];
         info = line.replace(match[0], "").trim();
       }
-    } else if (configData.timeFormat === "%m-%d-%Y %H:%M") {
+    } else if (item.timeFormat === "%m-%d-%Y %H:%M") {
       const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2})/);
       if (match) {
         date = match[1];
         time = match[2];
         info = line.replace(match[0], "").trim();
       }
-    } else if (configData.timeFormat === "%d-%m-%Y %H:%M:%S") {
+    } else if (item.timeFormat === "%d-%m-%Y %H:%M:%S") {
       const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2}:\d{2})/);
       if (match) {
         date = match[1];
@@ -174,7 +101,7 @@ const applyConfigToFile = () => {
 
     // 📌 DATETIME_CONFIG overrides
     const now = new Date();
-    switch (configData.dateTime) {
+    switch (item.dateTime) {
       case "CURRENT":
         date = now.toISOString().split("T")[0];
         time = now.toTimeString().split(" ")[0];
@@ -244,7 +171,7 @@ const applyConfigToFile = () => {
     if (fileText) {
       applyConfigToFile();
     }
-  }, [configData, fileText]);
+  }, [item, fileText]);
 
   function splitLogLine(line) {
     const firstSpace = line.indexOf(" ");
@@ -303,13 +230,15 @@ const applyConfigToFile = () => {
       return acc;
     }, {});
 
-    setConfigData((prev) => ({
+    item((prev) => ({
       ...prev,
       ...updates,
     }));
     setIsCopyConfig(true);
   };
 
+
+  console.log("file linessss : ", fileLines);
   return (
     <div>
       <div className="grid grid-cols-2 justify-between md:flex-row gap-6 mt-2.5">
@@ -317,10 +246,11 @@ const applyConfigToFile = () => {
           <div className="flex flex-col space-y-4">
             <h2 className="text-xl font-semibold text-gray-800">
               Upload Props.conf for{" "}
-              <span className="text-indigo-600">[SourceType]</span>
+              <span className="text-indigo-600">{sourceType}</span>
             </h2>
             <div className="flex items-center gap-4">
               <input
+                
                 onChange={(e) => setFile(e.target.files[0])}
                 type="file"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -339,13 +269,15 @@ const applyConfigToFile = () => {
                 TIME FORMAT
               </label>
               <select
-                value={configData.timeFormat}
-                onChange={(e) => {
-                  setConfigData((prev) => ({
-                    ...prev,
-                    timeFormat: e.target.value,
-                  }));
-                }}
+              name="timeFormat"
+                value={item.timeFormat}
+                // onChange={(e) => {
+                //   setConfigData((prev) => ({
+                //     ...prev,
+                //     timeFormat: e.target.value,
+                //   }));
+                // }}
+                 onChange={(e)=>updateIputs(e)}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Select TIME_FORMAT</option>
@@ -365,13 +297,15 @@ const applyConfigToFile = () => {
                 DATE TIME CONFIG
               </label>
               <select
-                value={configData.dateTime}
-                onChange={(e) => {
-                  setConfigData((prev) => ({
-                    ...prev,
-                    dateTime: e.target.value,
-                  }));
-                }}
+                name="dateTime"
+                value={item.dateTime}
+                // onChange={(e) => {
+                //   setConfigData((prev) => ({
+                //     ...prev,
+                //     dateTime: e.target.value,
+                //   }));
+                // }}
+                 onChange={(e)=>updateIputs(e)}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">--Select DATETIME_CONFIG--</option>
@@ -394,13 +328,15 @@ const applyConfigToFile = () => {
                 LINE BREAKER
               </label>
               <select
-                value={configData.lineBreaker}
-                onChange={(e) => {
-                  setConfigData((prev) => ({
-                    ...prev,
-                    lineBreaker: e.target.value,
-                  }));
-                }}
+              name="lineBreaker"
+                value={item.lineBreaker}
+                // onChange={(e) => {
+                //   setConfigData((prev) => ({
+                //     ...prev,
+                //     lineBreaker: e.target.value,
+                //   }));
+                // }}
+                 onChange={(e)=>updateIputs(e)}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Select Line Breaker</option>
@@ -421,13 +357,15 @@ const applyConfigToFile = () => {
                 SHOULD LINE
               </label>
               <select
-                value={configData.shouldLine}
-                onChange={(e) => {
-                  setConfigData((prev) => ({
-                    ...prev,
-                    shouldLine: e.target.value,
-                  }));
-                }}
+                name="shouldLine"
+                value={item.shouldLine}
+                // onChange={(e) => {
+                //   setConfigData((prev) => ({
+                //     ...prev,
+                //     shouldLine: e.target.value,
+                //   }));
+                // }}
+                 onChange={(e)=>updateIputs(e)}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 
@@ -444,13 +382,15 @@ const applyConfigToFile = () => {
                 TRUNCATE
               </label>
               <input
-                value={configData.truncate}
-                onChange={(e) => {
-                  setConfigData((prev) => ({
-                    ...prev,
-                    truncate: e.target.value,
-                  }));
-                }}
+                name="truncate"
+                value={item.truncate}
+                // onChange={(e) => {
+                //   setConfigData((prev) => ({
+                //     ...prev,
+                //     truncate: e.target.value,
+                //   }));
+                // }}
+                 onChange={(e)=>updateIputs(e)}
                 type="number"
                 min="0"
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -534,8 +474,8 @@ const applyConfigToFile = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {fileLines.map((each) => (
-                    <tr className="hover:bg-gray-50">
+                  {fileLines.map((each,index) => (
+                    <tr className="hover:bg-gray-50" key={index}>
                       <td className="px-4 py-2 border border-gray-300">
                         {each.date} {each.time}
                       </td>
@@ -553,7 +493,7 @@ const applyConfigToFile = () => {
               Generated Props.conf
             </h3>
             {isCopyConfig && <pre className=" h-44  overflow-auto w-96 resize-none border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              {JSON.stringify(configData, null, 2)}
+              {JSON.stringify(item, null, 2)}
             </pre>}
           </div>
         </div>
