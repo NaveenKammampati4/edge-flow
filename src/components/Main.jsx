@@ -5,6 +5,18 @@ import TransformsConfig from "./TransformsConfig";
 const Main = () => {
   const [inputsConfig, setInputsConfig] = useState(1);
   const [inputsConfigList, setInputsConfigList] = useState([]);
+  const [inputsFormat, setInputsFormat] = useState({
+    appName : "",
+    indexName : "",
+    customInput:[{filePath:"", sourceType:"", index:""}],
+    props : [{ 
+    sourceType : "",
+    timeFormat: "",
+    dateTime: "",
+    lineBreaker: "",
+    shouldLine: "",
+    truncate: "",}]
+  })
 
   useEffect(() => {
     const arr = Array.from({ length: inputsConfig }, (_, i) => i + 1);
@@ -17,6 +29,28 @@ const Main = () => {
       setInputsConfigList(inputs);
     }
   };
+
+  const handleCreateApp = () => {
+    console.log("inputs format : ", inputsFormat);
+    
+  }
+
+  const handleInputConfigs=()=>{
+    setInputsConfig(inputsConfig + 1)
+    const customInputData={filePath:"", sourceType:"", index:""}
+    const propsConfig={ 
+    sourceType : "",
+    timeFormat: "",
+    dateTime: "",
+    lineBreaker: "",
+    shouldLine: "",
+    truncate: "",}
+    setInputsFormat((prev) => ({
+    ...prev,
+    customInput: [...prev.customInput, customInputData], 
+    props:[...prev.props, propsConfig],
+  }));
+  }
 
   return (
     <div className="flex flex-col justify-center items-center p-6 bg-gray-100 min-h-screen">
@@ -32,6 +66,12 @@ const Main = () => {
             <input
               id="appName"
               className="border border-gray-400 rounded-md px-3 py-2"
+              onChange={(e) => {
+                  setInputsFormat((prev) => ({
+                    ...prev,
+                    appName: e.target.value,
+                  }));
+                }}
               placeholder="Enter App Name"
             />
           </div>
@@ -42,6 +82,12 @@ const Main = () => {
             <input
               id="indexName"
               className="border border-gray-400 rounded-md px-3 py-2"
+              onChange={(e) => {
+                  setInputsFormat((prev) => ({
+                    ...prev,
+                    indexName: e.target.value,
+                  }));
+                }}
               placeholder="Enter Index Name"
             />
           </div>
@@ -52,18 +98,23 @@ const Main = () => {
         </div>
 
         <div className="flex flex-col gap-6">
-          {inputsConfigList.map((each, index) => (
-            <InputConfig key={index} cancelConfig={cancelConfig} each={each} />
+          {inputsConfigList.map((each) => (
+            <InputConfig key={each} cancelConfig={cancelConfig} each={each} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
           ))}
         </div>
         <div className="mt-6 flex justify-end">
           <button
             className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600"
-            onClick={() => setInputsConfig(inputsConfig + 1)}
+            onClick={handleInputConfigs}
           >
             + Add Input
           </button>
         </div>
+        <button
+        className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600"
+        onClick={handleCreateApp}>
+          Create App
+        </button>
         
       </div>
     </div>
