@@ -2,15 +2,21 @@ import React from "react";
 import { useState, useEffect } from "react";
 import TransformsConfig from "./TransformsConfig";
 
-const PropsConfigPerSource = ({sourceType, inputsFormat, setInputsFormat, each}) => {
+const PropsConfigPerSource = ({
+  sourceType,
+  inputsFormat,
+  setInputsFormat,
+  each,
+  handleTransforms,
+}) => {
   const [file, setFile] = useState(null);
   const [fileText, setFileText] = useState("");
   const [fileLines, setFileLines] = useState([]);
   const [newKeys, setNewKeys] = useState([]);
   const [newKey, setNewKey] = useState("");
   const [newValue, setNewValue] = useState("");
-  const[transformConfig, setTransformConfig]=useState(false);
-  const[transforms, setTransforms]=useState([]);
+  const [transformConfig, setTransformConfig] = useState(false);
+  const [transforms, setTransforms] = useState([]);
   const [configData, setConfigData] = useState({
     timeFormat: "",
     dateTime: "",
@@ -18,154 +24,163 @@ const PropsConfigPerSource = ({sourceType, inputsFormat, setInputsFormat, each})
     shouldLine: "",
     truncate: "",
   });
-  const [isCopyConfig, setIsCopyConfig]=useState(false);
+  const [isCopyConfig, setIsCopyConfig] = useState(false);
 
-  const item=inputsFormat.props[each-1];
+  const item = inputsFormat.props[each - 1];
   console.log(inputsFormat);
 
-  const updateIputs=(e)=>{
-    const {name, value}=e.target;
+  const updateIputs = (e) => {
+    const { name, value } = e.target;
     console.log("name", name);
     console.log("value", value);
-     setInputsFormat((prev) => {
-    const updated = [...prev.props];
-    updated[each-1] = { ...updated[each-1], [name]: value }; // update only sourceType
-    return { ...prev, props: updated };
-  });
-  }
-
-
-const applyConfigToFile = () => {
-  let delimiter = /\r?\n/; // default: newline
-console.log("item : ", item);
-  // ✅ 1. Handle LINE_BREAKER
-  switch (item.lineBreaker) {
-    case "double":
-      delimiter = /\n\n/;
-      break;
-    case "windowsDouble":
-      delimiter = /\r\n\r\n/;
-      break;
-    case "date":
-      delimiter = /\d{4}-\d{2}-\d{2}/; // split at date pattern
-      break;
-    case "newline":
-    default:
-      delimiter = /\r?\n/;
-      break;
-  }
-
-  // ✅ 2. Break file into chunks
-  let lines = fileText.split(delimiter).filter(Boolean);
-
-  // ✅ 3. Handle SHOULD_LINE
-  if (item.shouldLine === "true") {
-    lines = [lines.join(" ")];
-  }
-
-  // ✅ 4. Handle TRUNCATE
-  if (item.truncate && Number(item.truncate) > 0) {
-    lines = lines.map((line) => line.substring(0, Number(item.truncate)));
-  }
-
-  // ✅ 5. Handle TIME_FORMAT + DATETIME_CONFIG
-  const processed = lines.map((line) => {
-    let date = "";
-    let time = "";
-    let info = line;
-
-  
-
-    if (item.timeFormat === "%Y-%m-%d %H:%M:%S") {
-      const match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
-      if (match) {
-        date = match[1];
-        time = match[2];
-        info = line.replace(match[0], "").trim();
-      }
-    } else if (item.timeFormat === "%m-%d-%Y %H:%M") {
-      const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2})/);
-      if (match) {
-        date = match[1];
-        time = match[2];
-        info = line.replace(match[0], "").trim();
-      }
-    } else if (item.timeFormat === "%d-%m-%Y %H:%M:%S") {
-      const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2}:\d{2})/);
-      if (match) {
-        date = match[1];
-        time = match[2];
-        info = line.replace(match[0], "").trim();
-      }
+    setInputsFormat((prev) => {
+      const updated = [...prev.props];
+      updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
+      return { ...prev, props: updated };
+    });
+    if (["regex", "format", "destKey", "newKey"].includes(name)) {
+      setInputsFormat((prev) => {
+        const updated = [...prev.transform];
+        updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
+        return { ...prev, transform: updated };
+      });
     }
+  };
 
-    // 📌 DATETIME_CONFIG overrides
-    const now = new Date();
-    switch (item.dateTime) {
-      case "CURRENT":
-        date = now.toISOString().split("T")[0];
-        time = now.toTimeString().split(" ")[0];
+  const applyConfigToFile = () => {
+    let delimiter = /\r?\n/; // default: newline
+    console.log("item : ", item);
+    // ✅ 1. Handle LINE_BREAKER
+    switch (item.lineBreaker) {
+      case "double":
+        delimiter = /\n\n/;
         break;
-
-      case "UTC": {
-        const utc = new Date(now.toISOString());
-        date = utc.toISOString().split("T")[0];
-        time = utc.toISOString().split("T")[1].split(".")[0];
+      case "windowsDouble":
+        delimiter = /\r\n\r\n/;
         break;
-      }
-
-      case "GMT":
-        date = now.toUTCString().split(" ").slice(0, 4).join(" ");
-        time = now.toUTCString().split(" ")[4];
+      case "date":
+        delimiter = /\d{4}-\d{2}-\d{2}/; // split at date pattern
         break;
-
-      case "US": {
-        const us = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
-        date = us.toISOString().split("T")[0];
-        time = us.toTimeString().split(" ")[0];
-        break;
-      }
-
-      case "EU": {
-        const eu = new Date(now.toLocaleString("en-GB", { timeZone: "Europe/Berlin" }));
-        date = eu.toISOString().split("T")[0];
-        time = eu.toTimeString().split(" ")[0];
-        break;
-      }
-
-      case "SA": {
-        const sa = new Date(now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }));
-        date = sa.toISOString().split("T")[0];
-        time = sa.toTimeString().split(" ")[0];
-        break;
-      }
-
-      case "APAC": {
-        const apac = new Date(now.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
-        date = apac.toISOString().split("T")[0];
-        time = apac.toTimeString().split(" ")[0];
-        break;
-      }
-
-      case "AUTO":
-        date = now.toISOString().split("T")[0];
-        time = now.toLocaleTimeString();
-        break;
-
-      case "NONE":
+      case "newline":
       default:
-        // keep whatever we parsed
+        delimiter = /\r?\n/;
         break;
     }
 
-    return { date, time, info };
-  });
+    // ✅ 2. Break file into chunks
+    let lines = fileText.split(delimiter).filter(Boolean);
 
-  setFileLines(processed);
-};
+    // ✅ 3. Handle SHOULD_LINE
+    if (item.shouldLine === "true") {
+      lines = [lines.join(" ")];
+    }
 
+    // ✅ 4. Handle TRUNCATE
+    if (item.truncate && Number(item.truncate) > 0) {
+      lines = lines.map((line) => line.substring(0, Number(item.truncate)));
+    }
 
+    // ✅ 5. Handle TIME_FORMAT + DATETIME_CONFIG
+    const processed = lines.map((line) => {
+      let date = "";
+      let time = "";
+      let info = line;
 
+      if (item.timeFormat === "%Y-%m-%d %H:%M:%S") {
+        const match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+        if (match) {
+          date = match[1];
+          time = match[2];
+          info = line.replace(match[0], "").trim();
+        }
+      } else if (item.timeFormat === "%m-%d-%Y %H:%M") {
+        const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2})/);
+        if (match) {
+          date = match[1];
+          time = match[2];
+          info = line.replace(match[0], "").trim();
+        }
+      } else if (item.timeFormat === "%d-%m-%Y %H:%M:%S") {
+        const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2}:\d{2})/);
+        if (match) {
+          date = match[1];
+          time = match[2];
+          info = line.replace(match[0], "").trim();
+        }
+      }
+
+      // 📌 DATETIME_CONFIG overrides
+      const now = new Date();
+      switch (item.dateTime) {
+        case "CURRENT":
+          date = now.toISOString().split("T")[0];
+          time = now.toTimeString().split(" ")[0];
+          break;
+
+        case "UTC": {
+          const utc = new Date(now.toISOString());
+          date = utc.toISOString().split("T")[0];
+          time = utc.toISOString().split("T")[1].split(".")[0];
+          break;
+        }
+
+        case "GMT":
+          date = now.toUTCString().split(" ").slice(0, 4).join(" ");
+          time = now.toUTCString().split(" ")[4];
+          break;
+
+        case "US": {
+          const us = new Date(
+            now.toLocaleString("en-US", { timeZone: "America/New_York" })
+          );
+          date = us.toISOString().split("T")[0];
+          time = us.toTimeString().split(" ")[0];
+          break;
+        }
+
+        case "EU": {
+          const eu = new Date(
+            now.toLocaleString("en-GB", { timeZone: "Europe/Berlin" })
+          );
+          date = eu.toISOString().split("T")[0];
+          time = eu.toTimeString().split(" ")[0];
+          break;
+        }
+
+        case "SA": {
+          const sa = new Date(
+            now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
+          );
+          date = sa.toISOString().split("T")[0];
+          time = sa.toTimeString().split(" ")[0];
+          break;
+        }
+
+        case "APAC": {
+          const apac = new Date(
+            now.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
+          );
+          date = apac.toISOString().split("T")[0];
+          time = apac.toTimeString().split(" ")[0];
+          break;
+        }
+
+        case "AUTO":
+          date = now.toISOString().split("T")[0];
+          time = now.toLocaleTimeString();
+          break;
+
+        case "NONE":
+        default:
+          // keep whatever we parsed
+          break;
+      }
+
+      return { date, time, info };
+    });
+
+    setFileLines(processed);
+  };
 
   useEffect(() => {
     if (fileText) {
@@ -212,14 +227,59 @@ console.log("item : ", item);
     reader.readAsText(file);
   };
 
-  const handleAddingKeys = () => {
-    const newData = { key: newKey, value: newValue };
-    setNewKeys([...newKeys, newData]);
+  // const updateIputs = (e) => {
+  //   const { name, value } = e.target;
+  //   console.log("name", name);
+  //   console.log("value", value);
+  //   setInputsFormat((prev) => {
+  //     const updated = [...prev.customInput];
+  //     updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
+  //     return { ...prev, customInput: updated };
+  //   });
+  //   if (name === "sourceType") {
+  //     setInputsFormat((prev) => {
+  //       const updated = [...prev.props];
+  //       updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
+  //       return { ...prev, props: updated };
+  //     });
+  //   }
+  // };
 
-    if(newKey.toLowerCase().startsWith("transform-")){
+  const handleAddingKeys = () => {
+    // const currentTransform = inputsFormat.transform[each - 1];
+    // const newData = { key: item.newKey, value: newValue };
+    // setNewKeys([...newKeys, newData]);
+
+    // if (item.newKey.toLowerCase().startsWith("transform-")) {
+    //   setTransformConfig(true);
+    //   setTransforms([
+    //     ...transforms,
+    //     { key: "", regex: "", format: "", destKey: "" },
+    //   ]);
+    // }
+
+    const data = {
+      newKey: newKey,
+      newValue: newValue,
+      regex: "",
+      format: "",
+      destKey: "",
+    };
+
+    setInputsFormat((prev) => {
+      const updated = [...prev.transform];
+      updated[updated.length] = data;
+      return { ...prev, transform: updated };
+    });
+
+    if (newKey.toLowerCase().startsWith("transform-")) {
       setTransformConfig(true);
-      setTransforms([...transforms,{key: newKey, regex:"", format:"", destKey:""}]);
+      setTransforms([
+        ...transforms,
+        { key: "", regex: "", format: "", destKey: "" },
+      ]);
     }
+
     setNewKey("");
     setNewValue("");
   };
@@ -237,7 +297,6 @@ console.log("item : ", item);
     setIsCopyConfig(true);
   };
 
-
   console.log("file linessss : ", fileLines);
   return (
     <div>
@@ -250,7 +309,6 @@ console.log("item : ", item);
             </h2>
             <div className="flex items-center gap-4">
               <input
-                
                 onChange={(e) => setFile(e.target.files[0])}
                 type="file"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -269,7 +327,7 @@ console.log("item : ", item);
                 TIME FORMAT
               </label>
               <select
-              name="timeFormat"
+                name="timeFormat"
                 value={item.timeFormat}
                 // onChange={(e) => {
                 //   setConfigData((prev) => ({
@@ -277,7 +335,7 @@ console.log("item : ", item);
                 //     timeFormat: e.target.value,
                 //   }));
                 // }}
-                 onChange={(e)=>updateIputs(e)}
+                onChange={(e) => updateIputs(e)}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Select TIME_FORMAT</option>
@@ -305,7 +363,7 @@ console.log("item : ", item);
                 //     dateTime: e.target.value,
                 //   }));
                 // }}
-                 onChange={(e)=>updateIputs(e)}
+                onChange={(e) => updateIputs(e)}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">--Select DATETIME_CONFIG--</option>
@@ -328,7 +386,7 @@ console.log("item : ", item);
                 LINE BREAKER
               </label>
               <select
-              name="lineBreaker"
+                name="lineBreaker"
                 value={item.lineBreaker}
                 // onChange={(e) => {
                 //   setConfigData((prev) => ({
@@ -336,7 +394,7 @@ console.log("item : ", item);
                 //     lineBreaker: e.target.value,
                 //   }));
                 // }}
-                 onChange={(e)=>updateIputs(e)}
+                onChange={(e) => updateIputs(e)}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">Select Line Breaker</option>
@@ -365,13 +423,11 @@ console.log("item : ", item);
                 //     shouldLine: e.target.value,
                 //   }));
                 // }}
-                 onChange={(e)=>updateIputs(e)}
+                onChange={(e) => updateIputs(e)}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                
                 <option value="true">true</option>
                 <option value="false">false</option>
-                
               </select>
               <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
                 Delete
@@ -390,7 +446,7 @@ console.log("item : ", item);
                 //     truncate: e.target.value,
                 //   }));
                 // }}
-                 onChange={(e)=>updateIputs(e)}
+                onChange={(e) => updateIputs(e)}
                 type="number"
                 min="0"
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -400,23 +456,46 @@ console.log("item : ", item);
               </button>
             </div>
           </div>
-          {newKeys.map((each) => (
-            <div className="flex items-center gap-4 mt-3.5">
-              <label className="w-40 text-sm font-medium text-gray-700">
-                {each.key}
-              </label>
-              <input
-                value={each.value}
-                type="text"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
-                Delete
-              </button>
-            </div>
-          ))}
+          {inputsFormat.transform.map((item, index) =>
+            item.newKey !== "" ? (
+              <div className="flex items-center gap-4 mt-3.5" key={index}>
+                <label className="w-40 text-sm font-medium text-gray-700">
+                  {item.newKey}
+                </label>
+                <input
+                  name="newValue"
+                  value={item.newValue || ""}
+                  onChange={(e) => {
+                    const { value } = e.target;
+                    setInputsFormat((prev) => {
+                      const updated = [...prev.transform];
+                      updated[index] = { ...updated[index], newValue: value };
+                      return { ...prev, transform: updated };
+                    });
+                  }}
+                  type="text"
+                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button
+                  onClick={() => {
+                    setInputsFormat((prev) => {
+                      const updated = prev.transform.filter(
+                        (_, i) => i !== index
+                      );
+                      return { ...prev, transform: updated };
+                    });
+                  }}
+                  className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400"
+                >
+                  Delete
+                </button>
+              </div>
+            ) : null
+          )}
+
           <div className="flex items-center gap-4 mt-3.5">
             <input
+              name="newKey"
               value={newKey}
               onChange={(e) => setNewKey(e.target.value)}
               type="text"
@@ -424,6 +503,7 @@ console.log("item : ", item);
               className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             <input
+              name="newValue"
               value={newValue}
               onChange={(e) => setNewValue(e.target.value)}
               type="text"
@@ -444,7 +524,6 @@ console.log("item : ", item);
             >
               Copy Config
             </button>
-           
           </div>
         </div>
 
@@ -474,7 +553,7 @@ console.log("item : ", item);
                   </tr>
                 </thead>
                 <tbody>
-                  {fileLines.map((each,index) => (
+                  {fileLines.map((each, index) => (
                     <tr className="hover:bg-gray-50" key={index}>
                       <td className="px-4 py-2 border border-gray-300">
                         {each.date} {each.time}
@@ -492,14 +571,26 @@ console.log("item : ", item);
             <h3 className="text-lg font-semibold text-gray-800">
               Generated Props.conf
             </h3>
-            {isCopyConfig && <pre className=" h-44  overflow-auto w-96 resize-none border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-              {JSON.stringify(item, null, 2)}
-            </pre>}
+            {isCopyConfig && (
+              <pre className=" h-44  overflow-auto w-96 resize-none border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                {JSON.stringify(item, null, 2)}
+              </pre>
+            )}
           </div>
         </div>
       </div>
 
-      {transformConfig && <TransformsConfig transforms={transforms} setTransforms={setTransforms} />}
+      {transformConfig && (
+        <TransformsConfig
+          key={each}
+          each={each}
+          newKey={item.newKey}
+          inputsFormat={inputsFormat}
+          setInputsFormat={setInputsFormat}
+          transforms={transforms}
+          setTransforms={setTransforms}
+        />
+      )}
     </div>
   );
 };
