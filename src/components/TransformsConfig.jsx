@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const TransformsConfig = ({ transforms, setTransforms }) => {
+const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTransforms }) => {
   const [logFile, setLogFile] = useState(null);
   const [logs, setLogs] = useState([]);
   const [transformedLogs, setTransformedLogs] = useState({});
@@ -15,6 +15,35 @@ const TransformsConfig = ({ transforms, setTransforms }) => {
   const handleDelete = (index) => {
     const updated = transforms.filter((_, i) => i !== index);
     setTransforms(updated);
+  };
+
+
+  const item=inputsFormat.transform[each-1];
+  console.log(inputsFormat);
+
+  // const updateIputs=(e)=>{
+  //   const {name, value}=e.target;
+  //   console.log("name", name);
+  //   console.log("value", value);
+  //    setInputsFormat((prev) => {
+  //   const updated = [...prev.transform];
+  //   updated[each-1] = { ...updated[each-1], [name]: value }; // update only sourceType
+  //   return { ...prev, transform: updated };
+  // });
+  // }
+
+  const updateInputs = (index, field, value) => {
+    // update transforms state
+    const updated = [...transforms];
+    updated[index] = { ...updated[index], [field]: value };
+    setTransforms(updated);
+
+    // update inputsFormat state
+    setInputsFormat((prev) => {
+      const copy = [...prev.transform];
+      copy[index] = { ...copy[index], [field]: value };
+      return { ...prev, transform: copy };
+    });
   };
 
   const handleReadLogFile = () => {
@@ -36,21 +65,21 @@ const TransformsConfig = ({ transforms, setTransforms }) => {
       let routeKey = "_raw";
       let drop = false;
 
-      transforms.forEach((t) => {
+      transforms.forEach((item) => {
         try {
-          const regex = new RegExp(t.regex, "g");
+          const regex = new RegExp(item.regex, "g");
 
-          if (t.destKey === "_raw") {
-            modifiedLine = t.format
-              ? modifiedLine.replace(regex, t.format)
+          if (item.destKey === "_raw") {
+            modifiedLine = item.format
+              ? modifiedLine.replace(regex, item.format)
               : modifiedLine.replace(regex, "");
-          } else if (t.destKey === "nullQueue") {
+          } else if (item.destKey === "nullQueue") {
             if (regex.test(modifiedLine)) {
               drop = true;
             }
           } else {
             if (regex.test(modifiedLine)) {
-              routeKey = t.destKey;
+              routeKey = item.destKey;
             }
           }
         } catch (err) {
@@ -72,6 +101,8 @@ const TransformsConfig = ({ transforms, setTransforms }) => {
       applyTransforms(logs);
     }
   }, [transforms, logs]);
+
+  console.log(inputsFormat);
 
   return (
     <div className="flex flex-col mt-3">
@@ -100,30 +131,30 @@ const TransformsConfig = ({ transforms, setTransforms }) => {
               <div className="flex flex-col mt-2">
                 <label className="text-blue-700">REGEX</label>
                 <textarea
+                  name="regex"
                   value={t.regex}
-                  onChange={(e) =>
-                    handleChange(index, "regex", e.target.value)
-                  }
+                  onChange={(e) => updateInputs(index, "regex", e.target.value)}
                   className="bg-white border border-gray-300 rounded-xl h-20"
                 />
               </div>
               <div className="flex flex-col mt-2">
                 <label className="text-blue-700">FORMAT</label>
                 <input
+                  name="format"
                   value={t.format}
-                  onChange={(e) =>
-                    handleChange(index, "format", e.target.value)
-                  }
+                  onChange={(e) => updateInputs(index, "format", e.target.value)}
+                  // onChange={(e) =>
+                  //   handleChange(index, "format", e.target.value)
+                  // }
                   className="bg-white border border-gray-300 rounded-xl h-10"
                 />
               </div>
               <div className="flex flex-col mt-2">
                 <label className="text-blue-700">DEST_KEY</label>
                 <input
+                  name="destKey"
                   value={t.destKey}
-                  onChange={(e) =>
-                    handleChange(index, "destKey", e.target.value)
-                  }
+                  onChange={(e) => updateInputs(index, "destKey", e.target.value)}
                   className="bg-white border border-gray-300 rounded-xl h-10"
                 />
               </div>

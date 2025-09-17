@@ -15,7 +15,8 @@ const Main = () => {
     dateTime: "",
     lineBreaker: "",
     shouldLine: "",
-    truncate: "",}]
+    truncate: "",}],
+    transform:[]
   })
 
   useEffect(() => {
@@ -31,8 +32,7 @@ const Main = () => {
   };
 
   const handleCreateApp = () => {
-    console.log("inputs format : ", inputsFormat);
-    
+    console.log("inputs format : ", inputsFormat); 
   }
 
   const handleInputConfigs=()=>{
@@ -49,6 +49,21 @@ const Main = () => {
     ...prev,
     customInput: [...prev.customInput, customInputData], 
     props:[...prev.props, propsConfig],
+  }));
+  }
+
+  const handleTransforms=()=>{
+    const transformsData={
+      newKey:"",
+      newValue:"",
+      regex:"",
+      format:"",
+      destKey:""
+    }
+
+    setInputsFormat((prev) => ({
+    ...prev,
+    transform:[...prev.transform, transformsData]
   }));
   }
 
@@ -99,7 +114,7 @@ const Main = () => {
 
         <div className="flex flex-col gap-6">
           {inputsConfigList.map((each) => (
-            <InputConfig key={each} cancelConfig={cancelConfig} each={each} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
+            <InputConfig key={each} cancelConfig={cancelConfig} each={each} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} handleTransforms={handleTransforms}/>
           ))}
         </div>
         <div className="mt-6 flex justify-end">
@@ -111,7 +126,7 @@ const Main = () => {
           </button>
         </div>
         <button
-        className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600"
+        className="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600"
         onClick={handleCreateApp}>
           Create App
         </button>
