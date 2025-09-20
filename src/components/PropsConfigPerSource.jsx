@@ -311,7 +311,8 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
     console.log("new value : ", newValue);
     setNewValue(newValue);
 
-    setInputsFormat((prev) => ({
+    if(newKey.toLowerCase().includes("transform-".toLowerCase())){
+      setInputsFormat((prev) => ({
       ...prev,
       transform: {
         ...prev.transform,
@@ -322,6 +323,7 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
         },
       },
     }));
+    }
 
     let sType=inputsFormat.inputs[each-1].sourceType;
     console.log(sType);
