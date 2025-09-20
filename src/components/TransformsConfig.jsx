@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 
-const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTransforms }) => {
+const TransformsConfig = ({ transforms, setTransforms, updateTransform, newKey }) => {
   const [logFile, setLogFile] = useState(null);
   const [logs, setLogs] = useState([]);
   const [transformedLogs, setTransformedLogs] = useState({});
@@ -15,35 +15,6 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
   const handleDelete = (index) => {
     const updated = transforms.filter((_, i) => i !== index);
     setTransforms(updated);
-  };
-
-
-  const item=inputsFormat.transform[each-1];
-  console.log(inputsFormat);
-
-  // const updateIputs=(e)=>{
-  //   const {name, value}=e.target;
-  //   console.log("name", name);
-  //   console.log("value", value);
-  //    setInputsFormat((prev) => {
-  //   const updated = [...prev.transform];
-  //   updated[each-1] = { ...updated[each-1], [name]: value }; // update only sourceType
-  //   return { ...prev, transform: updated };
-  // });
-  // }
-
-  const updateInputs = (index, field, value) => {
-    // update transforms state
-    const updated = [...transforms];
-    updated[index] = { ...updated[index], [field]: value };
-    setTransforms(updated);
-
-    // update inputsFormat state
-    setInputsFormat((prev) => {
-      const copy = [...prev.transform];
-      copy[index] = { ...copy[index], [field]: value };
-      return { ...prev, transform: copy };
-    });
   };
 
   const handleReadLogFile = () => {
@@ -65,21 +36,21 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
       let routeKey = "_raw";
       let drop = false;
 
-      transforms.forEach((item) => {
+      transforms.forEach((t) => {
         try {
-          const regex = new RegExp(item.regex, "g");
+          const regex = new RegExp(t.regex, "g");
 
-          if (item.destKey === "_raw") {
-            modifiedLine = item.format
-              ? modifiedLine.replace(regex, item.format)
+          if (t.destKey === "_raw") {
+            modifiedLine = t.format
+              ? modifiedLine.replace(regex, t.format)
               : modifiedLine.replace(regex, "");
-          } else if (item.destKey === "nullQueue") {
+          } else if (t.destKey === "nullQueue") {
             if (regex.test(modifiedLine)) {
               drop = true;
             }
           } else {
             if (regex.test(modifiedLine)) {
-              routeKey = item.destKey;
+              routeKey = t.destKey;
             }
           }
         } catch (err) {
@@ -101,8 +72,6 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
       applyTransforms(logs);
     }
   }, [transforms, logs]);
-
-  console.log(inputsFormat);
 
   return (
     <div className="flex flex-col mt-3">
@@ -131,9 +100,12 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
               <div className="flex flex-col mt-2">
                 <label className="text-blue-700">REGEX</label>
                 <textarea
-                  name="regex"
+                  name = "regex"
                   value={t.regex}
-                  onChange={(e) => updateInputs(index, "regex", e.target.value)}
+                  // onChange={(e) =>
+                  //   handleChange(index, "regex", e.target.value)
+                  // }
+                  onChange={(e) => updateTransform(newKey, "regex", e.target.value)}
                   className="bg-white border border-gray-300 rounded-xl h-20"
                 />
               </div>
@@ -142,10 +114,10 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
                 <input
                   name="format"
                   value={t.format}
-                  onChange={(e) => updateInputs(index, "format", e.target.value)}
                   // onChange={(e) =>
                   //   handleChange(index, "format", e.target.value)
                   // }
+                  onChange={(e) => updateTransform(newKey, "format", e.target.value)}
                   className="bg-white border border-gray-300 rounded-xl h-10"
                 />
               </div>
@@ -154,7 +126,10 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
                 <input
                   name="destKey"
                   value={t.destKey}
-                  onChange={(e) => updateInputs(index, "destKey", e.target.value)}
+                  // onChange={(e) =>
+                  //   handleChange(index, "destKey", e.target.value)
+                  // }
+                  onChange={(e) => updateTransform(newKey, "destKey", e.target.value)}
                   className="bg-white border border-gray-300 rounded-xl h-10"
                 />
               </div>

@@ -8,16 +8,30 @@ const Main = () => {
   const [inputsFormat, setInputsFormat] = useState({
     appName : "",
     indexName : "",
-    customInput:[{filePath:"", sourceType:"", index:""}],
-    props : [{ 
-    sourceType : "",
-    timeFormat: "",
-    dateTime: "",
-    lineBreaker: "",
-    shouldLine: "",
-    truncate: "",}],
-    transform:[]
-  })
+    inputs:[
+      {id : "", filePath:"", sourceType:"", index:"",
+         customFields : [
+      ]
+      }
+     
+    ],
+    props : {
+      
+  //     sourceType : { 
+   
+  //   timeFormat: "",
+  //   dateTime: "",
+  //   lineBreaker: "",
+  //   shouldLine: "",
+  //   truncate: "",
+  //   newKey : "",
+  //   newValue : "",
+  // }
+    }
+,
+    transform:
+      []   
+  });
 
   useEffect(() => {
     const arr = Array.from({ length: inputsConfig }, (_, i) => i + 1);
@@ -39,7 +53,6 @@ const Main = () => {
     setInputsConfig(inputsConfig + 1)
     const customInputData={filePath:"", sourceType:"", index:""}
     const propsConfig={ 
-    sourceType : "",
     timeFormat: "",
     dateTime: "",
     lineBreaker: "",
@@ -47,8 +60,8 @@ const Main = () => {
     truncate: "",}
     setInputsFormat((prev) => ({
     ...prev,
-    customInput: [...prev.customInput, customInputData], 
-    props:[...prev.props, propsConfig],
+    inputs: [...prev.inputs, customInputData], 
+    
   }));
   }
 

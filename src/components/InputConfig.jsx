@@ -13,10 +13,55 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
 
   // const[customField, setCustomField]=useState(false);
   // const[cancelCustomField, setCancelCustomField]=useState(false);
-  const [inputCustomFields, setInputCustomFields] = useState([]);
+  const [inputCustomFields, setInputCustomFields] = useState(inputsFormat.inputs[each-1].customFields);
+  const [key, setKey]=useState("");
+  const [value, setValue]=useState("");
 
   const handleAddCustomField = () => {
-    setInputCustomFields([...inputCustomFields, { key: "", value: "" }]);
+    // setInputCustomFields([...inputCustomFields, { key: "", value: "" }]);
+    if(key!=="" && value!==""){
+      setInputsFormat((prev) => {
+  const updatedInputs = [...prev.inputs];
+  console.log("update", updatedInputs[each - 1]);
+
+  const updatedCustomInputs = [
+    ...updatedInputs[each - 1].customFields,
+    {[key]:value}
+  ];
+
+  updatedInputs[each - 1] = {
+    ...updatedInputs[each - 1],
+    customFields: updatedCustomInputs
+  };
+
+  return {
+    ...prev,
+    inputs: updatedInputs
+  };
+});
+    }
+    else{
+      setInputsFormat((prev) => {
+  const updatedInputs = [...prev.inputs];
+  console.log("update", updatedInputs[each - 1]);
+
+  const updatedCustomInputs = [
+    ...updatedInputs[each - 1].customFields,
+    {}
+  ];
+
+  updatedInputs[each - 1] = {
+    ...updatedInputs[each - 1],
+    customFields: updatedCustomInputs
+  };
+
+  return {
+    ...prev,
+    inputs: updatedInputs
+  };
+});
+    }
+
   };
 
   const handleRemoveCustomField = (index) => {
@@ -35,26 +80,95 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
   //   setCustomField(true);
   //   setCancelCustomField(false);
   // }
-  const item = inputsFormat.customInput[each - 1];
-  // console.log(inputsFormat);
+  const item = inputsFormat.inputs[each - 1];
+  console.log("itemsinput : ", inputsFormat.inputs);
 
   const updateIputs = (e) => {
     const { name, value } = e.target;
     console.log("name", name);
     console.log("value", value);
     setInputsFormat((prev) => {
-      const updated = [...prev.customInput];
-      updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
-      return { ...prev, customInput: updated };
-    });
-    if (name === "sourceType") {
-      setInputsFormat((prev) => {
-        const updated = [...prev.props];
-        updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
-        return { ...prev, props: updated };
-      });
-    }
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = { ...updatedInputs[each - 1], [name]: value }; // update only sourceType
+      // return { ...prev, customInput: updated };
+      console.log("updatedInputs : ", updatedInputs);
+    
+    //  let updatedProps = [ ...prev.props ];
+    // if (name === "sourceType" && value) {
+    //   // setInputsFormat((prev) => {
+    //   //   const updated = [...prev.props];
+    //   //   updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
+    //   //   return { ...prev, props: updated };
+    //   // });
+    //   if (!updatedProps[each-1]) {
+    //     updatedProps[each-1] ={[value]: {
+    //       timeFormat: "",
+    //       dateTime: "",
+    //       lineBreaker: "",
+    //       shouldLine : "",
+    //       truncate: "",
+    //     }};
+    //   }
+    // }
+
+    //    console.log("updatedProps : ", updatedProps);
+    return {
+      ...prev,
+      inputs: updatedInputs,
+      // props: updatedProps,
+    };
+
+
+    })
   };
+
+  const addProps=()=>{
+    let sType=inputsFormat.inputs[each-1].sourceType;
+    console.log(sType);
+
+    setInputsFormat((prev)=>
+    {
+      let updateProps={...prev.props};
+      updateProps={...updateProps, [sType]:{ 
+   
+    timeFormat: "",
+    dateTime: "",
+    lineBreaker: "",
+    shouldLine: "",
+    truncate: "",
+    
+  }};
+  return {
+      ...prev,
+      props: updateProps,
+      // props: updatedProps,
+    };
+    })
+  }
+
+  const addField = () => {
+    let sTypeField=inputsFormat.inputs[each-1].customFields;
+    console.log("file : " ,sTypeField);
+
+    setInputsFormat((prev)=>
+    {
+      let updateField={...prev.inputs};
+      updateField={...updateField, [sTypeField]:{ 
+       inputKey : "",
+       inputValue : "",
+   
+    
+  }};
+  return {
+      ...prev,
+      props: updateField,
+      // props: updatedProps,
+    };
+    })
+
+  }
+
+  console.log(inputsFormat)
 
   return (
     <div>
@@ -125,6 +239,11 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
             >
               Cancel
             </button>
+          
+          <button
+          onClick={addProps}
+          className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 cursor-pointer ml-2"
+          >Add Props</button>
           </div>
         </div>
         <div className=" border-gray-200 pt-4">
@@ -132,25 +251,38 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
             Custom Fields
           </h3>
 
-          {inputCustomFields.length > 0 ? (
-            inputCustomFields.map((field, index) => (
+          {inputsFormat.inputs[each-1].customFields.length > 0 ? (
+            inputsFormat.inputs[each-1].customFields.map((field, index) => (
               <div className="grid grid-cols-[1fr_3fr_1fr] gap-2.5 mb-2.5">
                 <input
+                  onChange={(e)=>setKey(e.target.value)}
+                  value={key}
                   type="text"
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Key"
                 />
                 <input
+                  onChange={(e)=>setValue(e.target.value)}
+                  value={value}
                   type="text"
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Value"
                 />
+                <div>
                 <button
                   onClick={() => handleRemoveCustomField(index)}
                   className="p-2 ml-4 max-w-20 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition cursor-pointer"
                 >
                   Cancel
                 </button>
+                <button
+                   onClick={addField}
+                  className="p-2 ml-4 max-w-20 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition cursor-pointer"
+                >
+                  Add
+                </button>
+                </div>
+                
               </div>
             ))
           ) : (
@@ -169,7 +301,7 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
       </h2>
       <hr className="text-blue-500" />
       <div>
-        {item.sourceType !== "" && (
+        {inputsFormat.props[inputsFormat.inputs[each-1].sourceType] && (
           <PropsConfigPerSource
             key={each}
             each={each}

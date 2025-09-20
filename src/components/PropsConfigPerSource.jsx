@@ -25,18 +25,34 @@ const PropsConfigPerSource = ({
     truncate: "",
   });
   const [isCopyConfig, setIsCopyConfig] = useState(false);
+  
+  console.log("each",each);
+  console.log("inputss : ",inputsFormat);
+  const sourceTypes=inputsFormat.inputs[each-1].sourceType;
+  console.log("sourceType", sourceTypes);
+  const item = inputsFormat.props[sourceTypes];
+// const filteredEntries = Object.entries(item).filter(([key]) => key !== 'newKey' && key !== 'newValue');
+// console.log("filteredEntries", filteredEntries)
+const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.inputs[each-1].sourceType]).filter(([key]) => key !== 'newKey' && key !== 'newValue').map(([key, value]) => ({ [key]: value }));
 
-  const item = inputsFormat.props[each - 1];
-  console.log(inputsFormat);
+  console.log("items", item);
+  console.log("prop items",propItems);
+
+ 
+ 
 
   const updateIputs = (e) => {
     const { name, value } = e.target;
     console.log("name", name);
     console.log("value", value);
+    console.log("inputs config", inputsFormat);
     setInputsFormat((prev) => {
-      const updated = [...prev.props];
-      updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
+      const updated = {...prev.props};
+      console.log("updated",updated);
+      let updateSource={...updated[sourceType], [name]:value}
+      updated[sourceTypes] = { ...updateSource }; // update only sourceType
       return { ...prev, props: updated };
+      
     });
     if (["regex", "format", "destKey", "newKey"].includes(name)) {
       setInputsFormat((prev) => {
@@ -45,6 +61,7 @@ const PropsConfigPerSource = ({
         return { ...prev, transform: updated };
       });
     }
+
   };
 
   const applyConfigToFile = () => {
@@ -245,43 +262,122 @@ const PropsConfigPerSource = ({
   //   }
   // };
 
-  const handleAddingKeys = () => {
-    // const currentTransform = inputsFormat.transform[each - 1];
-    // const newData = { key: item.newKey, value: newValue };
-    // setNewKeys([...newKeys, newData]);
+  // const handleAddingKeys = () => {
+  //   // const currentTransform = inputsFormat.transform[each - 1];
+  //   // const newData = { key: item.newKey, value: newValue };
+  //   // setNewKeys([...newKeys, newData]);
 
-    // if (item.newKey.toLowerCase().startsWith("transform-")) {
-    //   setTransformConfig(true);
-    //   setTransforms([
-    //     ...transforms,
-    //     { key: "", regex: "", format: "", destKey: "" },
-    //   ]);
-    // }
+  //   // if (item.newKey.toLowerCase().startsWith("transform-")) {
+  //   //   setTransformConfig(true);
+  //   //   setTransforms([
+  //   //     ...transforms,
+  //   //     { key: "", regex: "", format: "", destKey: "" },
+  //   //   ]);
+  //   // }
 
-    const data = {
-      newKey: newKey,
-      newValue: newValue,
-      regex: "",
-      format: "",
-      destKey: "",
+  //   const data = {
+  //    [newKey] :{
+  //     regex: "",
+  //     format: "",
+  //     destKey: "",
+  //    }
+  //   };
+
+  //   // setInputsFormat((prev) => {
+  //   //   const updated = [...prev.transform];
+  //   //   updated[updated.length] = data;
+  //   //   return { ...prev, transform: updated };
+  //   // });
+  //   setInputsFormat((prev) => ({
+  //   ...prev,
+  //   transform: [...prev.transform, data], // add new transform object
+  // }));
+
+  //   if (newKey.toLowerCase().startsWith("transform-")) {
+  //     setTransformConfig(true);
+  //     setTransforms([
+  //       ...transforms,
+  //       { key: "", regex: "", format: "", destKey: "" },
+  //     ]);
+  //   }
+
+  //   setNewKey("");
+  //   setNewValue("");
+  // };
+
+   const handleAddingKeys = () => {
+    if (!newKey) return;
+    if (!newValue) return;
+    console.log("new value : ", newValue);
+    setNewValue(newValue);
+
+    setInputsFormat((prev) => ({
+      ...prev,
+      transform: {
+        ...prev.transform,
+        [newKey]: {
+          regex: "",
+          format: "",
+          destKey: "",
+        },
+      },
+    }));
+
+    let sType=inputsFormat.inputs[each-1].sourceType;
+    console.log(sType);
+
+    setInputsFormat((prev)=>
+    {
+      let updateProps={...prev.props};
+      let pProp={...updateProps[sType], [newKey]:newValue}
+      updateProps={...updateProps, [sType]:pProp};
+  return {
+      ...prev,
+      props: updateProps,
+      // props: updatedProps,
     };
-
-    setInputsFormat((prev) => {
-      const updated = [...prev.transform];
-      updated[updated.length] = data;
-      return { ...prev, transform: updated };
-    });
-
-    if (newKey.toLowerCase().startsWith("transform-")) {
-      setTransformConfig(true);
-      setTransforms([
-        ...transforms,
-        { key: "", regex: "", format: "", destKey: "" },
-      ]);
-    }
+    })
 
     setNewKey("");
     setNewValue("");
+  };
+
+   const addProps=()=>{
+    let sType=inputsFormat.inputs[each-1].sourceType;
+    console.log(sType);
+
+    setInputsFormat((prev)=>
+    {
+      let updateProps={...prev.props};
+      updateProps={...updateProps, [sType]:{ 
+   
+    timeFormat: "",
+    dateTime: "",
+    lineBreaker: "",
+    shouldLine: "",
+    truncate: "",
+    newKey : "",
+    newValue : "",
+  }};
+  return {
+      ...prev,
+      props: updateProps,
+      // props: updatedProps,
+    };
+    })
+  }
+
+   const updateTransform = (key, field, value) => {
+    setInputsFormat((prev) => ({
+      ...prev,
+      transform: {
+        ...prev.transform,
+        [key]: {
+          ...prev.transform[key],
+          [field]: value,
+        },
+      },
+    }));
   };
 
   const handleCopyConfig = () => {
@@ -296,6 +392,19 @@ const PropsConfigPerSource = ({
     }));
     setIsCopyConfig(true);
   };
+
+
+  //   const config = inputsFormat.props[sourceType] || {
+  //   timeFormat: "",
+  //   dateTime: "",
+  //   lineBreaker: "",
+  //   truncate: "",
+  // };
+
+  // console.log("config : ", config);
+
+  console.log("itemOutput : ", inputsFormat.props[inputsFormat.inputs[each-1].sourceType].timeFormat)
+
 
   console.log("file linessss : ", fileLines);
   return (
@@ -456,35 +565,55 @@ const PropsConfigPerSource = ({
               </button>
             </div>
           </div>
-          {inputsFormat.transform.map((item, index) =>
-            item.newKey !== "" ? (
+          {Object.keys(inputsFormat.transform).map((key, index) =>
+            key !== "" ? (
               <div className="flex items-center gap-4 mt-3.5" key={index}>
                 <label className="w-40 text-sm font-medium text-gray-700">
-                  {item.newKey}
+                  {key}
                 </label>
                 <input
                   name="newValue"
-                  value={item.newValue || ""}
-                  onChange={(e) => {
-                    const { value } = e.target;
-                    setInputsFormat((prev) => {
-                      const updated = [...prev.transform];
-                      updated[index] = { ...updated[index], newValue: value };
-                      return { ...prev, transform: updated };
-                    });
-                  }}
+                  // value={item.newValue || ""}
+                  value={inputsFormat.transform[key].newValue || ""}
+                  // onChange={(e) => {
+                  //   const { value } = e.target;
+                  //   setInputsFormat((prev) => {
+                  //     const updated = [...prev.transform];
+                  //     updated[index] = { ...updated[index], newValue: value };
+                  //     return { ...prev, transform: updated };
+                  //   });
+                  // }}
+                   onChange={(e) => {
+        const { value } = e.target;
+        setInputsFormat((prev) => ({
+          ...prev,
+          transform: {
+            ...prev.transform,
+            [key]: {
+              ...prev.transform[key],
+              newValue: value
+            }
+          }
+        }));
+      }}
                   type="text"
                   className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 <button
-                  onClick={() => {
-                    setInputsFormat((prev) => {
-                      const updated = prev.transform.filter(
-                        (_, i) => i !== index
-                      );
-                      return { ...prev, transform: updated };
-                    });
-                  }}
+                  // onClick={() => {
+                  //   setInputsFormat((prev) => {
+                  //     const updated = prev.transform.filter(
+                  //       (_, i) => i !== index
+                  //     );
+                  //     return { ...prev, transform: updated };
+                  //   });
+                  // }}
+                   onClick={() => {
+        setInputsFormat((prev) => {
+          const { [key]: _, ...rest } = prev.transform; // remove key
+          return { ...prev, transform: rest };
+        });
+      }}
                   className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400"
                 >
                   Delete
@@ -580,7 +709,7 @@ const PropsConfigPerSource = ({
         </div>
       </div>
 
-      {transformConfig && (
+      {/* {transformConfig && (
         <TransformsConfig
           key={each}
           each={each}
@@ -590,7 +719,27 @@ const PropsConfigPerSource = ({
           transforms={transforms}
           setTransforms={setTransforms}
         />
-      )}
+      )} */}
+      {Object.keys(inputsFormat.transform).map((key, index) => {
+              const value = inputsFormat.transform[key];
+              return(
+
+
+    <TransformsConfig
+      key={index}
+      each={each}
+      newKey={key}          // pass the actual key
+      transformValue={value} // optional: pass value if needed
+      inputsFormat={inputsFormat}
+      setInputsFormat={setInputsFormat}
+      transforms={transforms}
+      setTransforms={setTransforms}
+      updateTransform = {updateTransform}
+    />
+              )
+  
+})}
+
     </div>
   );
 };
