@@ -170,6 +170,9 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
 
   console.log(inputsFormat)
 
+
+  console.log("length : ", inputsFormat.inputs.length);
+
   return (
     <div>
       <div className="flex flex-col shadow-md rounded-2xl p-6 w-full">

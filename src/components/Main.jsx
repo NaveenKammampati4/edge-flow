@@ -3,7 +3,7 @@ import InputConfig from "./InputConfig";
 import TransformsConfig from "./TransformsConfig";
 
 const Main = () => {
-  const [inputsConfig, setInputsConfig] = useState(1);
+  const [inputsConfig, setInputsConfig] = useState([1]);
   const [inputsConfigList, setInputsConfigList] = useState([]);
   const [inputsFormat, setInputsFormat] = useState({
     appName : "",
@@ -50,14 +50,16 @@ const Main = () => {
   }
 
   const handleInputConfigs=()=>{
-    setInputsConfig(inputsConfig + 1)
-    const customInputData={filePath:"", sourceType:"", index:""}
-    const propsConfig={ 
-    timeFormat: "",
-    dateTime: "",
-    lineBreaker: "",
-    shouldLine: "",
-    truncate: "",}
+    const newId = inputsConfigList.length + 1;
+    // setInputsConfig(inputsConfig + 1)
+    const customInputData={id : newId, filePath:"", sourceType:"", index:"", customFields : []}
+    // const propsConfig={ 
+    // timeFormat: "",
+    // dateTime: "",
+    // lineBreaker: "",
+    // shouldLine: "",
+    // truncate: "",}
+    setInputsConfigList((prev) => [...prev, newId]);
     setInputsFormat((prev) => ({
     ...prev,
     inputs: [...prev.inputs, customInputData], 

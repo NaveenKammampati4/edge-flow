@@ -382,19 +382,38 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
     }));
   };
 
+  // const handleCopyConfig = () => {
+  //   const updates = newKeys.reduce((acc, item) => {
+  //     acc[item.key] = item.value;
+  //     return acc;
+  //   }, {});
+
+  //   item((prev) => ({
+  //     ...prev,
+  //     ...updates,
+  //   }));
+  //   setIsCopyConfig(true);
+  //   console.log("updates : ", updates);
+  // };
+
   const handleCopyConfig = () => {
-    const updates = newKeys.reduce((acc, item) => {
-      acc[item.key] = item.value;
-      return acc;
-    }, {});
+  if (!inputsFormat?.props) {
+    console.warn("No props found in inputsFormat");
+    return;
+  }
 
-    item((prev) => ({
-      ...prev,
-      ...updates,
-    }));
-    setIsCopyConfig(true);
-  };
+  // take only props from inputsFormat
+  const propsJson = JSON.stringify(inputsFormat.props, null, 2);
 
+  console.log("Props JSON:", propsJson);
+
+  // Copy to clipboard
+  navigator.clipboard.writeText(propsJson);
+
+  setIsCopyConfig(true);
+};
+
+  
 
   //   const config = inputsFormat.props[sourceType] || {
   //   timeFormat: "",
@@ -576,7 +595,7 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
                 <input
                   name="newValue"
                   // value={item.newValue || ""}
-                  value={inputsFormat.transform[key].newValue || ""}
+                  value={inputsFormat.props[sourceTypes][key] || ""}
                   // onChange={(e) => {
                   //   const { value } = e.target;
                   //   setInputsFormat((prev) => {
@@ -737,6 +756,7 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
       transforms={transforms}
       setTransforms={setTransforms}
       updateTransform = {updateTransform}
+      updateIputs={updateIputs}
     />
               )
   
