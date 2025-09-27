@@ -25,21 +25,24 @@ const PropsConfigPerSource = ({
     truncate: "",
   });
   const [isCopyConfig, setIsCopyConfig] = useState(false);
-  
-  console.log("each",each);
-  console.log("inputss : ",inputsFormat);
-  const sourceTypes=inputsFormat.inputs[each-1].sourceType;
+
+  console.log("each", each);
+  console.log("inputss : ", inputsFormat);
+  const sourceTypes = inputsFormat.inputs[each - 1].sourceType;
   console.log("sourceType", sourceTypes);
-  const item = inputsFormat.props[sourceTypes];
-// const filteredEntries = Object.entries(item).filter(([key]) => key !== 'newKey' && key !== 'newValue');
-// console.log("filteredEntries", filteredEntries)
-const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.inputs[each-1].sourceType]).filter(([key]) => key !== 'newKey' && key !== 'newValue').map(([key, value]) => ({ [key]: value }));
+  let itemList = [];
+  itemList = inputsFormat.props[sourceTypes];
+  // const filteredEntries = Object.entries(item).filter(([key]) => key !== 'newKey' && key !== 'newValue');
+  // console.log("filteredEntries", filteredEntries)
 
-  console.log("items", item);
-  console.log("prop items",propItems);
 
- 
- 
+  console.log("items", itemList);
+  const itemListTransform=Object.keys(itemList);
+  console.log("itemListTransform",itemListTransform);
+
+
+
+
 
   const updateIputs = (e) => {
     const { name, value } = e.target;
@@ -47,12 +50,12 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
     console.log("value", value);
     console.log("inputs config", inputsFormat);
     setInputsFormat((prev) => {
-      const updated = {...prev.props};
-      console.log("updated",updated);
-      let updateSource={...updated[sourceType], [name]:value}
+      const updated = { ...prev.props };
+      console.log("updated", updated);
+      let updateSource = { ...updated[sourceType], [name]: value }
       updated[sourceTypes] = { ...updateSource }; // update only sourceType
       return { ...prev, props: updated };
-      
+
     });
     if (["regex", "format", "destKey", "newKey"].includes(name)) {
       setInputsFormat((prev) => {
@@ -203,7 +206,7 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
     if (fileText) {
       applyConfigToFile();
     }
-  }, [item, fileText]);
+  }, [itemList, fileText]);
 
   function splitLogLine(line) {
     const firstSpace = line.indexOf(" ");
@@ -305,71 +308,71 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
   //   setNewValue("");
   // };
 
-   const handleAddingKeys = () => {
+  const handleAddingKeys = () => {
     if (!newKey) return;
     if (!newValue) return;
     console.log("new value : ", newValue);
     setNewValue(newValue);
 
-    if(newKey.toLowerCase().includes("transform-".toLowerCase())){
+    if (newKey.toLowerCase().includes("transform-".toLowerCase())) {
       setInputsFormat((prev) => ({
-      ...prev,
-      transform: {
-        ...prev.transform,
-        [newKey]: {
-          regex: "",
-          format: "",
-          destKey: "",
+        ...prev,
+        transform: {
+          ...prev.transform,
+          [newKey]: {
+            regex: "",
+            format: "",
+            destKey: "",
+          },
         },
-      },
-    }));
+      }));
     }
 
-    let sType=inputsFormat.inputs[each-1].sourceType;
+    let sType = inputsFormat.inputs[each - 1].sourceType;
     console.log(sType);
 
-    setInputsFormat((prev)=>
-    {
-      let updateProps={...prev.props};
-      let pProp={...updateProps[sType], [newKey]:newValue}
-      updateProps={...updateProps, [sType]:pProp};
-  return {
-      ...prev,
-      props: updateProps,
-      // props: updatedProps,
-    };
+    setInputsFormat((prev) => {
+      let updateProps = { ...prev.props };
+      let pProp = { ...updateProps[sType], [newKey]: newValue }
+      updateProps = { ...updateProps, [sType]: pProp };
+      return {
+        ...prev,
+        props: updateProps,
+        // props: updatedProps,
+      };
     })
 
     setNewKey("");
     setNewValue("");
   };
 
-   const addProps=()=>{
-    let sType=inputsFormat.inputs[each-1].sourceType;
+  const addProps = () => {
+    let sType = inputsFormat.inputs[each - 1].sourceType;
     console.log(sType);
 
-    setInputsFormat((prev)=>
-    {
-      let updateProps={...prev.props};
-      updateProps={...updateProps, [sType]:{ 
-   
-    timeFormat: "",
-    dateTime: "",
-    lineBreaker: "",
-    shouldLine: "",
-    truncate: "",
-    newKey : "",
-    newValue : "",
-  }};
-  return {
-      ...prev,
-      props: updateProps,
-      // props: updatedProps,
-    };
+    setInputsFormat((prev) => {
+      let updateProps = { ...prev.props };
+      updateProps = {
+        ...updateProps, [sType]: {
+
+          timeFormat: "",
+          dateTime: "",
+          lineBreaker: "",
+          shouldLine: "",
+          truncate: "",
+          newKey: "",
+          newValue: "",
+        }
+      };
+      return {
+        ...prev,
+        props: updateProps,
+        // props: updatedProps,
+      };
     })
   }
 
-   const updateTransform = (key, field, value) => {
+  const updateTransform = (key, field, value) => {
     setInputsFormat((prev) => ({
       ...prev,
       transform: {
@@ -397,23 +400,23 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
   // };
 
   const handleCopyConfig = () => {
-  if (!inputsFormat?.props) {
-    console.warn("No props found in inputsFormat");
-    return;
-  }
+    if (!inputsFormat?.props) {
+      console.warn("No props found in inputsFormat");
+      return;
+    }
 
-  // take only props from inputsFormat
-  const propsJson = JSON.stringify(inputsFormat.props, null, 2);
+    // take only props from inputsFormat
+    const propsJson = JSON.stringify(inputsFormat.props, null, 2);
 
-  console.log("Props JSON:", propsJson);
+    console.log("Props JSON:", propsJson);
 
-  // Copy to clipboard
-  navigator.clipboard.writeText(propsJson);
+    // Copy to clipboard
+    navigator.clipboard.writeText(propsJson);
 
-  setIsCopyConfig(true);
-};
+    setIsCopyConfig(true);
+  };
 
-  
+
 
   //   const config = inputsFormat.props[sourceType] || {
   //   timeFormat: "",
@@ -424,10 +427,168 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
 
   // console.log("config : ", config);
 
-  console.log("itemOutput : ", inputsFormat.props[inputsFormat.inputs[each-1].sourceType].timeFormat)
+  console.log("itemOutput : ", inputsFormat.props[inputsFormat.inputs[each - 1].sourceType].timeFormat)
 
 
   console.log("file linessss : ", fileLines);
+
+  const fileFormats = (item,value) => {
+    if (item === "timeFormat") {
+      return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          TIME FORMAT
+        </label>
+        <select
+          name="timeFormat"
+          value={item.timeFormat}
+
+          onChange={(e) => updateIputs(e)}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">Select TIME_FORMAT</option>
+          <option value="%Y-%m-%d %H:%M:%S">YYYY-MM-DD HH:mm:ss</option>
+          <option value="%m-%d-%Y %H:%M">MM-DD-YYYY HH:mm</option>
+          <option value="%d-%m-%Y %H:%M:%S">DD-MM-YYYY HH:mm:ss</option>
+          <option value="epoch">Epoch Time (seconds)</option>
+          <option value="iso8601">ISO 8601</option>
+          <option value="custom">Custom</option>
+        </select>
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+    else if (item === "dateTime") {
+      return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          DATE TIME CONFIG
+        </label>
+        <select
+          name="dateTime"
+          value={item.dateTime}
+          // onChange={(e) => {
+          //   setConfigData((prev) => ({
+          //     ...prev,
+          //     dateTime: e.target.value,
+          //   }));
+          // }}
+          onChange={(e) => updateIputs(e)}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">--Select DATETIME_CONFIG--</option>
+          <option value="NONE">NONE</option>
+          <option value="AUTO">AUTO</option>
+          <option value="CURRENT">CURRENT</option>
+          <option value="GMT">GMT</option>
+          <option value="UTC">UTC</option>
+          <option value="SA">SA</option>
+          <option value="US">US</option>
+          <option value="EU">EU</option>
+          <option value="APAC">APAC</option>
+        </select>
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+    else if (item === "lineBreaker") {
+      return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          LINE BREAKER
+        </label>
+        <select
+          name="lineBreaker"
+          value={item.lineBreaker}
+          // onChange={(e) => {
+          //   setConfigData((prev) => ({
+          //     ...prev,
+          //     lineBreaker: e.target.value,
+          //   }));
+          // }}
+          onChange={(e) => updateIputs(e)}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">Select Line Breaker</option>
+          <option value="newline">New Line (\r\n)</option>
+          <option value="double">Double New Line (\n\n)</option>
+          <option value="windowsDouble">
+            Windows Double New Line (\r\n\r\n)
+          </option>
+          <option value="date">Date Format (YYYY-MM-DD)</option>
+          <option value="custom">Custom</option>
+        </select>
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+    else if (item === "shouldLine") {
+      return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          SHOULD LINE
+        </label>
+        <select
+          name="shouldLine"
+          value={item.shouldLine}
+          // onChange={(e) => {
+          //   setConfigData((prev) => ({
+          //     ...prev,
+          //     shouldLine: e.target.value,
+          //   }));
+          // }}
+          onChange={(e) => updateIputs(e)}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="true">true</option>
+          <option value="false">false</option>
+        </select>
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+    else if (item === "truncate") {
+      return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          TRUNCATE
+        </label>
+        <input
+          name="truncate"
+          value={item.truncate}
+          // onChange={(e) => {
+          //   setConfigData((prev) => ({
+          //     ...prev,
+          //     truncate: e.target.value,
+          //   }));
+          // }}
+          onChange={(e) => updateIputs(e)}
+          type="number"
+          min="0"
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+    else{
+     return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          {item}
+        </label>
+        <input
+          name={item}
+          value={value}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+  };
+
+
   return (
     <div>
       <div className="grid grid-cols-2 justify-between md:flex-row gap-6 mt-2.5">
@@ -452,7 +613,7 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
             </div>
           </div>
           <div className="space-y-4 mt-3.5">
-            <div className="flex items-center gap-4">
+            {/* <div className="flex items-center gap-4">
               <label className="w-40 text-sm font-medium text-gray-700">
                 TIME FORMAT
               </label>
@@ -584,9 +745,13 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
               <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
                 Delete
               </button>
-            </div>
+            </div> */}
+            {Object.entries(itemList).map(([key, value], index) => {
+              return fileFormats(key, value);
+            })}
+
           </div>
-          {Object.keys(inputsFormat.transform).map((key, index) =>
+          {/* {Object.keys(inputsFormat.transform).map((key, index) =>
             key !== "" ? (
               <div className="flex items-center gap-4 mt-3.5" key={index}>
                 <label className="w-40 text-sm font-medium text-gray-700">
@@ -604,19 +769,19 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
                   //     return { ...prev, transform: updated };
                   //   });
                   // }}
-                   onChange={(e) => {
-        const { value } = e.target;
-        setInputsFormat((prev) => ({
-          ...prev,
-          transform: {
-            ...prev.transform,
-            [key]: {
-              ...prev.transform[key],
-              newValue: value
-            }
-          }
-        }));
-      }}
+                  onChange={(e) => {
+                    const { value } = e.target;
+                    setInputsFormat((prev) => ({
+                      ...prev,
+                      transform: {
+                        ...prev.transform,
+                        [key]: {
+                          ...prev.transform[key],
+                          newValue: value
+                        }
+                      }
+                    }));
+                  }}
                   type="text"
                   className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
@@ -629,19 +794,19 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
                   //     return { ...prev, transform: updated };
                   //   });
                   // }}
-                   onClick={() => {
-        setInputsFormat((prev) => {
-          const { [key]: _, ...rest } = prev.transform; // remove key
-          return { ...prev, transform: rest };
-        });
-      }}
+                  onClick={() => {
+                    setInputsFormat((prev) => {
+                      const { [key]: _, ...rest } = prev.transform; // remove key
+                      return { ...prev, transform: rest };
+                    });
+                  }}
                   className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400"
                 >
                   Delete
                 </button>
               </div>
             ) : null
-          )}
+          )} */}
 
           <div className="flex items-center gap-4 mt-3.5">
             <input
@@ -742,25 +907,27 @@ const [propItems, setPropItems] =Object.entries(inputsFormat.props[inputsFormat.
         />
       )} */}
       {Object.keys(inputsFormat.transform).map((key, index) => {
-              const value = inputsFormat.transform[key];
-              return(
+        const value = inputsFormat.transform[key];
+        if(itemListTransform.includes(key)){
+          return (
 
 
-    <TransformsConfig
-      key={index}
-      each={each}
-      newKey={key}          // pass the actual key
-      transformValue={value} // optional: pass value if needed
-      inputsFormat={inputsFormat}
-      setInputsFormat={setInputsFormat}
-      transforms={transforms}
-      setTransforms={setTransforms}
-      updateTransform = {updateTransform}
-      updateIputs={updateIputs}
-    />
-              )
-  
-})}
+          <TransformsConfig
+            key={index}
+            each={each}
+            newKey={key}          // pass the actual key
+            transformValue={value} // optional: pass value if needed
+            inputsFormat={inputsFormat}
+            setInputsFormat={setInputsFormat}
+            transforms={transforms}
+            setTransforms={setTransforms}
+            updateTransform={updateTransform}
+            updateIputs={updateIputs}
+          />
+        )
+        }
+
+      })}
 
     </div>
   );
