@@ -69,9 +69,9 @@ const PropsConfigPerSource = ({
 
   const applyConfigToFile = () => {
     let delimiter = /\r?\n/; // default: newline
-    console.log("item : ", item);
+    console.log("item : ", itemList);
     // ✅ 1. Handle LINE_BREAKER
-    switch (item.lineBreaker) {
+    switch (itemList.lineBreaker) {
       case "double":
         delimiter = /\n\n/;
         break;
@@ -91,13 +91,13 @@ const PropsConfigPerSource = ({
     let lines = fileText.split(delimiter).filter(Boolean);
 
     // ✅ 3. Handle SHOULD_LINE
-    if (item.shouldLine === "true") {
+    if (itemList.shouldLine === "true") {
       lines = [lines.join(" ")];
     }
 
     // ✅ 4. Handle TRUNCATE
-    if (item.truncate && Number(item.truncate) > 0) {
-      lines = lines.map((line) => line.substring(0, Number(item.truncate)));
+    if (itemList.truncate && Number(itemList.truncate) > 0) {
+      lines = lines.map((line) => line.substring(0, Number(itemList.truncate)));
     }
 
     // ✅ 5. Handle TIME_FORMAT + DATETIME_CONFIG
@@ -106,21 +106,21 @@ const PropsConfigPerSource = ({
       let time = "";
       let info = line;
 
-      if (item.timeFormat === "%Y-%m-%d %H:%M:%S") {
+      if (itemList.timeFormat === "%Y-%m-%d %H:%M:%S") {
         const match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
         if (match) {
           date = match[1];
           time = match[2];
           info = line.replace(match[0], "").trim();
         }
-      } else if (item.timeFormat === "%m-%d-%Y %H:%M") {
+      } else if (itemList.timeFormat === "%m-%d-%Y %H:%M") {
         const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2})/);
         if (match) {
           date = match[1];
           time = match[2];
           info = line.replace(match[0], "").trim();
         }
-      } else if (item.timeFormat === "%d-%m-%Y %H:%M:%S") {
+      } else if (itemList.timeFormat === "%d-%m-%Y %H:%M:%S") {
         const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2}:\d{2})/);
         if (match) {
           date = match[1];
@@ -131,7 +131,7 @@ const PropsConfigPerSource = ({
 
       // 📌 DATETIME_CONFIG overrides
       const now = new Date();
-      switch (item.dateTime) {
+      switch (itemList.dateTime) {
         case "CURRENT":
           date = now.toISOString().split("T")[0];
           time = now.toTimeString().split(" ")[0];
@@ -888,7 +888,7 @@ const PropsConfigPerSource = ({
             </h3>
             {isCopyConfig && (
               <pre className=" h-44  overflow-auto w-96 resize-none border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                {JSON.stringify(item, null, 2)}
+                {JSON.stringify(itemList, null, 2)}
               </pre>
             )}
           </div>

@@ -9,7 +9,7 @@ const Main = () => {
     appName : "",
     indexName : "",
     inputs:[
-      {id : "", filePath:"", sourceType:"", index:"",
+      {id : 1, filePath:"", sourceType:"", index:"",
          customFields : [
       ]
       }
