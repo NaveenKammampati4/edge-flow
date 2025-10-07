@@ -1,49 +1,32 @@
 import React, { useState, useEffect } from "react";
 
-const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTransforms }) => {
+const TransformsConfig = ({ transforms, setTransforms,each, updateTransform, newKey, inputsFormat, setInputsFormat, updateIputs }) => {
   const [logFile, setLogFile] = useState(null);
   const [logs, setLogs] = useState([]);
   const [transformedLogs, setTransformedLogs] = useState({});
   const [filterView, setFilterView] = useState("All");
+  const d=inputsFormat.transform[newKey];
+  console.log("d",d);
+  const transformsVal={[newKey]:d};
 
   const handleChange = (index, field, value) => {
     const updated = [...transforms];
     updated[index][field] = value;
     setTransforms(updated);
   };
+  
+
+  // const keyTypes=inputsFormat.props[each-1][newKey];
+  // console.log("key Types : ", keyTypes);
+  // const item = inputsFormat.transform[keyTypes];
+
+  //  const updated = [...transforms];
+   
+  //   setTransforms(updated);
 
   const handleDelete = (index) => {
     const updated = transforms.filter((_, i) => i !== index);
     setTransforms(updated);
-  };
-
-
-  const item=inputsFormat.transform[each-1];
-  console.log(inputsFormat);
-
-  // const updateIputs=(e)=>{
-  //   const {name, value}=e.target;
-  //   console.log("name", name);
-  //   console.log("value", value);
-  //    setInputsFormat((prev) => {
-  //   const updated = [...prev.transform];
-  //   updated[each-1] = { ...updated[each-1], [name]: value }; // update only sourceType
-  //   return { ...prev, transform: updated };
-  // });
-  // }
-
-  const updateInputs = (index, field, value) => {
-    // update transforms state
-    const updated = [...transforms];
-    updated[index] = { ...updated[index], [field]: value };
-    setTransforms(updated);
-
-    // update inputsFormat state
-    setInputsFormat((prev) => {
-      const copy = [...prev.transform];
-      copy[index] = { ...copy[index], [field]: value };
-      return { ...prev, transform: copy };
-    });
   };
 
   const handleReadLogFile = () => {
@@ -59,27 +42,28 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
 
   const applyTransforms = (lines) => {
     const results = {};
+    const transformArray = Object.entries(inputsFormat.transform || {}).map(([name,t]) => ({name, ...t}));
 
     lines.forEach((line) => {
       let modifiedLine = line;
       let routeKey = "_raw";
       let drop = false;
 
-      transforms.forEach((item) => {
+      transformArray.forEach((t) => {
         try {
-          const regex = new RegExp(item.regex, "g");
+          const regex = new RegExp(t.regex, "g");
 
-          if (item.destKey === "_raw") {
-            modifiedLine = item.format
-              ? modifiedLine.replace(regex, item.format)
+          if (t.destKey === "_raw") {
+            modifiedLine = t.format
+              ? modifiedLine.replace(regex, t.format)
               : modifiedLine.replace(regex, "");
-          } else if (item.destKey === "nullQueue") {
+          } else if (t.destKey === "nullQueue") {
             if (regex.test(modifiedLine)) {
               drop = true;
             }
           } else {
             if (regex.test(modifiedLine)) {
-              routeKey = item.destKey;
+              routeKey = t.destKey;
             }
           }
         } catch (err) {
@@ -100,9 +84,15 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
     if (logs.length > 0) {
       applyTransforms(logs);
     }
-  }, [transforms, logs]);
+  }, [logs]);
 
-  console.log(inputsFormat);
+  console.log("transforms : ", transforms);
+
+  console.log("updateInputs : ", updateIputs);
+
+  console.log("updateTransform : ", updateTransform);
+
+  console.log("...... : ", inputsFormat.transform?.[newKey]?.regex);
 
   return (
     <div className="flex flex-col mt-3">
@@ -111,15 +101,17 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
       <div className="grid grid-cols-[2fr_1fr_1fr] gap-2.5 md:flex-row mt-4">
         
         <div className="space-y-4">
-          {transforms.map((t, index) => (
+          {Object.entries(transformsVal || {}).map(([name, t]) => (
             <div
-              key={index}
+             key={name}
               className="border items-start border-gray-200 rounded-2xl p-6 bg-gray-50"
             >
               <div className="flex justify-between items-center">
                 <h2>
                   Transform:{" "}
-                  <span className="font-bold">{t.key}</span>
+                  <span className="font-bold">
+                      {name}
+                    </span>
                 </h2>
                 <button
                   onClick={() => handleDelete(index)}
@@ -131,9 +123,12 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
               <div className="flex flex-col mt-2">
                 <label className="text-blue-700">REGEX</label>
                 <textarea
-                  name="regex"
-                  value={t.regex}
-                  onChange={(e) => updateInputs(index, "regex", e.target.value)}
+                  name = "regex"
+                  value={t.regex || ""}
+                  // onChange={(e) =>
+                  //   handleChange( "regex", e.target.value)
+                  // }
+                  onChange={(e) => updateTransform(name, "regex", e.target.value)}
                   className="bg-white border border-gray-300 rounded-xl h-20"
                 />
               </div>
@@ -141,11 +136,11 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
                 <label className="text-blue-700">FORMAT</label>
                 <input
                   name="format"
-                  value={t.format}
-                  onChange={(e) => updateInputs(index, "format", e.target.value)}
+                   value={t.format || ""}
                   // onChange={(e) =>
-                  //   handleChange(index, "format", e.target.value)
+                  //   handleChange( "format", e.target.value)
                   // }
+                  onChange={(e) => updateTransform(name, "format", e.target.value)}
                   className="bg-white border border-gray-300 rounded-xl h-10"
                 />
               </div>
@@ -153,13 +148,16 @@ const TransformsConfig = ({inputsFormat,each,setInputsFormat, transforms, setTra
                 <label className="text-blue-700">DEST_KEY</label>
                 <input
                   name="destKey"
-                  value={t.destKey}
-                  onChange={(e) => updateInputs(index, "destKey", e.target.value)}
+                  value={t.destKey || ""}
+                  // onChange={(e) =>
+                  //   handleChange("destKey", e.target.value)
+                  // }
+                  onChange={(e) => updateTransform(name, "destKey", e.target.value)}
                   className="bg-white border border-gray-300 rounded-xl h-10"
                 />
               </div>
             </div>
-          ))}
+          ))} 
         </div>
 
         <div className="flex flex-col items-start">

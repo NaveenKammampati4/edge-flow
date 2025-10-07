@@ -3,21 +3,35 @@ import InputConfig from "./InputConfig";
 import TransformsConfig from "./TransformsConfig";
 
 const Main = () => {
-  const [inputsConfig, setInputsConfig] = useState(1);
+  const [inputsConfig, setInputsConfig] = useState([1]);
   const [inputsConfigList, setInputsConfigList] = useState([]);
   const [inputsFormat, setInputsFormat] = useState({
     appName : "",
     indexName : "",
-    customInput:[{filePath:"", sourceType:"", index:""}],
-    props : [{ 
-    sourceType : "",
-    timeFormat: "",
-    dateTime: "",
-    lineBreaker: "",
-    shouldLine: "",
-    truncate: "",}],
-    transform:[]
-  })
+    inputs:[
+      {id : 1, filePath:"", sourceType:"", index:"",
+         customFields : [
+      ]
+      }
+     
+    ],
+    props : {
+      
+  //     sourceType : { 
+   
+  //   timeFormat: "",
+  //   dateTime: "",
+  //   lineBreaker: "",
+  //   shouldLine: "",
+  //   truncate: "",
+  //   newKey : "",
+  //   newValue : "",
+  // }
+    }
+,
+    transform:
+      []   
+  });
 
   useEffect(() => {
     const arr = Array.from({ length: inputsConfig }, (_, i) => i + 1);
@@ -36,19 +50,20 @@ const Main = () => {
   }
 
   const handleInputConfigs=()=>{
-    setInputsConfig(inputsConfig + 1)
-    const customInputData={filePath:"", sourceType:"", index:""}
-    const propsConfig={ 
-    sourceType : "",
-    timeFormat: "",
-    dateTime: "",
-    lineBreaker: "",
-    shouldLine: "",
-    truncate: "",}
+    const newId = inputsConfigList.length + 1;
+    // setInputsConfig(inputsConfig + 1)
+    const customInputData={id : newId, filePath:"", sourceType:"", index:"", customFields : []}
+    // const propsConfig={ 
+    // timeFormat: "",
+    // dateTime: "",
+    // lineBreaker: "",
+    // shouldLine: "",
+    // truncate: "",}
+    setInputsConfigList((prev) => [...prev, newId]);
     setInputsFormat((prev) => ({
     ...prev,
-    customInput: [...prev.customInput, customInputData], 
-    props:[...prev.props, propsConfig],
+    inputs: [...prev.inputs, customInputData], 
+    
   }));
   }
 

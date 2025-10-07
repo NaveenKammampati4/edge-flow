@@ -26,17 +26,36 @@ const PropsConfigPerSource = ({
   });
   const [isCopyConfig, setIsCopyConfig] = useState(false);
 
-  const item = inputsFormat.props[each - 1];
-  console.log(inputsFormat);
+  console.log("each", each);
+  console.log("inputss : ", inputsFormat);
+  const sourceTypes = inputsFormat.inputs[each - 1].sourceType;
+  console.log("sourceType", sourceTypes);
+  let itemList = [];
+  itemList = inputsFormat.props[sourceTypes];
+  // const filteredEntries = Object.entries(item).filter(([key]) => key !== 'newKey' && key !== 'newValue');
+  // console.log("filteredEntries", filteredEntries)
+
+
+  console.log("items", itemList);
+  const itemListTransform=Object.keys(itemList);
+  console.log("itemListTransform",itemListTransform);
+
+
+
+
 
   const updateIputs = (e) => {
     const { name, value } = e.target;
     console.log("name", name);
     console.log("value", value);
+    console.log("inputs config", inputsFormat);
     setInputsFormat((prev) => {
-      const updated = [...prev.props];
-      updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
+      const updated = { ...prev.props };
+      console.log("updated", updated);
+      let updateSource = { ...updated[sourceType], [name]: value }
+      updated[sourceTypes] = { ...updateSource }; // update only sourceType
       return { ...prev, props: updated };
+
     });
     if (["regex", "format", "destKey", "newKey"].includes(name)) {
       setInputsFormat((prev) => {
@@ -45,13 +64,14 @@ const PropsConfigPerSource = ({
         return { ...prev, transform: updated };
       });
     }
+
   };
 
   const applyConfigToFile = () => {
     let delimiter = /\r?\n/; // default: newline
-    console.log("item : ", item);
+    console.log("item : ", itemList);
     // ✅ 1. Handle LINE_BREAKER
-    switch (item.lineBreaker) {
+    switch (itemList.lineBreaker) {
       case "double":
         delimiter = /\n\n/;
         break;
@@ -71,13 +91,13 @@ const PropsConfigPerSource = ({
     let lines = fileText.split(delimiter).filter(Boolean);
 
     // ✅ 3. Handle SHOULD_LINE
-    if (item.shouldLine === "true") {
+    if (itemList.shouldLine === "true") {
       lines = [lines.join(" ")];
     }
 
     // ✅ 4. Handle TRUNCATE
-    if (item.truncate && Number(item.truncate) > 0) {
-      lines = lines.map((line) => line.substring(0, Number(item.truncate)));
+    if (itemList.truncate && Number(itemList.truncate) > 0) {
+      lines = lines.map((line) => line.substring(0, Number(itemList.truncate)));
     }
 
     // ✅ 5. Handle TIME_FORMAT + DATETIME_CONFIG
@@ -86,21 +106,21 @@ const PropsConfigPerSource = ({
       let time = "";
       let info = line;
 
-      if (item.timeFormat === "%Y-%m-%d %H:%M:%S") {
+      if (itemList.timeFormat === "%Y-%m-%d %H:%M:%S") {
         const match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
         if (match) {
           date = match[1];
           time = match[2];
           info = line.replace(match[0], "").trim();
         }
-      } else if (item.timeFormat === "%m-%d-%Y %H:%M") {
+      } else if (itemList.timeFormat === "%m-%d-%Y %H:%M") {
         const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2})/);
         if (match) {
           date = match[1];
           time = match[2];
           info = line.replace(match[0], "").trim();
         }
-      } else if (item.timeFormat === "%d-%m-%Y %H:%M:%S") {
+      } else if (itemList.timeFormat === "%d-%m-%Y %H:%M:%S") {
         const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2}:\d{2})/);
         if (match) {
           date = match[1];
@@ -111,7 +131,7 @@ const PropsConfigPerSource = ({
 
       // 📌 DATETIME_CONFIG overrides
       const now = new Date();
-      switch (item.dateTime) {
+      switch (itemList.dateTime) {
         case "CURRENT":
           date = now.toISOString().split("T")[0];
           time = now.toTimeString().split(" ")[0];
@@ -186,7 +206,7 @@ const PropsConfigPerSource = ({
     if (fileText) {
       applyConfigToFile();
     }
-  }, [item, fileText]);
+  }, [itemList, fileText]);
 
   function splitLogLine(line) {
     const firstSpace = line.indexOf(" ");
@@ -245,59 +265,330 @@ const PropsConfigPerSource = ({
   //   }
   // };
 
+  // const handleAddingKeys = () => {
+  //   // const currentTransform = inputsFormat.transform[each - 1];
+  //   // const newData = { key: item.newKey, value: newValue };
+  //   // setNewKeys([...newKeys, newData]);
+
+  //   // if (item.newKey.toLowerCase().startsWith("transform-")) {
+  //   //   setTransformConfig(true);
+  //   //   setTransforms([
+  //   //     ...transforms,
+  //   //     { key: "", regex: "", format: "", destKey: "" },
+  //   //   ]);
+  //   // }
+
+  //   const data = {
+  //    [newKey] :{
+  //     regex: "",
+  //     format: "",
+  //     destKey: "",
+  //    }
+  //   };
+
+  //   // setInputsFormat((prev) => {
+  //   //   const updated = [...prev.transform];
+  //   //   updated[updated.length] = data;
+  //   //   return { ...prev, transform: updated };
+  //   // });
+  //   setInputsFormat((prev) => ({
+  //   ...prev,
+  //   transform: [...prev.transform, data], // add new transform object
+  // }));
+
+  //   if (newKey.toLowerCase().startsWith("transform-")) {
+  //     setTransformConfig(true);
+  //     setTransforms([
+  //       ...transforms,
+  //       { key: "", regex: "", format: "", destKey: "" },
+  //     ]);
+  //   }
+
+  //   setNewKey("");
+  //   setNewValue("");
+  // };
+
   const handleAddingKeys = () => {
-    // const currentTransform = inputsFormat.transform[each - 1];
-    // const newData = { key: item.newKey, value: newValue };
-    // setNewKeys([...newKeys, newData]);
+    if (!newKey) return;
+    if (!newValue) return;
+    console.log("new value : ", newValue);
+    setNewValue(newValue);
 
-    // if (item.newKey.toLowerCase().startsWith("transform-")) {
-    //   setTransformConfig(true);
-    //   setTransforms([
-    //     ...transforms,
-    //     { key: "", regex: "", format: "", destKey: "" },
-    //   ]);
-    // }
+    if (newKey.toLowerCase().includes("transform-".toLowerCase())) {
+      setInputsFormat((prev) => ({
+        ...prev,
+        transform: {
+          ...prev.transform,
+          [newKey]: {
+            regex: "",
+            format: "",
+            destKey: "",
+          },
+        },
+      }));
+    }
 
-    const data = {
-      newKey: newKey,
-      newValue: newValue,
-      regex: "",
-      format: "",
-      destKey: "",
-    };
+    let sType = inputsFormat.inputs[each - 1].sourceType;
+    console.log(sType);
 
     setInputsFormat((prev) => {
-      const updated = [...prev.transform];
-      updated[updated.length] = data;
-      return { ...prev, transform: updated };
-    });
-
-    if (newKey.toLowerCase().startsWith("transform-")) {
-      setTransformConfig(true);
-      setTransforms([
-        ...transforms,
-        { key: "", regex: "", format: "", destKey: "" },
-      ]);
-    }
+      let updateProps = { ...prev.props };
+      let pProp = { ...updateProps[sType], [newKey]: newValue }
+      updateProps = { ...updateProps, [sType]: pProp };
+      return {
+        ...prev,
+        props: updateProps,
+        // props: updatedProps,
+      };
+    })
 
     setNewKey("");
     setNewValue("");
   };
 
-  const handleCopyConfig = () => {
-    const updates = newKeys.reduce((acc, item) => {
-      acc[item.key] = item.value;
-      return acc;
-    }, {});
+  const addProps = () => {
+    let sType = inputsFormat.inputs[each - 1].sourceType;
+    console.log(sType);
 
-    item((prev) => ({
+    setInputsFormat((prev) => {
+      let updateProps = { ...prev.props };
+      updateProps = {
+        ...updateProps, [sType]: {
+
+          timeFormat: "",
+          dateTime: "",
+          lineBreaker: "",
+          shouldLine: "",
+          truncate: "",
+          newKey: "",
+          newValue: "",
+        }
+      };
+      return {
+        ...prev,
+        props: updateProps,
+        // props: updatedProps,
+      };
+    })
+  }
+
+  const updateTransform = (key, field, value) => {
+    setInputsFormat((prev) => ({
       ...prev,
-      ...updates,
+      transform: {
+        ...prev.transform,
+        [key]: {
+          ...prev.transform[key],
+          [field]: value,
+        },
+      },
     }));
+  };
+
+  // const handleCopyConfig = () => {
+  //   const updates = newKeys.reduce((acc, item) => {
+  //     acc[item.key] = item.value;
+  //     return acc;
+  //   }, {});
+
+  //   item((prev) => ({
+  //     ...prev,
+  //     ...updates,
+  //   }));
+  //   setIsCopyConfig(true);
+  //   console.log("updates : ", updates);
+  // };
+
+  const handleCopyConfig = () => {
+    if (!inputsFormat?.props) {
+      console.warn("No props found in inputsFormat");
+      return;
+    }
+
+    // take only props from inputsFormat
+    const propsJson = JSON.stringify(inputsFormat.props, null, 2);
+
+    console.log("Props JSON:", propsJson);
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(propsJson);
+
     setIsCopyConfig(true);
   };
 
+
+
+  //   const config = inputsFormat.props[sourceType] || {
+  //   timeFormat: "",
+  //   dateTime: "",
+  //   lineBreaker: "",
+  //   truncate: "",
+  // };
+
+  // console.log("config : ", config);
+
+  console.log("itemOutput : ", inputsFormat.props[inputsFormat.inputs[each - 1].sourceType].timeFormat)
+
+
   console.log("file linessss : ", fileLines);
+
+  const fileFormats = (item,value) => {
+    if (item === "timeFormat") {
+      return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          TIME FORMAT
+        </label>
+        <select
+          name="timeFormat"
+          value={item.timeFormat}
+
+          onChange={(e) => updateIputs(e)}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">Select TIME_FORMAT</option>
+          <option value="%Y-%m-%d %H:%M:%S">YYYY-MM-DD HH:mm:ss</option>
+          <option value="%m-%d-%Y %H:%M">MM-DD-YYYY HH:mm</option>
+          <option value="%d-%m-%Y %H:%M:%S">DD-MM-YYYY HH:mm:ss</option>
+          <option value="epoch">Epoch Time (seconds)</option>
+          <option value="iso8601">ISO 8601</option>
+          <option value="custom">Custom</option>
+        </select>
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+    else if (item === "dateTime") {
+      return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          DATE TIME CONFIG
+        </label>
+        <select
+          name="dateTime"
+          value={item.dateTime}
+          // onChange={(e) => {
+          //   setConfigData((prev) => ({
+          //     ...prev,
+          //     dateTime: e.target.value,
+          //   }));
+          // }}
+          onChange={(e) => updateIputs(e)}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">--Select DATETIME_CONFIG--</option>
+          <option value="NONE">NONE</option>
+          <option value="AUTO">AUTO</option>
+          <option value="CURRENT">CURRENT</option>
+          <option value="GMT">GMT</option>
+          <option value="UTC">UTC</option>
+          <option value="SA">SA</option>
+          <option value="US">US</option>
+          <option value="EU">EU</option>
+          <option value="APAC">APAC</option>
+        </select>
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+    else if (item === "lineBreaker") {
+      return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          LINE BREAKER
+        </label>
+        <select
+          name="lineBreaker"
+          value={item.lineBreaker}
+          // onChange={(e) => {
+          //   setConfigData((prev) => ({
+          //     ...prev,
+          //     lineBreaker: e.target.value,
+          //   }));
+          // }}
+          onChange={(e) => updateIputs(e)}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="">Select Line Breaker</option>
+          <option value="newline">New Line (\r\n)</option>
+          <option value="double">Double New Line (\n\n)</option>
+          <option value="windowsDouble">
+            Windows Double New Line (\r\n\r\n)
+          </option>
+          <option value="date">Date Format (YYYY-MM-DD)</option>
+          <option value="custom">Custom</option>
+        </select>
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+    else if (item === "shouldLine") {
+      return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          SHOULD LINE
+        </label>
+        <select
+          name="shouldLine"
+          value={item.shouldLine}
+          // onChange={(e) => {
+          //   setConfigData((prev) => ({
+          //     ...prev,
+          //     shouldLine: e.target.value,
+          //   }));
+          // }}
+          onChange={(e) => updateIputs(e)}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          <option value="true">true</option>
+          <option value="false">false</option>
+        </select>
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+    else if (item === "truncate") {
+      return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          TRUNCATE
+        </label>
+        <input
+          name="truncate"
+          value={item.truncate}
+          // onChange={(e) => {
+          //   setConfigData((prev) => ({
+          //     ...prev,
+          //     truncate: e.target.value,
+          //   }));
+          // }}
+          onChange={(e) => updateIputs(e)}
+          type="number"
+          min="0"
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+    else{
+     return <div className="flex items-center gap-4">
+        <label className="w-40 text-sm font-medium text-gray-700">
+          {item}
+        </label>
+        <input
+          name={item}
+          value={value}
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+          Delete
+        </button>
+      </div>
+    }
+  };
+
+
   return (
     <div>
       <div className="grid grid-cols-2 justify-between md:flex-row gap-6 mt-2.5">
@@ -322,7 +613,7 @@ const PropsConfigPerSource = ({
             </div>
           </div>
           <div className="space-y-4 mt-3.5">
-            <div className="flex items-center gap-4">
+            {/* <div className="flex items-center gap-4">
               <label className="w-40 text-sm font-medium text-gray-700">
                 TIME FORMAT
               </label>
@@ -509,35 +800,60 @@ const PropsConfigPerSource = ({
                 Delete
               </button> */}
             </div>
+              </button>
+            </div> */}
+            {Object.entries(itemList).map(([key, value], index) => {
+              return fileFormats(key, value);
+            })}
 
           </div>
-          {inputsFormat.transform.map((item, index) =>
-            item.newKey !== "" ? (
+          {/* {Object.keys(inputsFormat.transform).map((key, index) =>
+            key !== "" ? (
               <div className="flex items-center gap-4 mt-3.5" key={index}>
                 <label className="w-40 text-sm font-medium text-gray-700">
-                  {item.newKey}
+                  {key}
                 </label>
                 <input
                   name="newValue"
-                  value={item.newValue || ""}
+                  // value={item.newValue || ""}
+                  value={inputsFormat.props[sourceTypes][key] || ""}
+                  // onChange={(e) => {
+                  //   const { value } = e.target;
+                  //   setInputsFormat((prev) => {
+                  //     const updated = [...prev.transform];
+                  //     updated[index] = { ...updated[index], newValue: value };
+                  //     return { ...prev, transform: updated };
+                  //   });
+                  // }}
                   onChange={(e) => {
                     const { value } = e.target;
-                    setInputsFormat((prev) => {
-                      const updated = [...prev.transform];
-                      updated[index] = { ...updated[index], newValue: value };
-                      return { ...prev, transform: updated };
-                    });
+                    setInputsFormat((prev) => ({
+                      ...prev,
+                      transform: {
+                        ...prev.transform,
+                        [key]: {
+                          ...prev.transform[key],
+                          newValue: value
+                        }
+                      }
+                    }));
                   }}
                   type="text"
                   className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 />
                 <button
+                  // onClick={() => {
+                  //   setInputsFormat((prev) => {
+                  //     const updated = prev.transform.filter(
+                  //       (_, i) => i !== index
+                  //     );
+                  //     return { ...prev, transform: updated };
+                  //   });
+                  // }}
                   onClick={() => {
                     setInputsFormat((prev) => {
-                      const updated = prev.transform.filter(
-                        (_, i) => i !== index
-                      );
-                      return { ...prev, transform: updated };
+                      const { [key]: _, ...rest } = prev.transform; // remove key
+                      return { ...prev, transform: rest };
                     });
                   }}
                   className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400"
@@ -546,7 +862,7 @@ const PropsConfigPerSource = ({
                 </button>
               </div>
             ) : null
-          )}
+          )} */}
 
           <div className="flex items-center gap-4 mt-3.5">
             <input
@@ -635,14 +951,14 @@ const PropsConfigPerSource = ({
             </h3>
             {isCopyConfig && (
               <pre className=" h-44  overflow-auto w-96 resize-none border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                {JSON.stringify(item, null, 2)}
+                {JSON.stringify(itemList, null, 2)}
               </pre>
             )}
           </div>
         </div>
       </div>
 
-      {transformConfig && (
+      {/* {transformConfig && (
         <TransformsConfig
           key={each}
           each={each}
@@ -652,7 +968,30 @@ const PropsConfigPerSource = ({
           transforms={transforms}
           setTransforms={setTransforms}
         />
-      )}
+      )} */}
+      {Object.keys(inputsFormat.transform).map((key, index) => {
+        const value = inputsFormat.transform[key];
+        if(itemListTransform.includes(key)){
+          return (
+
+
+          <TransformsConfig
+            key={index}
+            each={each}
+            newKey={key}          // pass the actual key
+            transformValue={value} // optional: pass value if needed
+            inputsFormat={inputsFormat}
+            setInputsFormat={setInputsFormat}
+            transforms={transforms}
+            setTransforms={setTransforms}
+            updateTransform={updateTransform}
+            updateIputs={updateIputs}
+          />
+        )
+        }
+
+      })}
+
     </div>
   );
 };
