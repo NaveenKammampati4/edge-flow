@@ -604,12 +604,12 @@ const PropsConfigPerSource = ({
                 type="file"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-              <button
+              {/* <button
                 onClick={handleReadFile}
                 className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400"
               >
                 Apply Changes
-              </button>
+              </button> */}
             </div>
           </div>
           <div className="space-y-4 mt-3.5">
@@ -637,9 +637,9 @@ const PropsConfigPerSource = ({
                 <option value="iso8601">ISO 8601</option>
                 <option value="custom">Custom</option>
               </select>
-              <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+              {/* <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
                 Delete
-              </button>
+              </button> */}
             </div>
             <div className="flex items-center gap-4">
               <label className="w-40 text-sm font-medium text-gray-700">
@@ -668,9 +668,9 @@ const PropsConfigPerSource = ({
                 <option value="EU">EU</option>
                 <option value="APAC">APAC</option>
               </select>
-              <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+              {/* <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
                 Delete
-              </button>
+              </button> */}
             </div>
             <div className="flex items-center gap-4">
               <label className="w-40 text-sm font-medium text-gray-700">
@@ -697,9 +697,9 @@ const PropsConfigPerSource = ({
                 <option value="date">Date Format (YYYY-MM-DD)</option>
                 <option value="custom">Custom</option>
               </select>
-              <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+              {/* <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
                 Delete
-              </button>
+              </button> */}
             </div>
             <div className="flex items-center gap-4">
               <label className="w-40 text-sm font-medium text-gray-700">
@@ -720,9 +720,9 @@ const PropsConfigPerSource = ({
                 <option value="true">true</option>
                 <option value="false">false</option>
               </select>
-              <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+              {/* <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
                 Delete
-              </button>
+              </button> */}
             </div>
             <div className="flex items-center gap-4">
               <label className="w-40 text-sm font-medium text-gray-700">
@@ -742,8 +742,64 @@ const PropsConfigPerSource = ({
                 min="0"
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-              <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+              {/* <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
                 Delete
+              </button> */}
+            </div>
+            <div className="flex items-center gap-4">
+              <label className="w-40 text-sm font-medium text-gray-700">
+                TIME PREFIX
+              </label>
+              <select
+                name="timePrefix"
+                value={item.timePrefix}
+                onChange={(e) => updateIputs(e)}
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="">-- Select TIME_PREFIX --</option>
+                <option value="timestamp=">timestamp=</option>
+                <option value='"timestamp":\s*"'>"timestamp":\s*"</option>
+                <option value="\[timestamp=">\[timestamp=</option>
+                <option value="(?i)time[:=]\s*">(?i)time[:=]\s*</option>
+                <option value="custom">Custom (enter manually)</option>
+              </select>
+              {/* <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+                Delete
+              </button> */}
+            </div>
+            <div className="flex items-center gap-4">
+              <label className="w-40 text-sm font-medium text-gray-700">
+                MAX TIMESTAMP LOOKAHEAD
+              </label>
+              <input
+                name="maxTimestampLookahead"
+                value={item.maxTimestampLookahead}
+                onChange={(e) => updateIputs(e)}
+                type="number"
+                min="0"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+              {/* <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+                Delete
+              </button> */}
+            </div>
+            <div className="flex items-center gap-4">
+              <label className="w-40 text-sm font-medium text-gray-700">
+                NO BINARY CHECK
+              </label>
+              <select
+                name="noBinaryCheck"
+                value={item.noBinaryCheck}
+                onChange={(e) => updateIputs(e)}
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                <option value="true">true</option>
+                <option value="false">false</option>
+              </select>
+              {/* <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+                Delete
+              </button> */}
+            </div>
               </button>
             </div> */}
             {Object.entries(itemList).map(([key, value], index) => {
@@ -839,7 +895,14 @@ const PropsConfigPerSource = ({
             >
               Copy Config
             </button>
+            <button
+                onClick={handleReadFile}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400"
+              >
+                Apply Changes
+              </button>
           </div>
+
         </div>
 
         <div className="p-6  shadow-md rounded-2xl space-y-6">

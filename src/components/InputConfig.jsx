@@ -240,7 +240,7 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
           </div>
           <div className="flex flex-col w-1/4 min-w-[200px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
-              Index (Optional)
+              Index Name
             </label>
             <input
               // onChange={(e) =>
