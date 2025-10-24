@@ -16,6 +16,28 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
   const [inputCustomFields, setInputCustomFields] = useState(inputsFormat.inputs[each - 1].customFields);
   const [newkey, setNewKey] = useState("");
   const [value, setValue] = useState("");
+  const [mode, setMode] = useState("appName");
+  const [indexName, setIndexName] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+
+  const existingIndexes = ["users_index", "orders_index", "products_index"];
+  const possibleSuffixes = ["_logs", "_data"];
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setIndexName(value);
+    console.log("Typed:", value);
+    console.log("Current suggestions:", suggestions);
+
+    if (value.trim() !== "") {
+
+      const generated = possibleSuffixes.map((suffix) => suffix);
+      setSuggestions(generated);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
 
   const handleAddCustomField = () => {
     // setInputCustomFields([...inputCustomFields, { key: "", value: "" }]);
@@ -66,22 +88,22 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
 
   };
 
-  const deleteCustomField=(delVal)=>{
-    const updatedCustomFileds=inputsFormat.inputs[each-1].customFields.filter((each,index)=>index!==delVal);
-    console.log("updatedCustomFileds",updatedCustomFileds);
+  const deleteCustomField = (delVal) => {
+    const updatedCustomFileds = inputsFormat.inputs[each - 1].customFields.filter((each, index) => index !== delVal);
+    console.log("updatedCustomFileds", updatedCustomFileds);
     setInputsFormat((prev) => {
-        const updatedInputs = [...prev.inputs];
-        console.log("update", updatedInputs[each - 1]);
-        updatedInputs[each - 1] = {
-          ...updatedInputs[each - 1],
-          customFields: updatedCustomFileds
-        };
+      const updatedInputs = [...prev.inputs];
+      console.log("update", updatedInputs[each - 1]);
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        customFields: updatedCustomFileds
+      };
 
-        return {
-          ...prev,
-          inputs: updatedInputs
-        };
-      });
+      return {
+        ...prev,
+        inputs: updatedInputs
+      };
+    });
   }
 
   const handleRemoveCustomField = (index) => {
@@ -198,20 +220,14 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
   return (
     <div>
       <div className="flex flex-col shadow-md rounded-2xl p-6 w-full">
-        <div className="flex flex-wrap gap-6 mb-4">
-          <div className="flex flex-col w-1/4 min-w-[200px]">
+        <div className="flex flex-wrap gap-2 ">
+          <div className="flex flex-col w-48 min-w-[150px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
               File Path
             </label>
             <input
-              // value={inputsConfigData.filePath}
+
               value={item.filePath}
-              // onChange={(e) =>
-              //   setInputsConfigData((prev) => ({
-              //     ...prev,
-              //     filePath: e.target.value,
-              //   }))
-              // }
               name="filePath"
               onChange={(e) => updateIputs(e)}
               type="text"
@@ -219,17 +235,11 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
               placeholder="Enter file path"
             />
           </div>
-          <div className="flex flex-col w-1/4 min-w-[200px]">
+          <div className="flex flex-col w-48 min-w-[150px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
               Source Type
             </label>
             <input
-              // onChange={(e) =>
-              //   setInputsConfigData((prev) => ({
-              //     ...prev,
-              //     sourceType: e.target.value,
-              //   }))
-              // }
               name="sourceType"
               value={item.sourceType}
               onChange={(e) => updateIputs(e)}
@@ -238,7 +248,7 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
               placeholder="Enter source type"
             />
           </div>
-          <div className="flex flex-col w-1/4 min-w-[200px]">
+          {/* <div className="flex flex-col w-1/4 min-w-[200px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
               Index (Optional)
             </label>
@@ -256,75 +266,215 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter index"
             />
-          </div>
-          <div className="flex items-end">
-            <button
-              onClick={() => cancelConfig(each)}
-              className="px-4 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
-            >
-              Cancel
-            </button>
+          </div> */}
 
-            <button
-              onClick={addProps}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 cursor-pointer ml-2"
-            >Add Props</button>
+          <div className="flex flex-col rounded-lg p-4 space-y-3">
+            <div className="flex space-x-6">
+              {/* Existing Index Radio Button */}
+              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                <input
+                  type="radio"
+                  name="indexMode"
+                  value="existing"
+                  checked={mode === "existing"}
+                  onChange={() => {
+                    setMode("existing");
+                    setInputsFormat((prev) => ({
+                      ...prev,
+                      indexName: "",
+                    }));
+                  }}
+                  className="accent-blue-600"
+                />
+                <span>Existing Index</span>
+              </label>
+
+              {/* New Index Radio Button */}
+              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                <input
+                  type="radio"
+                  name="indexMode"
+                  value="new"
+                  checked={mode === "new"}
+                  onChange={() => {
+                    setMode("new");
+                    setInputsFormat((prev) => ({
+                      ...prev,
+                      indexName: "",
+                    }));
+                  }}
+                  className="accent-blue-600"
+                />
+                <span>New Index</span>
+              </label>
+
+              {/* As of App Name Radio Button */}
+              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                <input
+                  type="radio"
+                  name="indexMode"
+                  value="appName"
+                  checked={mode === "appName"}
+                  onChange={(e) => {
+                    const selectedIndex = e.target.value;
+                    setMode("appName");
+                    setInputsFormat((prev) => ({
+                      ...prev,
+                      indexName: selectedIndex,
+                    }));
+                  }}
+                  className="accent-blue-600"
+                />
+                <span>As of App Name</span>
+              </label>
+            </div>
+
+            {/* Conditional Rendering Based on Mode */}
+            {mode === "appName" && (
+              <div className="flex flex-col w-48">
+                <label htmlFor="appIndex" className=" text-sm font-medium text-gray-700  mb-1">
+                  Index (from App Name)
+                </label>
+                <input
+                  id="appIndex"
+                  type="text"
+                  value={inputsFormat.indexName || ""}
+                  readOnly
+                  className="border border-gray-400 rounded-md px-3 py-2"
+                  placeholder="App Name’s index"
+                />
+              </div>
+            )}
+
+            {mode === "existing" && (
+              <div className="flex flex-col w-48">
+                <label htmlFor="existingIndex" className="text-sm font-medium text-gray-700 mb-1">
+                  Select Existing Index
+                </label>
+                <select
+                  id="existingIndex"
+                  className="border border-gray-400 rounded-md px-3 py-2"
+                  onChange={(e) => {
+                    setInputsFormat((prev) => ({
+                      ...prev,
+                      indexName: e.target.value,
+                    }));
+                  }}
+                >
+                  <option value="">-- Choose an index --</option>
+                  {existingIndexes.map((index) => (
+                    <option key={index} value={index}>
+                      {index}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {mode === "new" && (
+              <div className="flex flex-col relative w-48">
+                <label htmlFor="newIndex" className="text-sm font-medium text-gray-700 mb-1">
+                  Enter New Index
+                </label>
+                <input
+                  id="newIndex"
+                  value={indexName}
+                  onChange={handleInputChange}
+                  placeholder="Enter index name"
+                  className="border border-gray-400 rounded-md px-3 py-2"
+                />
+                {/* Suggestions */}
+                {suggestions.length > 0 && inputsFormat.indexName !== indexName && (
+                  <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
+                    {suggestions.map((sug) => (
+                      <li
+                        key={sug}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          setInputsFormat((prev) => ({
+                            ...prev,
+                            indexName: indexName + sug,
+                          }));
+                          setIndexName(indexName + sug);
+                        }}
+                      >
+                        {indexName}
+                        <span className="text-gray-400">{sug}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
+
+          <div className="flex flex-col  ">
+            <div className="flex flex-row gap-2">
+              <button
+                onClick={() => cancelConfig(each)}
+                className="w-auto px-4 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={addProps}
+                className="w-auto bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 cursor-pointer"
+              >
+                Add Props
+              </button>
+            </div>
+          </div>
+
         </div>
         <div className=" border-gray-200 pt-4">
           <h3 className="text-lg font-semibold text-gray-800 mb-3">
             Custom Fields
           </h3>
 
-          <div className="grid grid-cols-[1fr_3fr_1fr] gap-2.5 mb-2.5">
+          <div className="flex flex-row gap-2">
             <input
               onChange={(e) => setNewKey(e.target.value)}
               value={newkey}
               type="text"
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
               placeholder="Key"
             />
             <input
               onChange={(e) => setValue(e.target.value)}
               value={value}
               type="text"
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
               placeholder="Value"
             />
             <div>
-              {/* <button
-                    onClick={() => handleRemoveCustomField(index)}
-                    className="p-2 ml-4 max-w-20 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition cursor-pointer"
-                  >
-                    Cancel
-                  </button> */}
               <button
                 onClick={handleAddCustomField}
-                className="p-2 ml-4 max-w-20 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition cursor-pointer"
+                className="p-2 ml-2 max-w-20 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition cursor-pointer"
               >
                 Add
               </button>
             </div>
-
           </div>
+
 
           {inputsFormat.inputs[each - 1].customFields.length > 0 ? (
             inputsFormat.inputs[each - 1].customFields.map((field, index) => {
               const key = Object.keys(field)[0];
               const value = field[key];
-              return <div className="grid grid-cols-[1fr_3fr_1fr] gap-2.5 mb-2.5">
+              return <div className="flex flex-row gap-2">
                 <input
                   onChange={(e) => setNewKey(e.target.value)}
                   value={key}
                   type="text"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 w-48 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Key"
                 />
                 <input
                   onChange={(e) => setValue(e.target.value)}
                   value={value}
                   type="text"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-3 py-2 w-48 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Value"
                 />
                 <div>
@@ -345,14 +495,9 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
               </div>
             })
           ) : (
-            <p className="text-sm mb-2.5">No Custom fields added yet.</p>
+            <p className="text-sm mt-2 ml-1">No Custom fields added yet.</p>
           )}
-          {/* <button
-            onClick={handleAddCustomField}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 cursor-pointer"
-          >
-            Add Custom Field
-          </button> */}
+
         </div>
       </div>
       <h2 className="items-center font-semibold text-xl mt-1 mb-1">
