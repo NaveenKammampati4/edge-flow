@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import InputConfig from "./InputConfig";
 import TransformsConfig from "./TransformsConfig";
+import { IndexConfig } from "./IndexConfig";
 
 const Main = () => {
   const [inputsConfig, setInputsConfig] = useState([1]);
@@ -10,8 +11,7 @@ const Main = () => {
   const [mode, setMode] = useState("new");
   const [indexName, setIndexName] = useState("");
   const [suggestions, setSuggestions] = useState([]);
-  const [customkey, setCustomKey] = useState("");
-  const [customvalue, setCustomValue] = useState("");
+
 
   const existingIndexes = ["users_index", "orders_index", "products_index"];
   const possibleSuffixes = ["_logs", "_data"];
@@ -21,6 +21,11 @@ const Main = () => {
     setIndexName(value);
     console.log("Typed:", value);
     console.log("Current suggestions:", suggestions);
+     setInputsFormat((prev) => ({
+      ...prev,
+      indexName:"",
+
+    }));
 
     if (value.trim() !== "") {
 
@@ -31,63 +36,12 @@ const Main = () => {
     }
   };
 
-  const handleAddCustomField = () => {
-    // setInputCustomFields([...inputCustomFields, { key: "", value: "" }]);
-    if (customkey !== "" && customvalue !== "") {
-      setInputsFormat((prev) => {
-        let updatedIndex = prev.index;
 
-        const updatedCustomIndex = [
-          ...updatedIndex.customFields,
-          { [customkey]: customvalue }
-        ];
-
-        updatedIndex = {
-          ...updatedIndex,
-          customFields: updatedCustomIndex
-        };
-
-        return {
-          ...prev,
-          index: updatedIndex
-        };
-      });
-    }
-
-    setCustomKey("");
-    setCustomValue("");
-
-  };
-
-  const deleteCustomField = (delVal) => {
-    let updatedCustomFileds = inputsFormat.index.customFields.filter((each, index) => index !== delVal);
-    console.log("updatedCustomFileds", updatedCustomFileds);
-    setInputsFormat((prev) => {
-      let updatedIndex = prev.index;
-
-      updatedIndex = {
-        ...updatedIndex,
-        customFields: updatedCustomFileds
-      };
-
-      return {
-        ...prev,
-        index: updatedIndex
-      };
-    });
-  }
 
   const [inputsFormat, setInputsFormat] = useState({
     appName: "",
     indexName: "",
-    index: {
-      hotPath: "",
-      coldPath: "",
-      thawedPath: "",
-      MAXsize: "",
-      retentionTime: "",
-      customFields: []
-    },
+    indexConfig: {},
     inputs: [
       {
         id: 1, filePath: "", sourceType: "", index: "",
@@ -178,8 +132,37 @@ const Main = () => {
     }));
   }
 
+  const handleIndexFocus = () => {
+    if (mode === "new" && indexName==="" && inputsFormat.appName!=="") {
+      const base = inputsFormat.appName.trim();
+      const newSuggestions = base
+        ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
+        : possibleSuffixes;
+      setSuggestions(newSuggestions);
+    }
+    else if(mode === "new" && indexName!==""){
+      const base = indexName.trim();
+      const newSuggestions = base
+        ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
+        : possibleSuffixes;
+      setSuggestions(newSuggestions);
+    }
+  };
+
+  useEffect(()=>{
+    if(mode === "new" && indexName!==""){
+      const base = indexName.trim();
+      const newSuggestions = base
+        ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
+        : possibleSuffixes;
+      setSuggestions(newSuggestions);
+    }
+    
+    
+  },[indexName])
+
   return (
-    <div className="flex flex-col justify-center items-center p-6 bg-gray-100 min-h-screen">
+    <div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
       <h2 className="text-blue-600 font-bold text-2xl mb-6">
         Dynamic Splunk App Builder
       </h2>
@@ -191,7 +174,7 @@ const Main = () => {
             </label>
             <input
               id="appName"
-              className="border border-gray-400 rounded-md px-3 py-2"
+              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
               onChange={(e) => {
                 setInputsFormat((prev) => ({
                   ...prev,
@@ -263,12 +246,26 @@ const Main = () => {
                 </label>
                 <select
                   id="existingIndex"
-                  className="border border-gray-400 rounded-md px-3 py-2"
+                  className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
                   onChange={(e) => {
-                    setInputsFormat((prev) => ({
-                      ...prev,
-                      indexName: e.target.value,
-                    }));
+                    setInputsFormat((prev) => {
+                      return {
+                        ...prev,
+                        indexName: e.target.value,
+                        indexConfig: {
+                          ...prev.indexConfig,
+                          [e.target.value]: {
+                            hotPath: "",
+                            coldPath: "",
+                            thawedPath: "",
+                            MAXsize: "",
+                            retentionTime: "",
+                            customFields: []
+                          }
+                        }
+
+                      }
+                    });
                   }}
                 >
                   <option value="">-- Choose an index --</option>
@@ -287,13 +284,50 @@ const Main = () => {
                 <input
                   id="newIndex"
                   value={indexName}
+                  onFocus={handleIndexFocus}
+
                   onChange={handleInputChange}
                   placeholder="Enter index name"
-                  className="border border-gray-400 rounded-md px-3 py-2"
+                  className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
                 />
 
                 {/* Suggestions */}
-                {(suggestions.length > 0 && inputsFormat.indexName !== indexName) && (
+                {/* {(suggestions.length > 0 && inputsFormat.indexName !== indexName) && (
+                  <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
+                    {suggestions.map((sug) => (
+                      <li
+                        key={sug}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          setInputsFormat((prev) => {
+                            return {
+                              ...prev,
+                              indexName: indexName + sug,
+                              indexConfig: {
+                                ...prev.indexConfig,
+                                [indexName + sug]: {
+                                  hotPath: "",
+                                  coldPath: "",
+                                  thawedPath: "",
+                                  MAXsize: "",
+                                  retentionTime: "",
+                                  customFields: []
+                                }
+                              }
+
+                            }
+                          }),
+                            setIndexName(indexName + sug)
+                        }}
+
+                      >
+                        {indexName}
+                        <span className="text-gray-400">{sug}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )} */}
+                {(suggestions.length > 0  && (inputsFormat.indexName==="") ) && (
                   <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
                     {suggestions.map((sug) => (
                       <li
@@ -302,13 +336,24 @@ const Main = () => {
                         onClick={() => {
                           setInputsFormat((prev) => ({
                             ...prev,
-                            indexName: indexName + sug,
-                          })),
-                            setIndexName(indexName + sug)
+                            indexName: sug,
+                            indexConfig: {
+                              ...prev.indexConfig,
+                              [sug]: {
+                                hotPath: "",
+                                coldPath: "",
+                                thawedPath: "",
+                                MAXsize: "",
+                                retentionTime: "",
+                                customFields: [],
+                              },
+                            },
+                          }));
+                          setIndexName(sug);
+                          setSuggestions([]);
                         }}
                       >
-                        {indexName}
-                        <span className="text-gray-400">{sug}</span>
+                        {sug}
                       </li>
                     ))}
                   </ul>
@@ -317,184 +362,11 @@ const Main = () => {
             )}
           </div>
         </div>
-        <div>
-          <h2 className="text-xl font-semibold mb-2">Index Config</h2>
-          <hr className="mb-4 text-blue-500" />
 
+        {Object.keys(inputsFormat.indexConfig).length > 0 &&
+          <IndexConfig key={Object.keys(inputsFormat.indexConfig)[0]} indexName={Object.keys(inputsFormat.indexConfig)[0]} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
+        }
 
-        </div>
-        <div className="shadow-md rounded-2xl pb-3">
-          <div className="grid grid-cols-5 gap-4   p-6">
-
-            <div className="flex flex-col ">
-              <label className="text-sm font-medium text-gray-700 mb-1">Hot Path</label>
-              <input
-                name="hotPath"
-                type="text"
-                onChange={e => {
-                  setInputsFormat(prev => ({
-                    ...prev,
-                    index: {
-                      ...prev.index,
-                      hotPath: e.target.value
-                    }
-                  }));
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter hot path"
-              />
-            </div>
-
-
-            <div className="flex flex-col ">
-              <label className="text-sm font-medium text-gray-700 mb-1">Cold Path</label>
-              <input
-                name="coldPath"
-                type="text"
-                onChange={e => {
-                  setInputsFormat(prev => ({
-                    ...prev,
-                    index: {
-                      ...prev.index,
-                      coldPath: e.target.value
-                    }
-                  }));
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter cold path"
-              />
-            </div>
-
-
-            <div className="flex flex-col ">
-              <label className="text-sm font-medium text-gray-700 mb-1">Thawed Path</label>
-              <input
-                name="thawedPath"
-                type="text"
-                onChange={e => {
-                  setInputsFormat(prev => ({
-                    ...prev,
-                    index: {
-                      ...prev.index,
-                      thawedPath: e.target.value
-                    }
-                  }));
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter thawed path"
-              />
-            </div>
-
-
-            <div className="flex flex-col ">
-              <label className="text-sm font-medium text-gray-700 mb-1">MAX Size</label>
-              <input
-                name="MAXsize"
-                type="text"
-                onChange={e => {
-                  setInputsFormat(prev => ({
-                    ...prev,
-                    index: {
-                      ...prev.index,
-                      MAXsize: e.target.value
-                    }
-                  }));
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter max size"
-              />
-            </div>
-
-
-            <div className="flex flex-col ">
-              <label className="text-sm font-medium text-gray-700 mb-1">Retention Time</label>
-              <input
-                name="retentionTime"
-                type="text"
-                onChange={e => {
-                  setInputsFormat(prev => ({
-                    ...prev,
-                    index: {
-                      ...prev.index,
-                      retentionTime: e.target.value
-                    }
-                  }));
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter retention time"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-row gap-2.5 justify-start items-end pl-6">
-            <div className="flex flex-col ">
-              <label className="text-lg font-semibold text-gray-700 mb-1">Custom Fields</label>
-              <input
-                value={customkey}
-                type="text"
-                onChange={(e) => setCustomKey(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Key"
-              />
-            </div>
-            <div className="flex flex-col ">
-              <label className="text-sm font-medium text-gray-700 mb-8"></label>
-              <input
-                value={customvalue}
-                type="text"
-                onChange={(e) => setCustomValue(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Value"
-              />
-            </div>
-            <div>
-              <button
-                onClick={handleAddCustomField}
-                className="p-2 ml-1.5 max-w-20 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition cursor-pointer"
-              >
-                Add
-              </button>
-            </div>
-          </div>
-          {inputsFormat.index.customFields.length > 0 ? (
-            inputsFormat.index.customFields.map((field, index) => {
-              const key = Object.keys(field)[0];
-              const value = field[key];
-              return <div className="flex flex-row gap-2.5 pl-6 mt-2">
-                <div className="flex flex-col ">
-                  <input
-                    onChange={(e) => setNewKey(e.target.value)}
-                    value={key}
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Key"
-                  />
-                </div>
-                <div className="flex flex-col ">
-                  <input
-                    onChange={(e) => setValue(e.target.value)}
-                    value={value}
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Value"
-                  />
-                </div>
-                <div>
-                  <button
-                    onClick={() => deleteCustomField(index)}
-                    className="p-2 ml-1.5  max-w-20 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-
-                </div>
-
-              </div>
-            })
-          ) : (
-            <p className="text-sm mt-2 pl-6">No Custom fields added yet.</p>
-          )}
-        </div>
 
         <div>
           <h2 className="text-xl font-semibold mb-2">Inputs Config</h2>

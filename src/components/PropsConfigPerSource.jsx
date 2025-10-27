@@ -590,7 +590,7 @@ const PropsConfigPerSource = ({
 
 
   return (
-    <div>
+    <div >
       <div className="grid grid-cols-2 justify-between md:flex-row gap-6 mt-2.5">
         <div className="flex-1 p-6 shadow-md rounded-2xl">
           <div className="flex flex-col space-y-4">

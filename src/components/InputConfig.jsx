@@ -1,7 +1,8 @@
 import React from "react";
 import PropsConfigPerSource from "./PropsConfigPerSource";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TransformsConfig from "./TransformsConfig";
+import { IndexConfig } from "./IndexConfig";
 
 const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handleTransforms }) => {
   const [inputsConfigData, setInputsConfigData] = useState({
@@ -37,6 +38,20 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
       setSuggestions([]);
     }
   };
+
+  useEffect(()=>{
+    setInputsFormat((prev) => {
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = { ...updatedInputs[each - 1], index: inputsFormat.indexName }; 
+      return {
+        ...prev,
+        inputs: updatedInputs,
+        
+      };
+
+
+    })
+  },[inputsFormat.indexName])
 
 
   const handleAddCustomField = () => {
@@ -125,39 +140,47 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
   const item = inputsFormat.inputs[each - 1];
   console.log("itemsinput : ", inputsFormat.inputs);
 
+  const addNewIndex = (value) => {
+    setInputsFormat((prev) => {
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = { ...updatedInputs[each - 1], index: value }; 
+      return {
+        ...prev,
+        inputs: updatedInputs,
+        indexConfig:{...prev.indexConfig,
+                        [value]:{
+                        hotPath: "",
+                        coldPath: "",
+                        thawedPath: "",
+                        MAXsize: "",
+                        retentionTime: "",
+                        customFields: []
+                      }}
+      };
+
+
+    })
+  };
+
   const updateIputs = (e) => {
     const { name, value } = e.target;
     console.log("name", name);
     console.log("value", value);
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      updatedInputs[each - 1] = { ...updatedInputs[each - 1], [name]: value }; // update only sourceType
-      // return { ...prev, customInput: updated };
-      console.log("updatedInputs : ", updatedInputs);
-
-      //  let updatedProps = [ ...prev.props ];
-      // if (name === "sourceType" && value) {
-      //   // setInputsFormat((prev) => {
-      //   //   const updated = [...prev.props];
-      //   //   updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
-      //   //   return { ...prev, props: updated };
-      //   // });
-      //   if (!updatedProps[each-1]) {
-      //     updatedProps[each-1] ={[value]: {
-      //       timeFormat: "",
-      //       dateTime: "",
-      //       lineBreaker: "",
-      //       shouldLine : "",
-      //       truncate: "",
-      //     }};
-      //   }
-      // }
-
-      //    console.log("updatedProps : ", updatedProps);
+      updatedInputs[each - 1] = { ...updatedInputs[each - 1], [name]: value }; 
       return {
         ...prev,
         inputs: updatedInputs,
-        // props: updatedProps,
+        indexConfig:{...prev.indexConfig,
+                        [value]:{
+                        hotPath: "",
+                        coldPath: "",
+                        thawedPath: "",
+                        MAXsize: "",
+                        retentionTime: "",
+                        customFields: []
+                      }}
       };
 
 
@@ -248,6 +271,21 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
               placeholder="Enter source type"
             />
           </div>
+          <div className="flex flex-col w-48">
+                <label htmlFor="appIndex" className=" text-sm font-medium text-gray-700  mb-1">
+                  Index (from App Name)
+                </label>
+                <input
+                  id="appIndex"
+                  type="text"
+                  value={inputsFormat.indexName || ""}
+                  readOnly
+                  className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                  placeholder="App Name’s index"
+                />
+
+                
+              </div>
           {/* <div className="flex flex-col w-1/4 min-w-[200px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
               Index (Optional)
@@ -268,9 +306,9 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
             />
           </div> */}
 
-          <div className="flex flex-col rounded-lg p-4 space-y-3">
+          {/* <div className="flex flex-col rounded-lg p-4 space-y-3">
             <div className="flex space-x-6">
-              {/* Existing Index Radio Button */}
+              
               <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                 <input
                   type="radio"
@@ -279,17 +317,14 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
                   checked={mode === "existing"}
                   onChange={() => {
                     setMode("existing");
-                    setInputsFormat((prev) => ({
-                      ...prev,
-                      indexName: "",
-                    }));
+                    
                   }}
                   className="accent-blue-600"
                 />
                 <span>Existing Index</span>
               </label>
 
-              {/* New Index Radio Button */}
+              
               <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                 <input
                   type="radio"
@@ -298,17 +333,14 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
                   checked={mode === "new"}
                   onChange={() => {
                     setMode("new");
-                    setInputsFormat((prev) => ({
-                      ...prev,
-                      indexName: "",
-                    }));
+                    
                   }}
                   className="accent-blue-600"
                 />
                 <span>New Index</span>
               </label>
 
-              {/* As of App Name Radio Button */}
+              
               <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                 <input
                   type="radio"
@@ -318,10 +350,6 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
                   onChange={(e) => {
                     const selectedIndex = e.target.value;
                     setMode("appName");
-                    setInputsFormat((prev) => ({
-                      ...prev,
-                      indexName: selectedIndex,
-                    }));
                   }}
                   className="accent-blue-600"
                 />
@@ -329,7 +357,7 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
               </label>
             </div>
 
-            {/* Conditional Rendering Based on Mode */}
+            
             {mode === "appName" && (
               <div className="flex flex-col w-48">
                 <label htmlFor="appIndex" className=" text-sm font-medium text-gray-700  mb-1">
@@ -354,12 +382,9 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
                 <select
                   id="existingIndex"
                   className="border border-gray-400 rounded-md px-3 py-2"
-                  onChange={(e) => {
-                    setInputsFormat((prev) => ({
-                      ...prev,
-                      indexName: e.target.value,
-                    }));
-                  }}
+                  
+                  name="index"
+                  onChange={(e) => updateIputs(e)}
                 >
                   <option value="">-- Choose an index --</option>
                   {existingIndexes.map((index) => (
@@ -383,19 +408,16 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
                   placeholder="Enter index name"
                   className="border border-gray-400 rounded-md px-3 py-2"
                 />
-                {/* Suggestions */}
-                {suggestions.length > 0 && inputsFormat.indexName !== indexName && (
+               
+                {suggestions.length > 0 && inputsFormat.inputs[each-1].index !== indexName && (
                   <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
                     {suggestions.map((sug) => (
                       <li
                         key={sug}
                         className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
                         onClick={() => {
-                          setInputsFormat((prev) => ({
-                            ...prev,
-                            indexName: indexName + sug,
-                          }));
-                          setIndexName(indexName + sug);
+                          addNewIndex(indexName + sug),
+                          setIndexName(indexName + sug)
                         }}
                       >
                         {indexName}
@@ -406,29 +428,30 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
                 )}
               </div>
             )}
-          </div>
+          </div> */}
 
-          <div className="flex flex-col  ">
-            <div className="flex flex-row gap-2">
+          
+          <div className="flex flex-col">
+            <div className="flex flex-row gap-2 mt-6">
+              <button
+                onClick={addProps}
+                className=" bg-blue-500 text-white px-3 py-2 rounded-lg shadow hover:bg-blue-600 cursor-pointer"
+              >
+                Add Props
+              </button>
               <button
                 onClick={() => cancelConfig(each)}
-                className="w-auto px-4 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
+                className=" px-3 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
               >
                 Cancel
               </button>
 
-              <button
-                onClick={addProps}
-                className="w-auto bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 cursor-pointer"
-              >
-                Add Props
-              </button>
+              
             </div>
           </div>
-
         </div>
         <div className=" border-gray-200 pt-4">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+          <h3 className="text-lg font-semibold text-gray-800 mb-1.9">
             Custom Fields
           </h3>
 
@@ -462,7 +485,7 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
             inputsFormat.inputs[each - 1].customFields.map((field, index) => {
               const key = Object.keys(field)[0];
               const value = field[key];
-              return <div className="flex flex-row gap-2">
+              return <div className="flex flex-row gap-2 mt-2">
                 <input
                   onChange={(e) => setNewKey(e.target.value)}
                   value={key}
@@ -480,7 +503,7 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
                 <div>
                   <button
                     onClick={() => deleteCustomField(index)}
-                    className="p-2 ml-4 max-w-20 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition cursor-pointer"
+                    className="p-2 ml-2 max-w-20 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -500,7 +523,12 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
 
         </div>
       </div>
-      <h2 className="items-center font-semibold text-xl mt-1 mb-1">
+       {/* {inputsFormat.inputs[each-1].index &&
+                
+                  <IndexConfig key={inputsFormat.inputs[each-1].index} indexName={inputsFormat.inputs[each-1].index} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
+                
+              } */}
+      <h2 className="items-center font-semibold text-xl  mb-1 mt-5">
         Props Config Per Source Type
       </h2>
       <hr className="text-blue-500" />
