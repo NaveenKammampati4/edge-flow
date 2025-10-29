@@ -255,10 +255,6 @@ const Main = () => {
                         indexConfig: {
                           ...prev.indexConfig,
                           [e.target.value]: {
-                            hotPath: "",
-                            coldPath: "",
-                            thawedPath: "",
-                            MAXsize: "",
                             retentionTime: "",
                             customFields: []
                           }
@@ -340,10 +336,6 @@ const Main = () => {
                             indexConfig: {
                               ...prev.indexConfig,
                               [sug]: {
-                                hotPath: "",
-                                coldPath: "",
-                                thawedPath: "",
-                                MAXsize: "",
                                 retentionTime: "",
                                 customFields: [],
                               },

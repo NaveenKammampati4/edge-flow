@@ -171,16 +171,7 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
       updatedInputs[each - 1] = { ...updatedInputs[each - 1], [name]: value }; 
       return {
         ...prev,
-        inputs: updatedInputs,
-        indexConfig:{...prev.indexConfig,
-                        [value]:{
-                        hotPath: "",
-                        coldPath: "",
-                        thawedPath: "",
-                        MAXsize: "",
-                        retentionTime: "",
-                        customFields: []
-                      }}
+        inputs: updatedInputs
       };
 
 

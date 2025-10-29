@@ -88,7 +88,7 @@ const PropsConfigPerSource = ({
     }
 
     // ✅ 2. Break file into chunks
-    let lines = fileText.split(delimiter).filter(Boolean);
+    let lines = fileText.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]+ .*?\(user=.*?\)/g);
 
     // ✅ 3. Handle SHOULD_LINE
     if (itemList.shouldLine === "true") {
@@ -226,8 +226,11 @@ const PropsConfigPerSource = ({
 
     reader.onload = (event) => {
       const text = event.target.result;
-      const textData = text.split(/\r?\n/).filter(Boolean);
-      console.log("hi", textData);
+      // const textData = text.split(/\r?\n/).filter(Boolean);
+      console.log("text",text);
+      const textData = text.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]+ .*?\(user=.*?\)/g);
+      console.log("textData",textData);
+
       setFileText(text);
       const processedLines = textData.map((line) => {
         const firstSpace = line.indexOf(" ");
@@ -868,6 +871,7 @@ const PropsConfigPerSource = ({
                   </tr>
                 </thead>
                 <tbody>
+                  {console.log("FIle lines", fileLines)}
                   {fileLines.map((each, index) => (
                     <tr className="hover:bg-gray-50" key={index}>
                       <td className="px-4 py-2 border border-gray-300">
