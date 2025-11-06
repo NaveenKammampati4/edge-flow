@@ -1,6 +1,9 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import TransformsConfig from "./TransformsConfig";
+import dayjs from 'dayjs'
+import utc from 'dayjs/plugin/utc';
+import { DateTime } from 'luxon';
 
 const PropsConfigPerSource = ({
   sourceType,
@@ -68,139 +71,124 @@ const PropsConfigPerSource = ({
   };
 
   const applyConfigToFile = () => {
-    let delimiter = /\r?\n/; // default: newline
-    console.log("item : ", itemList);
-    // ✅ 1. Handle LINE_BREAKER
-    switch (itemList.lineBreaker) {
-      case "double":
-        delimiter = /\n\n/;
+  let delimiter = /\r?\n/; // default: newline
+  console.log("item : ", itemList);
+
+  // 1️⃣ Handle LINE_BREAKER
+  switch (itemList.lineBreaker) {
+    case "double":
+      delimiter = /\n\n/;
+      break;
+    case "windowsDouble":
+      delimiter = /\r\n\r\n/;
+      break;
+    case "date":
+      delimiter = /\d{4}-\d{2}-\d{2}/;
+      break;
+    case "newline":
+    default:
+      delimiter = /\r?\n/;
+      break;
+  }
+
+  // 2️⃣ Match all log formats
+  let lines = fileText.match(
+    /(?:\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]+ .*?\(user=.*?\))|(?:\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] [A-Z]+: .*? \| user=.*?)/g
+  ) || [];
+
+  // 3️⃣ Handle SHOULD_LINE
+  if (itemList.shouldLine === "true") {
+    lines = [lines.join(" ")];
+  }
+
+  // 4️⃣ Handle TRUNCATE
+  if (itemList.truncate && Number(itemList.truncate) > 0) {
+    lines = lines.map((line) => line.substring(0, Number(itemList.truncate)));
+  }
+
+  // 5️⃣ Process each line
+  const processed = lines.map((line) => {
+    let date = "";
+    let time = "";
+    let info = line;
+    let match;
+
+    // Match based on timeFormat
+    switch (itemList.timeFormat) {
+      case "YYYY-MM-DD HH:mm:ss":
+        match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
         break;
-      case "windowsDouble":
-        delimiter = /\r\n\r\n/;
+      case "MM-DD-YYYY HH:mm":
+        match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
         break;
-      case "date":
-        delimiter = /\d{4}-\d{2}-\d{2}/; // split at date pattern
+      case "DD-MM-YYYY HH:mm:ss":
+       match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
         break;
-      case "newline":
       default:
-        delimiter = /\r?\n/;
+        match = null;
         break;
     }
 
-    // ✅ 2. Break file into chunks
-    let lines = fileText.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]+ .*?\(user=.*?\)/g);
-
-    // ✅ 3. Handle SHOULD_LINE
-    if (itemList.shouldLine === "true") {
-      lines = [lines.join(" ")];
+    if (match) {
+      date = match[1];
+      time = match[2];
+      info = line.replace(match[0], "").trim();
     }
 
-    // ✅ 4. Handle TRUNCATE
-    if (itemList.truncate && Number(itemList.truncate) > 0) {
-      lines = lines.map((line) => line.substring(0, Number(itemList.truncate)));
-    }
+    // 6️⃣ Apply DATETIME_CONFIG
+    const now = new Date();
+    const formatDate = (d) => d.toISOString().split("T")[0];
+    const formatTime = (d) => d.toTimeString().split(" ")[0];
 
-    // ✅ 5. Handle TIME_FORMAT + DATETIME_CONFIG
-    const processed = lines.map((line) => {
-      let date = "";
-      let time = "";
-      let info = line;
+    // switch (itemList.dateTime) {
+    //   case "CURRENT":
+    //     date = formatDate(now);
+    //     time = formatTime(now);
+    //     break;
+    //   case "UTC":
+    //     date = formatDate(new Date(now.toISOString()));
+    //     time = now.toISOString().split("T")[1].split(".")[0];
+    //     break;
+    //   case "GMT":
+    //     const gmt = now.toUTCString().split(" ");
+    //     date = gmt.slice(0, 4).join(" ");
+    //     time = gmt[4];
+    //     break;
+    //   case "US":
+    //     const us = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+    //     date = formatDate(us);
+    //     time = formatTime(us);
+    //     break;
+    //   case "EU":
+    //     const eu = new Date(now.toLocaleString("en-GB", { timeZone: "Europe/Berlin" }));
+    //     date = formatDate(eu);
+    //     time = formatTime(eu);
+    //     break;
+    //   case "SA":
+    //     const sa = new Date(now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }));
+    //     date = formatDate(sa);
+    //     time = formatTime(sa);
+    //     break;
+    //   case "APAC":
+    //     const apac = new Date(now.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
+    //     date = formatDate(apac);
+    //     time = formatTime(apac);
+    //     break;
+    //   case "AUTO":
+    //     date = formatDate(now);
+    //     time = now.toLocaleTimeString();
+    //     break;
+    //   case "NONE":
+    //   default:
+    //     // Keep parsed values
+    //     break;
+    // }
 
-      if (itemList.timeFormat === "%Y-%m-%d %H:%M:%S") {
-        const match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
-        if (match) {
-          date = match[1];
-          time = match[2];
-          info = line.replace(match[0], "").trim();
-        }
-      } else if (itemList.timeFormat === "%m-%d-%Y %H:%M") {
-        const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2})/);
-        if (match) {
-          date = match[1];
-          time = match[2];
-          info = line.replace(match[0], "").trim();
-        }
-      } else if (itemList.timeFormat === "%d-%m-%Y %H:%M:%S") {
-        const match = line.match(/(\d{2}-\d{2}-\d{4}) (\d{2}:\d{2}:\d{2})/);
-        if (match) {
-          date = match[1];
-          time = match[2];
-          info = line.replace(match[0], "").trim();
-        }
-      }
+    return { date, time, info };
+  });
 
-      // 📌 DATETIME_CONFIG overrides
-      const now = new Date();
-      switch (itemList.dateTime) {
-        case "CURRENT":
-          date = now.toISOString().split("T")[0];
-          time = now.toTimeString().split(" ")[0];
-          break;
-
-        case "UTC": {
-          const utc = new Date(now.toISOString());
-          date = utc.toISOString().split("T")[0];
-          time = utc.toISOString().split("T")[1].split(".")[0];
-          break;
-        }
-
-        case "GMT":
-          date = now.toUTCString().split(" ").slice(0, 4).join(" ");
-          time = now.toUTCString().split(" ")[4];
-          break;
-
-        case "US": {
-          const us = new Date(
-            now.toLocaleString("en-US", { timeZone: "America/New_York" })
-          );
-          date = us.toISOString().split("T")[0];
-          time = us.toTimeString().split(" ")[0];
-          break;
-        }
-
-        case "EU": {
-          const eu = new Date(
-            now.toLocaleString("en-GB", { timeZone: "Europe/Berlin" })
-          );
-          date = eu.toISOString().split("T")[0];
-          time = eu.toTimeString().split(" ")[0];
-          break;
-        }
-
-        case "SA": {
-          const sa = new Date(
-            now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })
-          );
-          date = sa.toISOString().split("T")[0];
-          time = sa.toTimeString().split(" ")[0];
-          break;
-        }
-
-        case "APAC": {
-          const apac = new Date(
-            now.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" })
-          );
-          date = apac.toISOString().split("T")[0];
-          time = apac.toTimeString().split(" ")[0];
-          break;
-        }
-
-        case "AUTO":
-          date = now.toISOString().split("T")[0];
-          time = now.toLocaleTimeString();
-          break;
-
-        case "NONE":
-        default:
-          // keep whatever we parsed
-          break;
-      }
-
-      return { date, time, info };
-    });
-
-    setFileLines(processed);
-  };
+  setFileLines(processed);
+};
 
   useEffect(() => {
     if (fileText) {
@@ -220,35 +208,60 @@ const PropsConfigPerSource = ({
   }
 
   const handleReadFile = () => {
-    if (!file) return;
+  if (!file) return;
 
-    const reader = new FileReader();
+  const reader = new FileReader();
 
-    reader.onload = (event) => {
-      const text = event.target.result;
-      // const textData = text.split(/\r?\n/).filter(Boolean);
-      console.log("text",text);
-      const textData = text.match(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]+ .*?\(user=.*?\)/g);
-      console.log("textData",textData);
+  reader.onload = (event) => {
+    const text = event.target.result;
+    console.log("text", text);
 
-      setFileText(text);
-      const processedLines = textData.map((line) => {
-        const firstSpace = line.indexOf(" ");
-        const secondSpace = line.indexOf(" ", firstSpace + 1);
+    // Match both formats
+    const textData = text.match(
+      /(?:\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]+ .*?\(user=.*?\))|(?:\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] [A-Z]+: .*? \| user=.*?)/g
+    );
+    console.log("textData", textData);
 
-        const part1 = line.substring(0, firstSpace);
-        const part2 = line.substring(firstSpace + 1, secondSpace);
-        const part3 = line.substring(secondSpace + 1);
+    setFileText(text);
 
-        return { date: part1, time: part2, info: part3 };
-      });
+    const processedLines = textData.map((line) => {
+      // Format 1: 2025-10-29 10:35:58 ERROR Database connection lost (user=system)
+      const match1 = line.match(
+        /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
+      );
 
-      setFileLines(processedLines);
-      console.log("processed", processedLines);
-    };
+      // Format 2: [2025-10-29 10:01:59] INFO: Low disk space detected | user=user01
+      const match2 = line.match(
+        /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
+      );
 
-    reader.readAsText(file);
+      if (match1) {
+        return {
+          date: match1[1],
+          time: match1[2],
+          level: match1[3],
+          message: match1[4],
+          user: match1[5],
+        };
+      } else if (match2) {
+        return {
+          date: match2[1],
+          time: match2[2],
+          level: match2[3],
+          message: match2[4],
+          user: match2[5],
+        };
+      } else {
+        return null;
+      }
+    }).filter(Boolean); // Remove nulls if any line didn't match
+
+    setFileLines(processedLines);
+    console.log("processed", processedLines);
   };
+
+  reader.readAsText(file);
+};
 
   // const updateIputs = (e) => {
   //   const { name, value } = e.target;
@@ -443,15 +456,15 @@ const PropsConfigPerSource = ({
         </label>
         <select
           name="timeFormat"
-          value={item.timeFormat}
+          value={inputsFormat.props[sourceType].timeFormat}
 
           onChange={(e) => updateIputs(e)}
           className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="">Select TIME_FORMAT</option>
-          <option value="%Y-%m-%d %H:%M:%S">YYYY-MM-DD HH:mm:ss</option>
-          <option value="%m-%d-%Y %H:%M">MM-DD-YYYY HH:mm</option>
-          <option value="%d-%m-%Y %H:%M:%S">DD-MM-YYYY HH:mm:ss</option>
+          <option value="YYYY-MM-DD HH:mm:ss">YYYY-MM-DD HH:mm:ss</option>
+          <option value="MM-DD-YYYY HH:mm">MM-DD-YYYY HH:mm</option>
+          <option value="DD-MM-YYYY HH:mm:ss">DD-MM-YYYY HH:mm:ss</option>
           <option value="epoch">Epoch Time (seconds)</option>
           <option value="iso8601">ISO 8601</option>
           <option value="custom">Custom</option>
@@ -468,13 +481,14 @@ const PropsConfigPerSource = ({
         </label>
         <select
           name="dateTime"
-          value={item.dateTime}
+          
           // onChange={(e) => {
           //   setConfigData((prev) => ({
           //     ...prev,
           //     dateTime: e.target.value,
           //   }));
           // }}
+          value={inputsFormat.props[sourceType].dateTime}
           onChange={(e) => updateIputs(e)}
           className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
@@ -501,7 +515,7 @@ const PropsConfigPerSource = ({
         </label>
         <select
           name="lineBreaker"
-          value={item.lineBreaker}
+          value={inputsFormat.props[sourceType].lineBreaker}
           // onChange={(e) => {
           //   setConfigData((prev) => ({
           //     ...prev,
@@ -590,6 +604,33 @@ const PropsConfigPerSource = ({
       </div>
     }
   };
+
+  const dateFormat=(dates, time)=>{
+    let originalDate=dates+" "+time;
+    const dateTimeFormat=inputsFormat.props[sourceType].timeFormat;
+    
+    if(inputsFormat.props[sourceType].dateTime==="CURRENT"){
+      originalDate=dayjs();
+    }
+     if(inputsFormat.props[sourceType].dateTime==="GMT" || inputsFormat.props[sourceType].dateTime==="UTC"){
+      dayjs.extend(utc);
+      return dayjs().utc().format(dateTimeFormat);
+    }
+    if(inputsFormat.props[sourceType].dateTime==="SA" || inputsFormat.props[sourceType].dateTime==="UTC"){
+      dayjs.extend(utc);
+      return dayjs().utc().format(dateTimeFormat);
+    }
+    console.log("originalDateTime", originalDate)
+
+    if(inputsFormat.props[sourceType].timeFormat){
+      
+    
+    return dayjs(originalDate).format(dateTimeFormat);
+    }
+    else{
+      return "";
+    }
+  }
 
 
   return (
@@ -875,7 +916,7 @@ const PropsConfigPerSource = ({
                   {fileLines.map((each, index) => (
                     <tr className="hover:bg-gray-50" key={index}>
                       <td className="px-4 py-2 border border-gray-300">
-                        {each.date} {each.time}
+                        {dateFormat(each.date, each.time)}
                       </td>
                       <td className="px-4 py-2 border border-gray-300">
                         {each.info}
