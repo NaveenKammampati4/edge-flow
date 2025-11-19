@@ -203,8 +203,9 @@ const Main = () => {
 
           </div> */}
 
-          <div className="flex flex-col bg-white shadow rounded-lg p-4 space-y-3">
-            <div className="flex space-x-6">
+          <div className="flex flex-row bg-white shadow rounded-lg p-4 space-y-3 gap-20 ">
+            <div>
+              <div className="flex space-x-6">
               <label className="flex items-center space-x-2">
                 <input
                   type="radio"
@@ -352,12 +353,37 @@ const Main = () => {
                 )}
               </div>
             )}
+            </div>
+             {mode==="new" && <div className="flex flex-col  rounded-lg mt-5">
+            <label htmlFor="appName" className="font-medium mb-1">
+              Retention Days
+            </label>
+            <input
+              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+              
+               name="retentionTime"
+                type="text"
+               onChange={e => {
+                  setInputsFormat(prev => ({
+                    ...prev,
+                    indexConfig:{ ...prev.indexConfig,[indexName]: {
+                      ...prev.indexConfig[indexName],
+                      retentionTime: e.target.value
+                    }},
+                    
+                  }));
+                }}
+              placeholder="Enter Retention Days"
+            />
+          </div>}
           </div>
+
+         
         </div>
 
-        {Object.keys(inputsFormat.indexConfig).length > 0 &&
+        {/* {Object.keys(inputsFormat.indexConfig).length > 0 &&
           <IndexConfig key={Object.keys(inputsFormat.indexConfig)[0]} indexName={Object.keys(inputsFormat.indexConfig)[0]} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
-        }
+        } */}
 
 
         <div>

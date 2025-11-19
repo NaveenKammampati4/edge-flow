@@ -28,6 +28,8 @@ const PropsConfigPerSource = ({
     truncate: "",
   });
   const [isCopyConfig, setIsCopyConfig] = useState(false);
+  const [customs, setCustoms] = useState({ dateTimeCustom: false, dateTimeCustomError: false });
+  const [customsValue, setCustomsValue] = useState({ dateTimeCustomValue: "" })
 
   console.log("each", each);
   console.log("inputss : ", inputsFormat);
@@ -40,15 +42,68 @@ const PropsConfigPerSource = ({
 
 
   console.log("items", itemList);
-  const itemListTransform=Object.keys(itemList);
-  console.log("itemListTransform",itemListTransform);
+  const itemListTransform = Object.keys(itemList);
+  console.log("itemListTransform", itemListTransform);
+
+  function isValidDateFormat(format) {
+    // Common allowed tokens
+    const validTokens = ["YYYY", "YY", "MM", "DD", "HH", "mm", "ss"];
+    const parts = format.split(/[^A-Za-z]+/); // split by non-letter characters
+
+    return parts.every(token => validTokens.includes(token));
+  }
 
 
+  const addCustomField = () => {
+    if (!isValidDateFormat(customsValue.dateTimeCustomValue)) {
+      setCustoms((prev) => ({
+        ...prev,
+        dateTimeCustomError: true
+      }))
+      return;
+    }
+    setCustoms((prev) => ({
+      ...prev,
+      dateTimeCustomError: false
+    }))
+    console.log("one", 1);
+    setInputsFormat((prev) => {
+      const updated = { ...prev.props };
 
+      let updateSource = { ...updated[sourceType], timeFormat: customsValue.dateTimeCustomValue }
+      console.log("updateSource", updateSource);
+      updated[sourceTypes] = { ...updateSource }; // update only sourceType
+      return { ...prev, props: updated };
+
+    });
+  }
 
 
   const updateIputs = (e) => {
     const { name, value } = e.target;
+    if (name === "timeFormat" && value === "custom") {
+      setCustoms((prev) => ({
+        ...prev,
+        dateTimeCustom: true
+      }))
+      return;
+    }
+    else if (name === "timeFormat" && value !== "custom") {
+      setCustoms((prev) => ({
+        ...prev,
+        dateTimeCustom: false
+      }))
+
+      setCustomsValue((prev) => ({
+        ...prev,
+        dateTimeCustomValue: ""
+      }))
+
+      setCustoms((prev) => ({
+        ...prev,
+        dateTimeCustomError: false
+      }))
+    }
     console.log("name", name);
     console.log("value", value);
     console.log("inputs config", inputsFormat);
@@ -71,124 +126,123 @@ const PropsConfigPerSource = ({
   };
 
   const applyConfigToFile = () => {
-  let delimiter = /\r?\n/; // default: newline
-  console.log("item : ", itemList);
+    let delimiter = /\r?\n/; // default: newline
+    console.log("item : ", itemList);
 
-  // 1️⃣ Handle LINE_BREAKER
-  switch (itemList.lineBreaker) {
-    case "double":
-      delimiter = /\n\n/;
-      break;
-    case "windowsDouble":
-      delimiter = /\r\n\r\n/;
-      break;
-    case "date":
-      delimiter = /\d{4}-\d{2}-\d{2}/;
-      break;
-    case "newline":
-    default:
-      delimiter = /\r?\n/;
-      break;
-  }
-
-  // 2️⃣ Match all log formats
-  let lines = fileText.match(
-    /(?:\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]+ .*?\(user=.*?\))|(?:\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] [A-Z]+: .*? \| user=.*?)/g
-  ) || [];
-
-  // 3️⃣ Handle SHOULD_LINE
-  if (itemList.shouldLine === "true") {
-    lines = [lines.join(" ")];
-  }
-
-  // 4️⃣ Handle TRUNCATE
-  if (itemList.truncate && Number(itemList.truncate) > 0) {
-    lines = lines.map((line) => line.substring(0, Number(itemList.truncate)));
-  }
-
-  // 5️⃣ Process each line
-  const processed = lines.map((line) => {
-    let date = "";
-    let time = "";
-    let info = line;
-    let match;
-
-    // Match based on timeFormat
-    switch (itemList.timeFormat) {
-      case "YYYY-MM-DD HH:mm:ss":
-        match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+    // 1️⃣ Handle LINE_BREAKER
+    switch (itemList.lineBreaker) {
+      case "double":
+        delimiter = /\n\n/;
         break;
-      case "MM-DD-YYYY HH:mm":
-        match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+      case "windowsDouble":
+        delimiter = /\r\n\r\n/;
         break;
-      case "DD-MM-YYYY HH:mm:ss":
-       match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+      case "date":
+        delimiter = /\d{4}-\d{2}-\d{2}/;
         break;
+      case "newline":
       default:
-        match = null;
+        delimiter = /\r?\n/;
         break;
     }
 
-    if (match) {
-      date = match[1];
-      time = match[2];
-      info = line.replace(match[0], "").trim();
+    // 2️⃣ Match all log formats
+    const lines = fileText.match(
+      /(?:[\[\(\{\<]?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[\]\)\}\>]?\s+[A-Z]+[:]? .*?\(user=.*?\))|(?:[\[\(\{\<]?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[\]\)\}\>]?\s+[A-Z]+[:]? .*?\| user=.*?)/g
+    ) || [];
+
+    // 3️⃣ Handle SHOULD_LINE
+    if (itemList.shouldLine === "true") {
+      lines = [lines.join(" ")];
     }
 
-    // 6️⃣ Apply DATETIME_CONFIG
-    const now = new Date();
-    const formatDate = (d) => d.toISOString().split("T")[0];
-    const formatTime = (d) => d.toTimeString().split(" ")[0];
+    // 4️⃣ Handle TRUNCATE
+    if (itemList.truncate && Number(itemList.truncate) > 0) {
+      lines = lines.map((line) => line.substring(0, Number(itemList.truncate)));
+    }
 
-    // switch (itemList.dateTime) {
-    //   case "CURRENT":
-    //     date = formatDate(now);
-    //     time = formatTime(now);
-    //     break;
-    //   case "UTC":
-    //     date = formatDate(new Date(now.toISOString()));
-    //     time = now.toISOString().split("T")[1].split(".")[0];
-    //     break;
-    //   case "GMT":
-    //     const gmt = now.toUTCString().split(" ");
-    //     date = gmt.slice(0, 4).join(" ");
-    //     time = gmt[4];
-    //     break;
-    //   case "US":
-    //     const us = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
-    //     date = formatDate(us);
-    //     time = formatTime(us);
-    //     break;
-    //   case "EU":
-    //     const eu = new Date(now.toLocaleString("en-GB", { timeZone: "Europe/Berlin" }));
-    //     date = formatDate(eu);
-    //     time = formatTime(eu);
-    //     break;
-    //   case "SA":
-    //     const sa = new Date(now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }));
-    //     date = formatDate(sa);
-    //     time = formatTime(sa);
-    //     break;
-    //   case "APAC":
-    //     const apac = new Date(now.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
-    //     date = formatDate(apac);
-    //     time = formatTime(apac);
-    //     break;
-    //   case "AUTO":
-    //     date = formatDate(now);
-    //     time = now.toLocaleTimeString();
-    //     break;
-    //   case "NONE":
-    //   default:
-    //     // Keep parsed values
-    //     break;
-    // }
+    // 5️⃣ Process each line
+    const processed = lines.map((line) => {
+      let date = "";
+      let time = "";
+      let info = line;
+      let match;
+      console.log("lines", line);
+      switch (itemList.timeFormat) {
+        case "YYYY-MM-DD HH:mm:ss":
+          match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+          break;
+        case "MM-DD-YYYY HH:mm":
+          match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+          break;
+        case "DD-MM-YYYY HH:mm:ss":
+          match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+          break;
+        default:
+          match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+          break;
+      }
 
-    return { date, time, info };
-  });
+      if (match) {
+        date = match[1];
+        time = match[2];
+        info = line.replace(match[0], "").trim();
+      }
 
-  setFileLines(processed);
-};
+      // 6️⃣ Apply DATETIME_CONFIG
+      const now = new Date();
+      const formatDate = (d) => d.toISOString().split("T")[0];
+      const formatTime = (d) => d.toTimeString().split(" ")[0];
+
+      // switch (itemList.dateTime) {
+      //   case "CURRENT":
+      //     date = formatDate(now);
+      //     time = formatTime(now);
+      //     break;
+      //   case "UTC":
+      //     date = formatDate(new Date(now.toISOString()));
+      //     time = now.toISOString().split("T")[1].split(".")[0];
+      //     break;
+      //   case "GMT":
+      //     const gmt = now.toUTCString().split(" ");
+      //     date = gmt.slice(0, 4).join(" ");
+      //     time = gmt[4];
+      //     break;
+      //   case "US":
+      //     const us = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
+      //     date = formatDate(us);
+      //     time = formatTime(us);
+      //     break;
+      //   case "EU":
+      //     const eu = new Date(now.toLocaleString("en-GB", { timeZone: "Europe/Berlin" }));
+      //     date = formatDate(eu);
+      //     time = formatTime(eu);
+      //     break;
+      //   case "SA":
+      //     const sa = new Date(now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }));
+      //     date = formatDate(sa);
+      //     time = formatTime(sa);
+      //     break;
+      //   case "APAC":
+      //     const apac = new Date(now.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
+      //     date = formatDate(apac);
+      //     time = formatTime(apac);
+      //     break;
+      //   case "AUTO":
+      //     date = formatDate(now);
+      //     time = now.toLocaleTimeString();
+      //     break;
+      //   case "NONE":
+      //   default:
+      //     // Keep parsed values
+      //     break;
+      // }
+
+      return { date, time, info };
+    });
+
+    setFileLines(processed);
+  };
 
   useEffect(() => {
     if (fileText) {
@@ -208,60 +262,64 @@ const PropsConfigPerSource = ({
   }
 
   const handleReadFile = () => {
-  if (!file) return;
+    if (!file) return;
 
-  const reader = new FileReader();
+    const reader = new FileReader();
 
-  reader.onload = (event) => {
-    const text = event.target.result;
-    console.log("text", text);
-
-    // Match both formats
-    const textData = text.match(
-      /(?:\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]+ .*?\(user=.*?\))|(?:\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] [A-Z]+: .*? \| user=.*?)/g
-    );
-    console.log("textData", textData);
-
-    setFileText(text);
-
-    const processedLines = textData.map((line) => {
-      // Format 1: 2025-10-29 10:35:58 ERROR Database connection lost (user=system)
-      const match1 = line.match(
-        /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
-      );
-
-      // Format 2: [2025-10-29 10:01:59] INFO: Low disk space detected | user=user01
-      const match2 = line.match(
-        /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
-      );
-
-      if (match1) {
-        return {
-          date: match1[1],
-          time: match1[2],
-          level: match1[3],
-          message: match1[4],
-          user: match1[5],
-        };
-      } else if (match2) {
-        return {
-          date: match2[1],
-          time: match2[2],
-          level: match2[3],
-          message: match2[4],
-          user: match2[5],
-        };
-      } else {
-        return null;
+    reader.onload = (event) => {
+      const text = event.target.result;
+      if (text === fileText) {
+        console.log("same");
+        return;
       }
-    }).filter(Boolean); // Remove nulls if any line didn't match
+      console.log("text", text);
 
-    setFileLines(processedLines);
-    console.log("processed", processedLines);
+      // Match both formats
+      const textData = text.match(
+        /(?:\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]+ .*?\(user=.*?\))|(?:\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] [A-Z]+: .*? \| user=.*?)/g
+      );
+      console.log("textData", textData);
+
+      setFileText(text);
+
+      const processedLines = textData.map((line) => {
+        // Format 1: 2025-10-29 10:35:58 ERROR Database connection lost (user=system)
+        const match1 = line.match(
+          /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
+        );
+
+        // Format 2: [2025-10-29 10:01:59] INFO: Low disk space detected | user=user01
+        const match2 = line.match(
+          /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
+        );
+
+        if (match1) {
+          return {
+            date: match1[1],
+            time: match1[2],
+            level: match1[3],
+            message: match1[4],
+            user: match1[5],
+          };
+        } else if (match2) {
+          return {
+            date: match2[1],
+            time: match2[2],
+            level: match2[3],
+            message: match2[4],
+            user: match2[5],
+          };
+        } else {
+          return null;
+        }
+      }).filter(Boolean); // Remove nulls if any line didn't match
+
+      setFileLines(processedLines);
+      console.log("processed", processedLines);
+    };
+
+    reader.readAsText(file);
   };
-
-  reader.readAsText(file);
-};
 
   // const updateIputs = (e) => {
   //   const { name, value } = e.target;
@@ -448,30 +506,104 @@ const PropsConfigPerSource = ({
 
   console.log("file linessss : ", fileLines);
 
-  const fileFormats = (item,value) => {
-    if (item === "timeFormat") {
-      return <div className="flex items-center gap-4">
-        <label className="w-40 text-sm font-medium text-gray-700">
-          TIME FORMAT
-        </label>
-        <select
-          name="timeFormat"
-          value={inputsFormat.props[sourceType].timeFormat}
+  const fileFormats = (item, value) => {
+    if (item === "timePrefix") {
+      return <div className="flex flex-col items-start">
+        <div className="w-full flex items-center gap-4">
+          <label className="w-40 text-sm font-medium text-gray-700">
+            TIME Prefix
+          </label>
+          <input name="timePrefix"
+            value={inputsFormat.props[sourceType].timePrefix}
 
-          onChange={(e) => updateIputs(e)}
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="">Select TIME_FORMAT</option>
-          <option value="YYYY-MM-DD HH:mm:ss">YYYY-MM-DD HH:mm:ss</option>
-          <option value="MM-DD-YYYY HH:mm">MM-DD-YYYY HH:mm</option>
-          <option value="DD-MM-YYYY HH:mm:ss">DD-MM-YYYY HH:mm:ss</option>
-          <option value="epoch">Epoch Time (seconds)</option>
-          <option value="iso8601">ISO 8601</option>
-          <option value="custom">Custom</option>
-        </select>
-        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
-          Delete
-        </button>
+            onChange={(e) => updateIputs(e)}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          {/* <select
+            name="timeFormat"
+            value={inputsFormat.props[sourceType].timeFormat}
+
+            onChange={(e) => updateIputs(e)}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">Select TIME_FORMAT</option>
+            <option value="YYYY-MM-DD HH:mm:ss">YYYY-MM-DD HH:mm:ss</option>
+            <option value="MM-DD-YYYY HH:mm">MM-DD-YYYY HH:mm</option>
+            <option value="DD-MM-YYYY HH:mm:ss">DD-MM-YYYY HH:mm:ss</option>
+            <option value="epoch">Epoch Time (seconds)</option>
+            <option value="iso8601">ISO 8601</option>
+            <option value="custom">Custom</option>
+          </select> */}
+          <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+            Delete
+          </button>
+        </div>
+        {customs.dateTimeCustom && <div className="w-full flex items-center gap-4 mt-1">
+          <label className="w-40 text-sm font-medium text-gray-700">
+            Custom Format
+          </label>
+          <input
+            name="timeFormat"
+            value={customsValue.dateTimeCustomValue}
+            onChange={(e) => setCustomsValue((prev) => ({
+              ...prev,
+              dateTimeCustomValue: e.target.value
+            }))}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+
+
+          <button onClick={addCustomField} className="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg">
+            Add
+          </button>
+        </div>}
+        {customs.dateTimeCustomError && <p className="text-red-600 self-center">In valid format</p>}
+      </div>
+    }
+    if (item === "timeFormat") {
+      return <div className="flex flex-col items-start">
+        <div className="w-full flex items-center gap-4">
+          <label className="w-40 text-sm font-medium text-gray-700">
+            TIME FORMAT
+          </label>
+          <select
+            name="timeFormat"
+            value={inputsFormat.props[sourceType].timeFormat}
+
+            onChange={(e) => updateIputs(e)}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">Select TIME_FORMAT</option>
+            <option value="YYYY-MM-DD HH:mm:ss">YYYY-MM-DD HH:mm:ss</option>
+            <option value="MM-DD-YYYY HH:mm">MM-DD-YYYY HH:mm</option>
+            <option value="DD-MM-YYYY HH:mm:ss">DD-MM-YYYY HH:mm:ss</option>
+            <option value="epoch">Epoch Time (seconds)</option>
+            <option value="iso8601">ISO 8601</option>
+            <option value="custom">Custom</option>
+          </select>
+          <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+            Delete
+          </button>
+        </div>
+        {customs.dateTimeCustom && <div className="w-full flex items-center gap-4 mt-1">
+          <label className="w-40 text-sm font-medium text-gray-700">
+            Custom Format
+          </label>
+          <input
+            name="timeFormat"
+            value={customsValue.dateTimeCustomValue}
+            onChange={(e) => setCustomsValue((prev) => ({
+              ...prev,
+              dateTimeCustomValue: e.target.value
+            }))}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+
+
+          <button onClick={addCustomField} className="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg">
+            Add
+          </button>
+        </div>}
+        {customs.dateTimeCustomError && <p className="text-red-600 self-center">In valid format</p>}
       </div>
     }
     else if (item === "dateTime") {
@@ -481,7 +613,7 @@ const PropsConfigPerSource = ({
         </label>
         <select
           name="dateTime"
-          
+
           // onChange={(e) => {
           //   setConfigData((prev) => ({
           //     ...prev,
@@ -588,8 +720,8 @@ const PropsConfigPerSource = ({
         </button>
       </div>
     }
-    else{
-     return <div className="flex items-center gap-4">
+    else {
+      return <div className="flex items-center gap-4">
         <label className="w-40 text-sm font-medium text-gray-700">
           {item}
         </label>
@@ -605,29 +737,58 @@ const PropsConfigPerSource = ({
     }
   };
 
-  const dateFormat=(dates, time)=>{
-    let originalDate=dates+" "+time;
-    const dateTimeFormat=inputsFormat.props[sourceType].timeFormat;
-    
-    if(inputsFormat.props[sourceType].dateTime==="CURRENT"){
-      originalDate=dayjs();
+  const dateFormat = (dates, time) => {
+    const nowUTC = DateTime.utc();
+    let originalDate = dates + " " + time;
+    console.log("dd", originalDate);
+    const dateTimeFormat = inputsFormat.props[sourceType].timeFormat;
+
+    if (inputsFormat.props[sourceType].dateTime === "CURRENT") {
+      originalDate = dayjs();
     }
-     if(inputsFormat.props[sourceType].dateTime==="GMT" || inputsFormat.props[sourceType].dateTime==="UTC"){
+    if (inputsFormat.props[sourceType].dateTime === "GMT" || inputsFormat.props[sourceType].dateTime === "UTC") {
       dayjs.extend(utc);
       return dayjs().utc().format(dateTimeFormat);
     }
-    if(inputsFormat.props[sourceType].dateTime==="SA" || inputsFormat.props[sourceType].dateTime==="UTC"){
-      dayjs.extend(utc);
-      return dayjs().utc().format(dateTimeFormat);
+    if (inputsFormat.props[sourceType].dateTime === "SA" || inputsFormat.props[sourceType].dateTime === "US" || inputsFormat.props[sourceType].dateTime === "EU" || inputsFormat.props[sourceType].dateTime === "APAC") {
+      let country = inputsFormat.props[sourceType].dateTime;
+      let zone = "";
+      if (country === "SA") {
+        zone = 'America/Argentina/Buenos_Aires';
+      }
+      else if (country === "US") {
+        zone = 'America/New_York';
+      }
+      else if (country === "EU") {
+        zone = 'Europe/Berlin';
+      }
+      else if (country === "APAC") {
+        zone = 'Asia/Tokyo';
+      }
+
+      const nowUTC = DateTime.utc();
+      const newDate = nowUTC.setZone(zone);
+
+      // Format using Luxon
+      console.log("dateTimeFormat", dateTimeFormat);
+      const formattedLuxon = newDate.toFormat('yyyy-MM-dd HH:mm:ss');
+
+      // Then pass to dayjs if needed
+
+
+      return formattedLuxon;
+
     }
     console.log("originalDateTime", originalDate)
 
-    if(inputsFormat.props[sourceType].timeFormat){
-      
-    
-    return dayjs(originalDate).format(dateTimeFormat);
+    if (inputsFormat.props[sourceType].timeFormat) {
+
+      console.log("originalDate", originalDate);
+      console.log("dateFormat", dateTimeFormat);
+      console.log("After formatting", dayjs(originalDate).format(dateTimeFormat));
+      return dayjs(originalDate).format(dateTimeFormat);
     }
-    else{
+    else {
       return "";
     }
   }
@@ -648,12 +809,7 @@ const PropsConfigPerSource = ({
                 type="file"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-              <button
-                onClick={handleReadFile}
-                className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400"
-              >
-                Apply Changes
-              </button>
+
             </div>
           </div>
           <div className="space-y-4 mt-3.5">
@@ -878,6 +1034,12 @@ const PropsConfigPerSource = ({
           </div>
           <div className="flex justify-end gap-4 mt-3.5">
             <button
+              onClick={handleReadFile}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400"
+            >
+              Apply Changes
+            </button>
+            <button
               onClick={handleCopyConfig}
               className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 focus:ring-2 focus:ring-gray-300"
             >
@@ -932,9 +1094,15 @@ const PropsConfigPerSource = ({
               Generated Props.conf
             </h3>
             {isCopyConfig && (
-              <pre className=" h-44  overflow-auto w-96 resize-none border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                {JSON.stringify(itemList, null, 2)}
-              </pre>
+              // <pre className=" h-44  overflow-auto w-96 resize-none border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              //   {JSON.stringify(itemList, null, 2)}
+              // </pre>
+              <div className="w-120 h-40 overflow-auto bg-white border border-black rounded-2xl p-3">
+                <p>{`[${sourceType}]`}</p>
+                <ul>
+                  {Object.keys(itemList).map((each) => { return itemList[each] !== "" && <li>{each} : {itemList[each]}</li> })}
+                </ul>
+              </div>
             )}
           </div>
         </div>
@@ -953,23 +1121,23 @@ const PropsConfigPerSource = ({
       )} */}
       {Object.keys(inputsFormat.transform).map((key, index) => {
         const value = inputsFormat.transform[key];
-        if(itemListTransform.includes(key)){
+        if (itemListTransform.includes(key)) {
           return (
 
 
-          <TransformsConfig
-            key={index}
-            each={each}
-            newKey={key}          // pass the actual key
-            transformValue={value} // optional: pass value if needed
-            inputsFormat={inputsFormat}
-            setInputsFormat={setInputsFormat}
-            transforms={transforms}
-            setTransforms={setTransforms}
-            updateTransform={updateTransform}
-            updateIputs={updateIputs}
-          />
-        )
+            <TransformsConfig
+              key={index}
+              each={each}
+              newKey={key}          // pass the actual key
+              transformValue={value} // optional: pass value if needed
+              inputsFormat={inputsFormat}
+              setInputsFormat={setInputsFormat}
+              transforms={transforms}
+              setTransforms={setTransforms}
+              updateTransform={updateTransform}
+              updateIputs={updateIputs}
+            />
+          )
         }
 
       })}

@@ -186,7 +186,7 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
       let updateProps = { ...prev.props };
       updateProps = {
         ...updateProps, [sType]: {
-
+          timePrefix:"",
           timeFormat: "YYYY-MM-DD HH:mm:ss",
           dateTime: "AUTO",
           lineBreaker: "newline",
