@@ -28,8 +28,8 @@ const PropsConfigPerSource = ({
     truncate: "",
   });
   const [isCopyConfig, setIsCopyConfig] = useState(false);
-  const [customs, setCustoms] = useState({ dateTimeCustom: false, dateTimeCustomError: false });
-  const [customsValue, setCustomsValue] = useState({ dateTimeCustomValue: "" })
+  const [customs, setCustoms] = useState({ dateTimeCustom: false, dateTimeCustomError: false, lineBreakerCustom:false, lineBreakerError:false });
+  const [customsValue, setCustomsValue] = useState({ dateTimeCustomValue: "", lineBreakerCustomValue:"" })
 
   console.log("each", each);
   console.log("inputss : ", inputsFormat);
@@ -104,6 +104,30 @@ const PropsConfigPerSource = ({
         dateTimeCustomError: false
       }))
     }
+
+    if (name === "lineBreaker" && value === "custom") {
+      setCustoms((prev) => ({
+        ...prev,
+        lineBreakerCustom: true
+      }))
+      return;
+    }
+    else if (name === "lineBreaker" && value !== "custom") {
+      setCustoms((prev) => ({
+        ...prev,
+        lineBreakerCustom: false
+      }))
+
+      setCustomsValue((prev) => ({
+        ...prev,
+        lineBreakerCustomValue: ""
+      }))
+
+      setCustoms((prev) => ({
+        ...prev,
+        lineBreakerError: false
+      }))
+    }
     console.log("name", name);
     console.log("value", value);
     console.log("inputs config", inputsFormat);
@@ -147,7 +171,7 @@ const PropsConfigPerSource = ({
     }
 
     // 2️⃣ Match all log formats
-    const lines = fileText.match(
+    let lines = fileText.match(
       /(?:[\[\(\{\<]?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[\]\)\}\>]?\s+[A-Z]+[:]? .*?\(user=.*?\))|(?:[\[\(\{\<]?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[\]\)\}\>]?\s+[A-Z]+[:]? .*?\| user=.*?)/g
     ) || [];
 
@@ -537,26 +561,7 @@ const PropsConfigPerSource = ({
             Delete
           </button>
         </div>
-        {customs.dateTimeCustom && <div className="w-full flex items-center gap-4 mt-1">
-          <label className="w-40 text-sm font-medium text-gray-700">
-            Custom Format
-          </label>
-          <input
-            name="timeFormat"
-            value={customsValue.dateTimeCustomValue}
-            onChange={(e) => setCustomsValue((prev) => ({
-              ...prev,
-              dateTimeCustomValue: e.target.value
-            }))}
-            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-
-
-          <button onClick={addCustomField} className="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg">
-            Add
-          </button>
-        </div>}
-        {customs.dateTimeCustomError && <p className="text-red-600 self-center">In valid format</p>}
+        
       </div>
     }
     if (item === "timeFormat") {
@@ -641,7 +646,8 @@ const PropsConfigPerSource = ({
       </div>
     }
     else if (item === "lineBreaker") {
-      return <div className="flex items-center gap-4">
+      return <div className="flex flex-col items-start">
+        <div className="w-full flex items-center gap-4">
         <label className="w-40 text-sm font-medium text-gray-700">
           LINE BREAKER
         </label>
@@ -669,7 +675,32 @@ const PropsConfigPerSource = ({
         <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
           Delete
         </button>
+
+       
       </div>
+
+       {customs.dateTimeCustom && <div className="w-full flex items-center gap-4 mt-1">
+          <label className="w-40 text-sm font-medium text-gray-700">
+            Line Breaker Format
+          </label>
+          <input
+            name="lineBreakerCustomValue"
+            value={customsValue.lineBreakerCustomValue}
+            onChange={(e) => setCustomsValue((prev) => ({
+              ...prev,
+              lineBreakerCustomValue: e.target.value
+            }))}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+
+
+          <button onClick={addCustomField} className="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg">
+            Add
+          </button>
+        </div>}
+        {customs.dateTimeCustomError && <p className="text-red-600 self-center">In valid format</p>}
+      </div>
+      
     }
     else if (item === "shouldLine") {
       return <div className="flex items-center gap-4">
