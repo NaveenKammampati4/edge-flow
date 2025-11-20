@@ -150,123 +150,121 @@ const PropsConfigPerSource = ({
   };
 
   const applyConfigToFile = () => {
-    let delimiter = /\r?\n/; // default: newline
-    console.log("item : ", itemList);
+  let delimiter = /\r?\n/; // default: newline
+  console.log("item : ", itemList);
 
-    // 1️⃣ Handle LINE_BREAKER
-    switch (itemList.lineBreaker) {
-      case "double":
-        delimiter = /\n\n/;
-        break;
-      case "windowsDouble":
-        delimiter = /\r\n\r\n/;
-        break;
-      case "date":
-        delimiter = /\d{4}-\d{2}-\d{2}/;
-        break;
-      case "newline":
-      default:
-        delimiter = /\r?\n/;
-        break;
-    }
+  // 1️⃣ Handle LINE_BREAKER
+  switch (itemList.lineBreaker) {
+    case "double":
+      delimiter = /\n\n/;
+      break;
+    case "windowsDouble":
+      delimiter = /\r\n\r\n/;
+      break;
+    case "date":
+      delimiter = /\d{4}-\d{2}-\d{2}/;
+      break;
+    case "newline":
+    default:
+      delimiter = /\r?\n/;
+      break;
+  }
 
-    // 2️⃣ Match all log formats
-    let lines = fileText.match(
-      /(?:[\[\(\{\<]?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[\]\)\}\>]?\s+[A-Z]+[:]? .*?\(user=.*?\))|(?:[\[\(\{\<]?\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[\]\)\}\>]?\s+[A-Z]+[:]? .*?\| user=.*?)/g
+  // 2️⃣ Prepare dynamic prefix
+  const prefix = inputsFormat.props[sourceType].timePrefix;
+  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  // 3️⃣ Build dynamic prefix REGEX
+  const prefixRegex = escapedPrefix
+    ? new RegExp(
+        `${escapedPrefix}(\\d{4}-\\d{2}-\\d{2}) (\\d{2}:\\d{2}:\\d{2})${escapedPrefix} ([A-Z]+) (.*?) \\(user=(.*?)\\)`
+      )
+    : null;
+
+  // 4️⃣ Match ALL log lines (prefix + format1 + format2)
+  let lines =
+    fileText.match(
+      new RegExp(
+        `(?:${escapedPrefix}\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}${escapedPrefix} [A-Z]+ .*?\\(user=.*?\\))|` +
+        `(?:\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} [A-Z]+ .*?\\(user=.*?\\))|` +
+        `(?:\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\] [A-Z]+: .*? \\| user=.*?)`,
+        "g"
+      )
     ) || [];
 
-    // 3️⃣ Handle SHOULD_LINE
-    if (itemList.shouldLine === "true") {
-      lines = [lines.join(" ")];
+  // 5️⃣ SHOULD_LINE (combine all lines)
+  if (itemList.shouldLine === "true") {
+    lines = [lines.join(" ")];
+  }
+
+  // 6️⃣ TRUNCATE
+  if (itemList.truncate && Number(itemList.truncate) > 0) {
+    lines = lines.map((line) => line.substring(0, Number(itemList.truncate)));
+  }
+
+  // 7️⃣ PROCESS EACH LINE
+  const processed = lines.map((line) => {
+    let date = "";
+    let time = "";
+    let info = line;
+    let match;
+
+    console.log("line:", line);
+
+    // 7.1️⃣ Try PREFIX FORMAT first if prefix exists
+    if (prefixRegex) {
+      const pMatch = line.match(prefixRegex);
+      if (pMatch) {
+        date = pMatch[1];
+        time = pMatch[2];
+        info = pMatch[4];
+
+        console.log("infos", pMatch);
+        return { date, time, info };
+      }
     }
 
-    // 4️⃣ Handle TRUNCATE
-    if (itemList.truncate && Number(itemList.truncate) > 0) {
-      lines = lines.map((line) => line.substring(0, Number(itemList.truncate)));
-    }
+    // 7.2️⃣ FORMAT-1
+    const match1 = line.match(
+      /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
+    );
 
-    // 5️⃣ Process each line
-    const processed = lines.map((line) => {
-      let date = "";
-      let time = "";
-      let info = line;
-      let match;
-      console.log("lines", line);
-      switch (itemList.timeFormat) {
-        case "YYYY-MM-DD HH:mm:ss":
-          match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
-          break;
-        case "MM-DD-YYYY HH:mm":
-          match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
-          break;
-        case "DD-MM-YYYY HH:mm:ss":
-          match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
-          break;
-        default:
-          match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
-          break;
-      }
+    if (match1) {
 
-      if (match) {
-        date = match[1];
-        time = match[2];
-        info = line.replace(match[0], "").trim();
-      }
-
-      // 6️⃣ Apply DATETIME_CONFIG
-      const now = new Date();
-      const formatDate = (d) => d.toISOString().split("T")[0];
-      const formatTime = (d) => d.toTimeString().split(" ")[0];
-
-      // switch (itemList.dateTime) {
-      //   case "CURRENT":
-      //     date = formatDate(now);
-      //     time = formatTime(now);
-      //     break;
-      //   case "UTC":
-      //     date = formatDate(new Date(now.toISOString()));
-      //     time = now.toISOString().split("T")[1].split(".")[0];
-      //     break;
-      //   case "GMT":
-      //     const gmt = now.toUTCString().split(" ");
-      //     date = gmt.slice(0, 4).join(" ");
-      //     time = gmt[4];
-      //     break;
-      //   case "US":
-      //     const us = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
-      //     date = formatDate(us);
-      //     time = formatTime(us);
-      //     break;
-      //   case "EU":
-      //     const eu = new Date(now.toLocaleString("en-GB", { timeZone: "Europe/Berlin" }));
-      //     date = formatDate(eu);
-      //     time = formatTime(eu);
-      //     break;
-      //   case "SA":
-      //     const sa = new Date(now.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }));
-      //     date = formatDate(sa);
-      //     time = formatTime(sa);
-      //     break;
-      //   case "APAC":
-      //     const apac = new Date(now.toLocaleString("en-IN", { timeZone: "Asia/Kolkata" }));
-      //     date = formatDate(apac);
-      //     time = formatTime(apac);
-      //     break;
-      //   case "AUTO":
-      //     date = formatDate(now);
-      //     time = now.toLocaleTimeString();
-      //     break;
-      //   case "NONE":
-      //   default:
-      //     // Keep parsed values
-      //     break;
-      // }
-
+      console.log("match",match1);
+      date = match1[1];
+      time = match1[2];
+      info = match1[4];
       return { date, time, info };
-    });
+    }
 
-    setFileLines(processed);
-  };
+    // 7.3️⃣ FORMAT-2
+    const match2 = line.match(
+      /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
+    );
+
+    if (match2) {
+      date = match2[1];
+      time = match2[2];
+      info = match2[4];
+      return { date, time, info };
+    }
+
+    // 7.4️⃣ Default: basic date-time extraction
+    match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+
+    if (match) {
+      date = match[1];
+      time = match[2];
+      info = match[4];
+    }
+
+    return { date, time, info };
+  });
+
+  setFileLines(processed);
+};
+
 
   useEffect(() => {
     if (fileText) {
@@ -290,57 +288,104 @@ const PropsConfigPerSource = ({
 
     const reader = new FileReader();
 
-    reader.onload = (event) => {
-      const text = event.target.result;
-      if (text === fileText) {
-        console.log("same");
-        return;
+   reader.onload = (event) => {
+  const text = event.target.result;
+
+  if (text === fileText) {
+    console.log("same");
+    return;
+  }
+
+  console.log("text", text);
+
+  // Split lines
+  const textData = text.split("\n").filter(line => line.trim() !== "");
+  console.log("textData", textData);
+
+  setFileText(text);
+
+  // -----------------------------------------
+  // Get prefix dynamically (example: from input)
+  // -----------------------------------------
+  const prefix = inputsFormat.props[sourceType].timePrefix;
+  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  // -----------------------------------------
+  // Dynamic prefix log pattern
+  // -----------------------------------------
+  const prefixRegex = new RegExp(
+    `${escapedPrefix}(\\d{4}-\\d{2}-\\d{2}) (\\d{2}:\\d{2}:\\d{2})${escapedPrefix} ([A-Z]+) (.*?) \\(user=(.*?)\\)`
+  );
+
+  const processedLines = textData
+    .map((line) => {
+
+      // -----------------------------------------
+      // 1. PREFIX FORMAT (dynamic)
+      // -----------------------------------------
+      const matchPrefix = line.match(prefixRegex);
+
+      console.log("matchPrefix", matchPrefix);
+      if (matchPrefix) {
+        return {
+          type: "FORMAT1",
+          date: matchPrefix[1],
+          time: matchPrefix[2],
+          level: matchPrefix[3],
+          message: matchPrefix[4],
+          user: matchPrefix[5],
+        };
       }
-      console.log("text", text);
 
-      // Match both formats
-      const textData = text.match(
-        /(?:\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} [A-Z]+ .*?\(user=.*?\))|(?:\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] [A-Z]+: .*? \| user=.*?)/g
+      // -----------------------------------------
+      // 2. FORMAT 1
+      // -----------------------------------------
+      const match1 = line.match(
+        /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
       );
-      console.log("textData", textData);
 
-      setFileText(text);
+      if (match1) {
+        return {
+          type: "FORMAT1",
+          date: match1[1],
+          time: match1[2],
+          level: match1[3],
+          message: match1[4],
+          user: match1[5],
+        };
+      }
 
-      const processedLines = textData.map((line) => {
-        // Format 1: 2025-10-29 10:35:58 ERROR Database connection lost (user=system)
-        const match1 = line.match(
-          /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
-        );
+      // -----------------------------------------
+      // 3. FORMAT 2
+      // -----------------------------------------
+      const match2 = line.match(
+        /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
+      );
 
-        // Format 2: [2025-10-29 10:01:59] INFO: Low disk space detected | user=user01
-        const match2 = line.match(
-          /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
-        );
+      if (match2) {
+        return {
+          type: "FORMAT2",
+          date: match2[1],
+          time: match2[2],
+          level: match2[3],
+          message: match2[4],
+          user: match2[5],
+        };
+      }
 
-        if (match1) {
-          return {
-            date: match1[1],
-            time: match1[2],
-            level: match1[3],
-            message: match1[4],
-            user: match1[5],
-          };
-        } else if (match2) {
-          return {
-            date: match2[1],
-            time: match2[2],
-            level: match2[3],
-            message: match2[4],
-            user: match2[5],
-          };
-        } else {
-          return null;
-        }
-      }).filter(Boolean); // Remove nulls if any line didn't match
+      return null;
+    })
+    .filter(Boolean);
 
-      setFileLines(processedLines);
-      console.log("processed", processedLines);
-    };
+    
+
+  setFileLines(processedLines);
+  console.log("processed", processedLines);
+};
+
+
+
+
 
     reader.readAsText(file);
   };
@@ -535,7 +580,7 @@ const PropsConfigPerSource = ({
       return <div className="flex flex-col items-start">
         <div className="w-full flex items-center gap-4">
           <label className="w-40 text-sm font-medium text-gray-700">
-            TIME Prefix
+            TIME PREFIX
           </label>
           <input name="timePrefix"
             value={inputsFormat.props[sourceType].timePrefix}
@@ -645,6 +690,39 @@ const PropsConfigPerSource = ({
         </button>
       </div>
     }
+    else if (item === "maximum_lookHead") {
+      return <div className="flex flex-col items-start">
+        <div className="w-full flex items-center gap-4">
+          <label className="w-40 text-sm font-medium text-gray-700">
+          MAXIMUM LOOKHEAD
+          </label>
+          <input name="maximum_lookHead"
+            value={inputsFormat.props[sourceType].maximum_lookHead}
+
+            onChange={(e) => updateIputs(e)}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          {/* <select
+            name="timeFormat"
+            value={inputsFormat.props[sourceType].timeFormat}
+
+            onChange={(e) => updateIputs(e)}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">Select TIME_FORMAT</option>
+            <option value="YYYY-MM-DD HH:mm:ss">YYYY-MM-DD HH:mm:ss</option>
+            <option value="MM-DD-YYYY HH:mm">MM-DD-YYYY HH:mm</option>
+            <option value="DD-MM-YYYY HH:mm:ss">DD-MM-YYYY HH:mm:ss</option>
+            <option value="epoch">Epoch Time (seconds)</option>
+            <option value="iso8601">ISO 8601</option>
+            <option value="custom">Custom</option>
+          </select> */}
+          <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+            Delete
+          </button>
+        </div>
+        
+      </div>
+    }
     else if (item === "lineBreaker") {
       return <div className="flex flex-col items-start">
         <div className="w-full flex items-center gap-4">
@@ -679,7 +757,7 @@ const PropsConfigPerSource = ({
        
       </div>
 
-       {customs.dateTimeCustom && <div className="w-full flex items-center gap-4 mt-1">
+       {customs.lineBreakerCustom && <div className="w-full flex items-center gap-4 mt-1">
           <label className="w-40 text-sm font-medium text-gray-700">
             Line Breaker Format
           </label>
@@ -1109,7 +1187,7 @@ const PropsConfigPerSource = ({
                   {fileLines.map((each, index) => (
                     <tr className="hover:bg-gray-50" key={index}>
                       <td className="px-4 py-2 border border-gray-300">
-                        {dateFormat(each.date, each.time)}
+                        {dateFormat(each.date, each.time).substring(0,inputsFormat.props[sourceType].maximum_lookHead)}
                       </td>
                       <td className="px-4 py-2 border border-gray-300">
                         {each.info}

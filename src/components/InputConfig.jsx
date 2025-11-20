@@ -189,9 +189,11 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
           timePrefix:"",
           timeFormat: "YYYY-MM-DD HH:mm:ss",
           dateTime: "AUTO",
+          maximum_lookHead:"",
           lineBreaker: "newline",
           shouldLine: "",
           truncate: "",
+        
 
         }
       };
