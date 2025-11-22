@@ -28,8 +28,8 @@ const PropsConfigPerSource = ({
     truncate: "",
   });
   const [isCopyConfig, setIsCopyConfig] = useState(false);
-  const [customs, setCustoms] = useState({ dateTimeCustom: false, dateTimeCustomError: false, lineBreakerCustom:false, lineBreakerError:false });
-  const [customsValue, setCustomsValue] = useState({ dateTimeCustomValue: "", lineBreakerCustomValue:"" })
+  const [customs, setCustoms] = useState({ dateTimeCustom: false, dateTimeCustomError: false, lineBreakerCustom: false, lineBreakerError: false });
+  const [customsValue, setCustomsValue] = useState({ dateTimeCustomValue: "", lineBreakerCustomValue: "" })
 
   console.log("each", each);
   console.log("inputss : ", inputsFormat);
@@ -71,6 +71,30 @@ const PropsConfigPerSource = ({
       const updated = { ...prev.props };
 
       let updateSource = { ...updated[sourceType], timeFormat: customsValue.dateTimeCustomValue }
+      console.log("updateSource", updateSource);
+      updated[sourceTypes] = { ...updateSource }; // update only sourceType
+      return { ...prev, props: updated };
+
+    });
+  }
+
+  const addLineBreakerCustomField = () => {
+    // if (!isValidDateFormat(customsValue.dateTimeCustomValue)) {
+    //   setCustoms((prev) => ({
+    //     ...prev,
+    //     dateTimeCustomError: true
+    //   }))
+    //   return;
+    // }
+    setCustoms((prev) => ({
+      ...prev,
+      lineBreakerCustomError: false
+    }))
+    console.log("one", 1);
+    setInputsFormat((prev) => {
+      const updated = { ...prev.props };
+
+      let updateSource = { ...updated[sourceType], lineBreaker: customsValue.lineBreakerCustomValue }
       console.log("updateSource", updateSource);
       updated[sourceTypes] = { ...updateSource }; // update only sourceType
       return { ...prev, props: updated };
@@ -150,120 +174,128 @@ const PropsConfigPerSource = ({
   };
 
   const applyConfigToFile = () => {
-  let delimiter = /\r?\n/; // default: newline
-  console.log("item : ", itemList);
+    let delimiter = /\r?\n/; // default: newline
+    console.log("item : ", itemList);
 
-  // 1️⃣ Handle LINE_BREAKER
-  switch (itemList.lineBreaker) {
-    case "double":
-      delimiter = /\n\n/;
-      break;
-    case "windowsDouble":
-      delimiter = /\r\n\r\n/;
-      break;
-    case "date":
-      delimiter = /\d{4}-\d{2}-\d{2}/;
-      break;
-    case "newline":
-    default:
-      delimiter = /\r?\n/;
-      break;
-  }
+    // 1️⃣ Handle LINE_BREAKER
+    switch (itemList.lineBreaker) {
+      case "double":
+        delimiter = /\n\n/;
+        break;
+      case "windowsDouble":
+        delimiter = /\r\n\r\n/;
+        break;
+      case "date":
+        delimiter = /\d{4}-\d{2}-\d{2}/;
+        break;
+      case "newline":
+      default:
+        delimiter = /\r?\n/;
+        break;
+    }
 
-  // 2️⃣ Prepare dynamic prefix
-  const prefix = inputsFormat.props[sourceType].timePrefix;
-  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    // 2️⃣ Prepare dynamic prefix
+    const prefix = inputsFormat.props[sourceType].timePrefix;
+    const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-  // 3️⃣ Build dynamic prefix REGEX
-  const prefixRegex = escapedPrefix
-    ? new RegExp(
-        `${escapedPrefix}(\\d{4}-\\d{2}-\\d{2}) (\\d{2}:\\d{2}:\\d{2})${escapedPrefix} ([A-Z]+) (.*?) \\(user=(.*?)\\)`
-      )
-    : null;
+    // 3️⃣ Build dynamic prefix REGEX
+    const prefixRegex = escapedPrefix
+      ? new RegExp(inputsFormat.props[sourceType].lineBreaker)
+      : null;
 
-  // 4️⃣ Match ALL log lines (prefix + format1 + format2)
-  let lines =
-    fileText.match(
-      new RegExp(
-        `(?:${escapedPrefix}\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}${escapedPrefix} [A-Z]+ .*?\\(user=.*?\\))|` +
-        `(?:\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} [A-Z]+ .*?\\(user=.*?\\))|` +
-        `(?:\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\] [A-Z]+: .*? \\| user=.*?)`,
-        "g"
-      )
-    ) || [];
+    // 4️⃣ Match ALL log lines (prefix + format1 + format2)
 
-  // 5️⃣ SHOULD_LINE (combine all lines)
-  if (itemList.shouldLine === "true") {
-    lines = [lines.join(" ")];
-  }
+    console.log("prefixRegex", prefixRegex);
+    let lines =
+      fileText.match(
+        new RegExp(
+          `(?:${escapedPrefix}\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}${escapedPrefix} [A-Z]+ .*?\\(user=.*?\\))|` +
+          `(?:\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} [A-Z]+ .*?\\(user=.*?\\))|` +
+          `(?:\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\] [A-Z]+: .*? \\| user=.*?)`,
+          "g"
+        )
+      ) || [];
 
-  // 6️⃣ TRUNCATE
-  if (itemList.truncate && Number(itemList.truncate) > 0) {
-    lines = lines.map((line) => line.substring(0, Number(itemList.truncate)));
-  }
+    // 5️⃣ SHOULD_LINE (combine all lines)
+    if (itemList.shouldLine === "true") {
+      lines = [lines.join(" ")];
+    }
 
-  // 7️⃣ PROCESS EACH LINE
-  const processed = lines.map((line) => {
-    let date = "";
-    let time = "";
-    let info = line;
-    let match;
+    // 6️⃣ TRUNCATE
+    if (itemList.truncate && Number(itemList.truncate) > 0) {
+      lines = lines.map((line) => line.substring(0, Number(itemList.truncate)));
+    }
 
-    console.log("line:", line);
+    // 7️⃣ PROCESS EACH LINE
+    const processed = lines.map((line) => {
+      let date = "";
+      let time = "";
+      let info = line;
+      let match;
 
-    // 7.1️⃣ Try PREFIX FORMAT first if prefix exists
-    if (prefixRegex) {
-      const pMatch = line.match(prefixRegex);
-      if (pMatch) {
-        date = pMatch[1];
-        time = pMatch[2];
-        info = pMatch[4];
+      console.log("line:", line);
 
-        console.log("infos", pMatch);
+      // 7.1️⃣ Try PREFIX FORMAT first if prefix exists
+      let newRegex = inputsFormat.props[sourceType].lineBreaker;
+
+      if (newRegex) {
+        // Remove leading/trailing slashes if present
+        const cleanPattern = newRegex.replace(/^\/|\/$/g, "");
+        const regexObj = new RegExp(cleanPattern);
+
+        console.log("regexObj", regexObj);
+
+        const pMatch = line.match(regexObj);
+        console.log("pMatch", pMatch);
+
+        if (pMatch) {
+          date = pMatch[1];
+          time = pMatch[2];
+          info = pMatch[4];
+          return { date, time, info };
+        }
+      }
+
+      // 7.2️⃣ FORMAT-1
+      const match1 = line.match(
+        /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
+      );
+
+      if (match1) {
+
+        console.log("match", match1);
+        date = match1[1];
+        time = match1[2];
+        info = match1[4];
         return { date, time, info };
       }
-    }
 
-    // 7.2️⃣ FORMAT-1
-    const match1 = line.match(
-      /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
-    );
+      // 7.3️⃣ FORMAT-2
+      const match2 = line.match(
+        /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
+      );
 
-    if (match1) {
+      if (match2) {
+        date = match2[1];
+        time = match2[2];
+        info = match2[4];
+        return { date, time, info };
+      }
 
-      console.log("match",match1);
-      date = match1[1];
-      time = match1[2];
-      info = match1[4];
+      // 7.4️⃣ Default: basic date-time extraction
+      match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+
+      if (match) {
+        date = match[1];
+        time = match[2];
+        info = match[4];
+      }
+
       return { date, time, info };
-    }
+    });
 
-    // 7.3️⃣ FORMAT-2
-    const match2 = line.match(
-      /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
-    );
-
-    if (match2) {
-      date = match2[1];
-      time = match2[2];
-      info = match2[4];
-      return { date, time, info };
-    }
-
-    // 7.4️⃣ Default: basic date-time extraction
-    match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
-
-    if (match) {
-      date = match[1];
-      time = match[2];
-      info = match[4];
-    }
-
-    return { date, time, info };
-  });
-
-  setFileLines(processed);
-};
+    setFileLines(processed);
+  };
 
 
   useEffect(() => {
@@ -288,100 +320,100 @@ const PropsConfigPerSource = ({
 
     const reader = new FileReader();
 
-   reader.onload = (event) => {
-  const text = event.target.result;
+    reader.onload = (event) => {
+      const text = event.target.result;
 
-  if (text === fileText) {
-    console.log("same");
-    return;
-  }
-
-  console.log("text", text);
-
-  // Split lines
-  const textData = text.split("\n").filter(line => line.trim() !== "");
-  console.log("textData", textData);
-
-  setFileText(text);
-
-  // -----------------------------------------
-  // Get prefix dynamically (example: from input)
-  // -----------------------------------------
-  const prefix = inputsFormat.props[sourceType].timePrefix;
-  const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-  // -----------------------------------------
-  // Dynamic prefix log pattern
-  // -----------------------------------------
-  const prefixRegex = new RegExp(
-    `${escapedPrefix}(\\d{4}-\\d{2}-\\d{2}) (\\d{2}:\\d{2}:\\d{2})${escapedPrefix} ([A-Z]+) (.*?) \\(user=(.*?)\\)`
-  );
-
-  const processedLines = textData
-    .map((line) => {
-
-      // -----------------------------------------
-      // 1. PREFIX FORMAT (dynamic)
-      // -----------------------------------------
-      const matchPrefix = line.match(prefixRegex);
-
-      console.log("matchPrefix", matchPrefix);
-      if (matchPrefix) {
-        return {
-          type: "FORMAT1",
-          date: matchPrefix[1],
-          time: matchPrefix[2],
-          level: matchPrefix[3],
-          message: matchPrefix[4],
-          user: matchPrefix[5],
-        };
+      if (text === fileText) {
+        console.log("same");
+        return;
       }
 
+      console.log("text", text);
+
+      // Split lines
+      const textData = text.split("\n").filter(line => line.trim() !== "");
+      console.log("textData", textData);
+
+      setFileText(text);
+
       // -----------------------------------------
-      // 2. FORMAT 1
+      // Get prefix dynamically (example: from input)
       // -----------------------------------------
-      const match1 = line.match(
-        /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
+      const prefix = inputsFormat.props[sourceType].timePrefix;
+      const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+      // -----------------------------------------
+      // Dynamic prefix log pattern
+      // -----------------------------------------
+      const prefixRegex = new RegExp(
+        inputsFormat.props[sourceType].lineBreaker
       );
 
-      if (match1) {
-        return {
-          type: "FORMAT1",
-          date: match1[1],
-          time: match1[2],
-          level: match1[3],
-          message: match1[4],
-          user: match1[5],
-        };
-      }
+      const processedLines = textData
+        .map((line) => {
 
-      // -----------------------------------------
-      // 3. FORMAT 2
-      // -----------------------------------------
-      const match2 = line.match(
-        /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
-      );
+          // -----------------------------------------
+          // 1. PREFIX FORMAT (dynamic)
+          // -----------------------------------------
+          const matchPrefix = line.match(prefixRegex);
 
-      if (match2) {
-        return {
-          type: "FORMAT2",
-          date: match2[1],
-          time: match2[2],
-          level: match2[3],
-          message: match2[4],
-          user: match2[5],
-        };
-      }
+          console.log("matchPrefix", matchPrefix);
+          if (matchPrefix) {
+            return {
+              type: "FORMAT1",
+              date: matchPrefix[1],
+              time: matchPrefix[2],
+              level: matchPrefix[3],
+              message: matchPrefix[4],
+              user: matchPrefix[5],
+            };
+          }
 
-      return null;
-    })
-    .filter(Boolean);
+          // -----------------------------------------
+          // 2. FORMAT 1
+          // -----------------------------------------
+          const match1 = line.match(
+            /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
+          );
 
-    
+          if (match1) {
+            return {
+              type: "FORMAT1",
+              date: match1[1],
+              time: match1[2],
+              level: match1[3],
+              message: match1[4],
+              user: match1[5],
+            };
+          }
 
-  setFileLines(processedLines);
-  console.log("processed", processedLines);
-};
+          // -----------------------------------------
+          // 3. FORMAT 2
+          // -----------------------------------------
+          const match2 = line.match(
+            /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
+          );
+
+          if (match2) {
+            return {
+              type: "FORMAT2",
+              date: match2[1],
+              time: match2[2],
+              level: match2[3],
+              message: match2[4],
+              user: match2[5],
+            };
+          }
+
+          return null;
+        })
+        .filter(Boolean);
+
+
+
+      setFileLines(processedLines);
+      console.log("processed", processedLines);
+    };
 
 
 
@@ -606,7 +638,7 @@ const PropsConfigPerSource = ({
             Delete
           </button>
         </div>
-        
+
       </div>
     }
     if (item === "timeFormat") {
@@ -694,7 +726,7 @@ const PropsConfigPerSource = ({
       return <div className="flex flex-col items-start">
         <div className="w-full flex items-center gap-4">
           <label className="w-40 text-sm font-medium text-gray-700">
-          MAXIMUM LOOKHEAD
+            MAXIMUM LOOKHEAD
           </label>
           <input name="maximum_lookHead"
             value={inputsFormat.props[sourceType].maximum_lookHead}
@@ -720,44 +752,44 @@ const PropsConfigPerSource = ({
             Delete
           </button>
         </div>
-        
+
       </div>
     }
     else if (item === "lineBreaker") {
       return <div className="flex flex-col items-start">
         <div className="w-full flex items-center gap-4">
-        <label className="w-40 text-sm font-medium text-gray-700">
-          LINE BREAKER
-        </label>
-        <select
-          name="lineBreaker"
-          value={inputsFormat.props[sourceType].lineBreaker}
-          // onChange={(e) => {
-          //   setConfigData((prev) => ({
-          //     ...prev,
-          //     lineBreaker: e.target.value,
-          //   }));
-          // }}
-          onChange={(e) => updateIputs(e)}
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        >
-          <option value="">Select Line Breaker</option>
-          <option value="newline">New Line (\r\n)</option>
-          <option value="double">Double New Line (\n\n)</option>
-          <option value="windowsDouble">
-            Windows Double New Line (\r\n\r\n)
-          </option>
-          <option value="date">Date Format (YYYY-MM-DD)</option>
-          <option value="custom">Custom</option>
-        </select>
-        <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
-          Delete
-        </button>
+          <label className="w-40 text-sm font-medium text-gray-700">
+            LINE BREAKER
+          </label>
+          <select
+            name="lineBreaker"
+            value={inputsFormat.props[sourceType].lineBreaker}
+            // onChange={(e) => {
+            //   setConfigData((prev) => ({
+            //     ...prev,
+            //     lineBreaker: e.target.value,
+            //   }));
+            // }}
+            onChange={(e) => updateIputs(e)}
+            className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">Select Line Breaker</option>
+            <option value="newline">New Line (\r\n)</option>
+            <option value="double">Double New Line (\n\n)</option>
+            <option value="windowsDouble">
+              Windows Double New Line (\r\n\r\n)
+            </option>
+            <option value="date">Date Format (YYYY-MM-DD)</option>
+            <option value="custom">Custom</option>
+          </select>
+          <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
+            Delete
+          </button>
 
-       
-      </div>
 
-       {customs.lineBreakerCustom && <div className="w-full flex items-center gap-4 mt-1">
+        </div>
+
+        {customs.lineBreakerCustom && <div className="w-full flex items-center gap-4 mt-1">
           <label className="w-40 text-sm font-medium text-gray-700">
             Line Breaker Format
           </label>
@@ -772,13 +804,13 @@ const PropsConfigPerSource = ({
           />
 
 
-          <button onClick={addCustomField} className="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg">
+          <button onClick={addLineBreakerCustomField} className="px-3 py-1 bg-blue-500 text-white text-sm rounded-lg">
             Add
           </button>
         </div>}
         {customs.dateTimeCustomError && <p className="text-red-600 self-center">In valid format</p>}
       </div>
-      
+
     }
     else if (item === "shouldLine") {
       return <div className="flex items-center gap-4">
@@ -1187,7 +1219,7 @@ const PropsConfigPerSource = ({
                   {fileLines.map((each, index) => (
                     <tr className="hover:bg-gray-50" key={index}>
                       <td className="px-4 py-2 border border-gray-300">
-                        {dateFormat(each.date, each.time).substring(0,inputsFormat.props[sourceType].maximum_lookHead)}
+                        {dateFormat(each.date, each.time).substring(0, inputsFormat.props[sourceType].maximum_lookHead)}
                       </td>
                       <td className="px-4 py-2 border border-gray-300">
                         {each.info}
