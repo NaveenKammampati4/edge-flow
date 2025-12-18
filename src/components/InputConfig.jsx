@@ -4,7 +4,13 @@ import { useState, useEffect } from "react";
 import TransformsConfig from "./TransformsConfig";
 import { IndexConfig } from "./IndexConfig";
 
-const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handleTransforms }) => {
+const InputConfig = ({
+  cancelConfig,
+  each,
+  inputsFormat,
+  setInputsFormat,
+  handleTransforms,
+}) => {
   const [inputsConfigData, setInputsConfigData] = useState({
     filePath: "",
     sourceType: "",
@@ -14,12 +20,20 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
 
   // const[customField, setCustomField]=useState(false);
   // const[cancelCustomField, setCancelCustomField]=useState(false);
-  const [inputCustomFields, setInputCustomFields] = useState(inputsFormat.inputs[each - 1].customFields);
+  const [inputCustomFields, setInputCustomFields] = useState(
+    inputsFormat.inputs[each - 1].customFields
+  );
   const [newkey, setNewKey] = useState("");
   const [value, setValue] = useState("");
   const [mode, setMode] = useState("appName");
   const [indexName, setIndexName] = useState("");
   const [suggestions, setSuggestions] = useState([]);
+  const [customFieldError, setCustomFieldError] = useState("");
+  const [editCustomField, setEditCustomField] = useState({});
+  const [customFieldRowErrors, setCustomFieldRowErrors] = useState({});
+  const [tempSourceType, setTempSourceType] = useState(
+    inputsFormat.inputs[each - 1].sourceType || ""
+  );
 
   const existingIndexes = ["users_index", "orders_index", "products_index"];
   const possibleSuffixes = ["_logs", "_data"];
@@ -31,7 +45,6 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
     console.log("Current suggestions:", suggestions);
 
     if (value.trim() !== "") {
-
       const generated = possibleSuffixes.map((suffix) => suffix);
       setSuggestions(generated);
     } else {
@@ -39,87 +52,196 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
     }
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      updatedInputs[each - 1] = { ...updatedInputs[each - 1], index: inputsFormat.indexName }; 
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        index: inputsFormat.indexName,
+      };
       return {
         ...prev,
         inputs: updatedInputs,
-        
       };
+    });
+  }, [inputsFormat.indexName]);
 
+  // const handleAddCustomField = () => {
+  //   // setInputCustomFields([...inputCustomFields, { key: "", value: "" }]);
+  //   if (newkey !== "" && value !== "") {
+  //     setInputsFormat((prev) => {
+  //       const updatedInputs = [...prev.inputs];
+  //       console.log("update", updatedInputs[each - 1]);
 
-    })
-  },[inputsFormat.indexName])
+  //       const updatedCustomInputs = [
+  //         ...updatedInputs[each - 1].customFields,
+  //         { [newkey]: value }
+  //       ];
 
+  //       updatedInputs[each - 1] = {
+  //         ...updatedInputs[each - 1],
+  //         customFields: updatedCustomInputs
+  //       };
+
+  //       return {
+  //         ...prev,
+  //         inputs: updatedInputs
+  //       };
+  //     });
+  //   }
+  //   else {
+  //     setInputsFormat((prev) => {
+  //       const updatedInputs = [...prev.inputs];
+  //       console.log("update", updatedInputs[each - 1]);
+
+  //       const updatedCustomInputs = [
+  //         ...updatedInputs[each - 1].customFields,
+  //         {}
+  //       ];
+
+  //       updatedInputs[each - 1] = {
+  //         ...updatedInputs[each - 1],
+  //         customFields: updatedCustomInputs
+  //       };
+
+  //       return {
+  //         ...prev,
+  //         inputs: updatedInputs
+  //       };
+  //     });
+  //   }
+  //   setNewKey("");
+  //   setValue("");
+
+  // };
 
   const handleAddCustomField = () => {
-    // setInputCustomFields([...inputCustomFields, { key: "", value: "" }]);
-    if (newkey !== "" && value !== "") {
-      setInputsFormat((prev) => {
-        const updatedInputs = [...prev.inputs];
-        console.log("update", updatedInputs[each - 1]);
-
-        const updatedCustomInputs = [
-          ...updatedInputs[each - 1].customFields,
-          { [newkey]: value }
-        ];
-
-        updatedInputs[each - 1] = {
-          ...updatedInputs[each - 1],
-          customFields: updatedCustomInputs
-        };
-
-        return {
-          ...prev,
-          inputs: updatedInputs
-        };
-      });
+    const trimmedKey = newkey.trim();
+    const trimmedValue = value.trim();
+    // Empty validation
+    if (!trimmedKey) {
+      setCustomFieldError("Key Cannot be empty");
+      return;
     }
-    else {
-      setInputsFormat((prev) => {
-        const updatedInputs = [...prev.inputs];
-        console.log("update", updatedInputs[each - 1]);
-
-        const updatedCustomInputs = [
-          ...updatedInputs[each - 1].customFields,
-          {}
-        ];
-
-        updatedInputs[each - 1] = {
-          ...updatedInputs[each - 1],
-          customFields: updatedCustomInputs
-        };
-
-        return {
-          ...prev,
-          inputs: updatedInputs
-        };
-      });
+    if (!trimmedValue) {
+      setCustomFieldError("Value Cannot be empty");
+      return;
     }
+    //Duplicate Validation
+    const isDuplicate = inputsFormat.inputs[each - 1].customFields.some(
+      (field) => Object.keys(field)[0] === trimmedKey
+    );
+    if (isDuplicate) {
+      setCustomFieldError("Duplicate key is not allowed");
+      return;
+    }
+    setCustomFieldError("");
+    setInputsFormat((prev) => {
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        customFields: [
+          ...updatedInputs[each - 1].customFields,
+          { [trimmedKey]: trimmedValue },
+        ],
+      };
+      return {
+        ...prev,
+        inputs: updatedInputs,
+      };
+    });
     setNewKey("");
     setValue("");
+  };
 
+  const handleUpdateCustomField = (index) => {
+    const { key, value } = editCustomField[index] || {};
+
+    const trimmedKey = key?.trim();
+    const trimmedValue = value?.trim();
+
+    //Empty validation
+    if (!trimmedKey) {
+      setCustomFieldRowErrors((prev) => ({
+        ...prev,
+        [index]: "Key cannot be empty",
+      }));
+      return;
+    }
+
+    if (!trimmedValue) {
+      setCustomFieldRowErrors((prev) => ({
+        ...prev,
+        [index]: "Value cannot be empty",
+      }));
+      return;
+    }
+
+    //Duplicate validation
+    const isDuplicate = inputsFormat.inputs[each - 1].customFields.some(
+      (field, i) => i !== index && Object.keys(field)[0] === trimmedKey
+    );
+
+    if (isDuplicate) {
+      setCustomFieldRowErrors((prev) => ({
+        ...prev,
+        [index]: "Duplicate key is not allowed",
+      }));
+      return;
+    }
+
+    //Clear error for this row
+    setCustomFieldRowErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[index];
+      return copy;
+    });
+
+    //Update only this row
+    setInputsFormat((prev) => {
+      const updatedInputs = [...prev.inputs];
+      const updatedFields = [...updatedInputs[each - 1].customFields];
+
+      updatedFields[index] = { [trimmedKey]: trimmedValue };
+
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        customFields: updatedFields,
+      };
+
+      return {
+        ...prev,
+        inputs: updatedInputs,
+      };
+    });
+
+    // Clear edit cache for this row
+    setEditCustomField((prev) => {
+      const copy = { ...prev };
+      delete copy[index];
+      return copy;
+    });
   };
 
   const deleteCustomField = (delVal) => {
-    const updatedCustomFileds = inputsFormat.inputs[each - 1].customFields.filter((each, index) => index !== delVal);
+    const updatedCustomFileds = inputsFormat.inputs[
+      each - 1
+    ].customFields.filter((each, index) => index !== delVal);
     console.log("updatedCustomFileds", updatedCustomFileds);
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
       console.log("update", updatedInputs[each - 1]);
       updatedInputs[each - 1] = {
         ...updatedInputs[each - 1],
-        customFields: updatedCustomFileds
+        customFields: updatedCustomFileds,
       };
 
       return {
         ...prev,
-        inputs: updatedInputs
+        inputs: updatedInputs,
       };
     });
-  }
+  };
 
   const handleRemoveCustomField = (index) => {
     const updatedFields = inputCustomFields.filter((_, i) => i !== index);
@@ -138,28 +260,31 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
   //   setCancelCustomField(false);
   // }
   const item = inputsFormat.inputs[each - 1];
+  const committedSourceType = item.sourceType;
+  const hasProps = Boolean(inputsFormat.props[committedSourceType]);
+
   console.log("itemsinput : ", inputsFormat.inputs);
 
   const addNewIndex = (value) => {
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      updatedInputs[each - 1] = { ...updatedInputs[each - 1], index: value }; 
+      updatedInputs[each - 1] = { ...updatedInputs[each - 1], index: value };
       return {
         ...prev,
         inputs: updatedInputs,
-        indexConfig:{...prev.indexConfig,
-                        [value]:{
-                        hotPath: "",
-                        coldPath: "",
-                        thawedPath: "",
-                        MAXsize: "",
-                        retentionTime: "",
-                        customFields: []
-                      }}
+        indexConfig: {
+          ...prev.indexConfig,
+          [value]: {
+            hotPath: "",
+            coldPath: "",
+            thawedPath: "",
+            MAXsize: "",
+            retentionTime: "",
+            customFields: [],
+          },
+        },
       };
-
-
-    })
+    });
   };
 
   const updateIputs = (e) => {
@@ -168,42 +293,105 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
     console.log("value", value);
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      updatedInputs[each - 1] = { ...updatedInputs[each - 1], [name]: value }; 
+      updatedInputs[each - 1] = { ...updatedInputs[each - 1], [name]: value };
       return {
         ...prev,
-        inputs: updatedInputs
+        inputs: updatedInputs,
       };
-
-
-    })
+    });
   };
 
-  const addProps = () => {
-    let sType = inputsFormat.inputs[each - 1].sourceType;
-    console.log(sType);
+  // const addProps = () => {
+  //   let sourceTypeData = inputsFormat.inputs[each - 1].sourceType;
+  //   if (sourceTypeData.trim() === "") {
+  //     alert("Please fill source file");
+  //     return;
+  //   }
 
+  //   let sType = inputsFormat.inputs[each - 1].sourceType;
+  //   console.log(sType);
+
+  //   setInputsFormat((prev) => {
+  //     let updateProps = { ...prev.props };
+  //     updateProps = {
+  //       ...updateProps,
+  //       [sType]: {
+  //         timePrefix: "",
+  //         timeFormat: "YYYY-MM-DD HH:mm:ss",
+  //         dateTime: "AUTO",
+  //         maximum_lookHead: "",
+  //         lineBreaker: "newline",
+  //         shouldLine: "",
+  //         truncate: "",
+  //       },
+  //     };
+  //     return {
+  //       ...prev,
+  //       props: updateProps,
+  //       // props: updatedProps,
+  //     };
+  //   });
+  // };
+
+  const updateProps=()=>{
+    const trimmedSourceType = tempSourceType.trim();
     setInputsFormat((prev) => {
       let updateProps = { ...prev.props };
-      updateProps = {
-        ...updateProps, [sType]: {
-          timePrefix:"",
-          timeFormat: "YYYY-MM-DD HH:mm:ss",
-          dateTime: "AUTO",
-          maximum_lookHead:"",
-          lineBreaker: "newline",
-          shouldLine: "",
-          truncate: "",
-        
-
-        }
+      let sType=Object.keys(updateProps)[0];
+      let pProp = updateProps[sType];
+      console.log("pProp", pProp);
+//       const updated = Object.fromEntries(
+//   Object.entries(pProp).filter(([key]) => key !== val)
+// );
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        sourceType: trimmedSourceType,
       };
+      updateProps = {[trimmedSourceType]: pProp};
       return {
         ...prev,
+         inputs: updatedInputs,
         props: updateProps,
         // props: updatedProps,
       };
     })
   }
+
+  const addProps = () => {
+    const trimmedSourceType = tempSourceType.trim();
+
+    if (!trimmedSourceType) {
+      alert("Source Type cannot be empty");
+      return;
+    }
+
+    // ✅ Commit source type ONLY here
+    setInputsFormat((prev) => {
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        sourceType: trimmedSourceType,
+      };
+
+      return {
+        ...prev,
+        inputs: updatedInputs,
+        props: {
+          ...prev.props,
+          [trimmedSourceType]: {
+            timePrefix: "",
+            timeFormat: "YYYY-MM-DD HH:mm:ss",
+            dateTime: "AUTO",
+            maximum_lookHead: "",
+            lineBreaker: "newline",
+            shouldLine: "",
+            truncate: "",
+          },
+        },
+      };
+    });
+  };
 
   const addField = () => {
     let sTypeField = inputsFormat.inputs[each - 1].customFields;
@@ -212,37 +400,33 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
     setInputsFormat((prev) => {
       let updateField = { ...prev.inputs };
       updateField = {
-        ...updateField, [sTypeField]: {
+        ...updateField,
+        [sTypeField]: {
           inputKey: "",
           inputValue: "",
-
-
-        }
+        },
       };
       return {
         ...prev,
         props: updateField,
         // props: updatedProps,
       };
-    })
+    });
+  };
 
-  }
-
-  console.log(inputsFormat)
-
+  console.log(inputsFormat);
 
   console.log("length : ", inputsFormat.inputs.length);
 
   return (
     <div>
-      <div className="flex flex-col shadow-md rounded-2xl p-6 w-full">
+      <div className="  ">
         <div className="flex flex-wrap gap-2 ">
           <div className="flex flex-col w-48 min-w-[150px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
               File Path
             </label>
             <input
-
               value={item.filePath}
               name="filePath"
               onChange={(e) => updateIputs(e)}
@@ -255,30 +439,61 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
             <label className="text-sm font-medium text-gray-700 mb-1">
               Source Type
             </label>
+
             <input
-              name="sourceType"
-              value={item.sourceType}
-              onChange={(e) => updateIputs(e)}
               type="text"
+              value={tempSourceType}
+              onChange={(e) => setTempSourceType(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter source type"
             />
           </div>
           <div className="flex flex-col w-48">
-                <label htmlFor="appIndex" className=" text-sm font-medium text-gray-700  mb-1">
-                  Index (from App Name)
-                </label>
-                <input
-                  id="appIndex"
-                  type="text"
-                  value={inputsFormat.indexName || ""}
-                  readOnly
-                  className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                  placeholder="App Name’s index"
-                />
-
-                
-              </div>
+            <label
+              htmlFor="appIndex"
+              className=" text-sm font-medium text-gray-700  mb-1"
+            >
+              Index (from App Name)
+            </label>
+            <input
+              id="appIndex"
+              type="text"
+              value={inputsFormat.indexName || ""}
+              readOnly
+              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+              placeholder="App Name’s index"
+            />
+          </div>
+          <div className="flex flex-col w-48">
+            <label
+              htmlFor="whitelist"
+              className=" text-sm font-medium text-gray-700  mb-1"
+            >
+              WhiteList
+            </label>
+            <input
+              id="whitelist"
+              type="text"
+              // value={inputsFormat.indexName || ""}
+              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+              placeholder="whitelist"
+            />
+          </div>
+          <div className="flex flex-col w-48">
+            <label
+              htmlFor="blacklist"
+              className=" text-sm font-medium text-gray-700  mb-1"
+            >
+              BlackList
+            </label>
+            <input
+              id="blacklist"
+              type="text"
+              // value={inputsFormat.indexName || ""}
+              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+              placeholder="blacklist"
+            />
+          </div>
           {/* <div className="flex flex-col w-1/4 min-w-[200px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
               Index (Optional)
@@ -423,23 +638,46 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
             )}
           </div> */}
 
-          
           <div className="flex flex-col">
             <div className="flex flex-row gap-2 mt-6">
-              <button
+              {/* {inputsFormat.inputs[each-1].sourceType} */}
+              {/* <button
                 onClick={addProps}
                 className=" bg-blue-500 text-white px-3 py-2 rounded-lg shadow hover:bg-blue-600 cursor-pointer"
               >
                 Add Props
-              </button>
+              </button> */}
+
+              {!hasProps ? (
+                /* 🟦 ADD MODE */
+                <button
+                  onClick={addProps}
+                  disabled={!tempSourceType.trim()}
+                  className={`px-3 py-2 rounded-lg shadow text-white
+      ${
+        tempSourceType.trim()
+          ? "bg-blue-500 hover:bg-blue-600 cursor-pointer"
+          : "bg-gray-300 cursor-not-allowed"
+      }`}
+                >
+                  Add Props
+                </button>
+              ) : (
+                /* 🟩 UPDATE MODE */
+                <button
+                  onClick={updateProps}
+                  className="px-3 py-2 rounded-lg shadow bg-green-500 text-white hover:bg-green-600"
+                >
+                  Update Props
+                </button>
+              )}
+
               <button
                 onClick={() => cancelConfig(each)}
                 className=" px-3 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
               >
                 Cancel
               </button>
-
-              
             </div>
           </div>
         </div>
@@ -449,20 +687,28 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
           </h3>
 
           <div className="flex flex-row gap-2">
-            <input
-              onChange={(e) => setNewKey(e.target.value)}
-              value={newkey}
-              type="text"
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
-              placeholder="Key"
-            />
-            <input
-              onChange={(e) => setValue(e.target.value)}
-              value={value}
-              type="text"
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
-              placeholder="Value"
-            />
+            <div>
+              <input
+                onChange={(e) => setNewKey(e.target.value)}
+                value={newkey}
+                type="text"
+                className="px-3 py-2 mr-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
+                placeholder="Key"
+              />
+              <input
+                onChange={(e) => setValue(e.target.value)}
+                value={value}
+                type="text"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
+                placeholder="Value"
+              />
+              {customFieldError && (
+                <p className="text-sm text-red-500 mt-1 ml-1">
+                  {customFieldError}
+                </p>
+              )}
+            </div>
+
             <div>
               <button
                 onClick={handleAddCustomField}
@@ -473,50 +719,86 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
             </div>
           </div>
 
-
           {inputsFormat.inputs[each - 1].customFields.length > 0 ? (
             inputsFormat.inputs[each - 1].customFields.map((field, index) => {
-              const key = Object.keys(field)[0];
-              const value = field[key];
-              return <div className="flex flex-row gap-2 mt-2">
-                <input
-                  onChange={(e) => setNewKey(e.target.value)}
-                  value={key}
-                  type="text"
-                  className="px-3 py-2 w-48 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Key"
-                />
-                <input
-                  onChange={(e) => setValue(e.target.value)}
-                  value={value}
-                  type="text"
-                  className="px-3 py-2 w-48 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Value"
-                />
-                <div>
-                  <button
-                    onClick={() => deleteCustomField(index)}
-                    className="p-2 ml-2 max-w-20 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  {/* <button
-                    onClick={addField}
-                    className="p-2 ml-4 max-w-20 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition cursor-pointer"
-                  >
-                    Add
-                  </button> */}
-                </div>
+              const originalKey = Object.keys(field)[0];
+              const originalValue = field[originalKey];
 
-              </div>
+              const currentEdit = editCustomField[index] || {
+                key: originalKey,
+                value: originalValue,
+              };
+
+              return (
+                <div key={index}>
+                  <div className="flex flex-row gap-2 mt-2 items-center">
+                    <input
+                      type="text"
+                      value={currentEdit.key}
+                      className="px-3 py-2 w-48 border border-gray-300 rounded-lg"
+                      onChange={(e) => {
+                        setEditCustomField((prev) => ({
+                          ...prev,
+                          [index]: {
+                            ...currentEdit,
+                            key: e.target.value,
+                          },
+                        }));
+                      }}
+                      placeholder="Key"
+                    />
+
+                    <input
+                      type="text"
+                      value={currentEdit.value}
+                      className="px-3 py-2 w-48 border border-gray-300 rounded-lg"
+                      onChange={(e) => {
+                        setEditCustomField((prev) => ({
+                          ...prev,
+                          [index]: {
+                            ...currentEdit,
+                            value: e.target.value,
+                          },
+                        }));
+                      }}
+                      placeholder="Value"
+                    />
+
+                    {/* ✅ Update button only when row is changed */}
+                    {(currentEdit.key !== originalKey ||
+                      currentEdit.value !== originalValue) && (
+                      <button
+                        onClick={() => handleUpdateCustomField(index)}
+                        className="px-3 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600"
+                      >
+                        Update
+                      </button>
+                    )}
+
+                    <button
+                      onClick={() => deleteCustomField(index)}
+                      className="px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  {/* Row-level error */}
+                  {customFieldRowErrors[index] && (
+                    <p className="text-sm text-red-500 mt-1 ml-1">
+                      {customFieldRowErrors[index]}
+                    </p>
+                  )}
+                </div>
+              );
             })
           ) : (
             <p className="text-sm mt-2 ml-1">No Custom fields added yet.</p>
           )}
-
         </div>
       </div>
-       {/* {inputsFormat.inputs[each-1].index &&
+
+      {/* {inputsFormat.inputs[each-1].index &&
                 
                   <IndexConfig key={inputsFormat.inputs[each-1].index} indexName={inputsFormat.inputs[each-1].index} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
                 

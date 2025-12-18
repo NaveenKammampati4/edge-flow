@@ -1,32 +1,53 @@
 import React, { useState, useEffect } from "react";
 
-const TransformsConfig = ({ transforms, setTransforms,each, updateTransform, newKey, inputsFormat, setInputsFormat, updateIputs }) => {
+const TransformsConfig = ({
+  transforms,
+  setTransforms,
+  each,
+  updateTransform,
+  newKey,
+  inputsFormat,
+  setInputsFormat,
+  deleteTransformEverywhere,
+  updateIputs,
+}) => {
   const [logFile, setLogFile] = useState(null);
   const [logs, setLogs] = useState([]);
   const [transformedLogs, setTransformedLogs] = useState({});
   const [filterView, setFilterView] = useState("All");
-  const d=inputsFormat.transform[newKey];
-  console.log("d",d);
-  const transformsVal={[newKey]:d};
+  const d = inputsFormat.transform[newKey];
+  console.log("d", d);
+  const transformsVal = { [newKey]: d };
 
   const handleChange = (index, field, value) => {
     const updated = [...transforms];
     updated[index][field] = value;
     setTransforms(updated);
   };
-  
 
   // const keyTypes=inputsFormat.props[each-1][newKey];
   // console.log("key Types : ", keyTypes);
   // const item = inputsFormat.transform[keyTypes];
 
   //  const updated = [...transforms];
-   
+
   //   setTransforms(updated);
 
-  const handleDelete = (index) => {
-    const updated = transforms.filter((_, i) => i !== index);
-    setTransforms(updated);
+  // const handleDelete = (index) => {
+  //   const updated = transforms.filter((_, i) => i !== index);
+  //   setTransforms(updated);
+  // };
+
+  const handleDelete = (name) => {
+    setInputsFormat((prev) => {
+      const updated = { ...prev.transform };
+      delete updated[name];
+
+      return {
+        ...prev,
+        transform: updated,
+      };
+    });
   };
 
   const handleReadLogFile = () => {
@@ -42,7 +63,9 @@ const TransformsConfig = ({ transforms, setTransforms,each, updateTransform, new
 
   const applyTransforms = (lines) => {
     const results = {};
-    const transformArray = Object.entries(inputsFormat.transform || {}).map(([name,t]) => ({name, ...t}));
+    const transformArray = Object.entries(inputsFormat.transform || {}).map(
+      ([name, t]) => ({ name, ...t })
+    );
 
     lines.forEach((line) => {
       let modifiedLine = line;
@@ -86,7 +109,7 @@ const TransformsConfig = ({ transforms, setTransforms,each, updateTransform, new
     }
   }, [logs]);
 
-  console.log("transforms : ", transforms);
+  // console.log("transforms : ", transforms);
 
   console.log("updateInputs : ", updateIputs);
 
@@ -99,36 +122,35 @@ const TransformsConfig = ({ transforms, setTransforms,each, updateTransform, new
       <h2 className="font-bold text-2xl">Transforms Config</h2>
       <hr />
       <div className="grid grid-cols-[2fr_1fr_1fr] gap-2.5 md:flex-row mt-4">
-        
         <div className="space-y-4">
           {Object.entries(transformsVal || {}).map(([name, t]) => (
             <div
-             key={name}
+              key={name}
               className="border items-start border-gray-200 rounded-2xl p-6 bg-gray-50"
             >
               <div className="flex justify-between items-center">
                 <h2>
-                  Transform:{" "}
-                  <span className="font-bold">
-                      {name}
-                    </span>
+                  Transform: <span className="font-bold">{name}</span>
                 </h2>
                 <button
-                  onClick={() => handleDelete(index)}
-                  className="bg-red-500 text-white rounded-xl p-2"
-                >
-                  Delete
-                </button>
+  onClick={() => deleteTransformEverywhere(newKey)}
+  className="bg-red-500 text-white rounded-xl p-2"
+>
+  Delete
+</button>
+
               </div>
               <div className="flex flex-col mt-2">
                 <label className="text-blue-700">REGEX</label>
                 <textarea
-                  name = "regex"
+                  name="regex"
                   value={t.regex || ""}
                   // onChange={(e) =>
                   //   handleChange( "regex", e.target.value)
                   // }
-                  onChange={(e) => updateTransform(name, "regex", e.target.value)}
+                  onChange={(e) =>
+                    updateTransform(name, "regex", e.target.value)
+                  }
                   className="bg-white border border-gray-300 rounded-xl h-20"
                 />
               </div>
@@ -136,11 +158,13 @@ const TransformsConfig = ({ transforms, setTransforms,each, updateTransform, new
                 <label className="text-blue-700">FORMAT</label>
                 <input
                   name="format"
-                   value={t.format || ""}
+                  value={t.format || ""}
                   // onChange={(e) =>
                   //   handleChange( "format", e.target.value)
                   // }
-                  onChange={(e) => updateTransform(name, "format", e.target.value)}
+                  onChange={(e) =>
+                    updateTransform(name, "format", e.target.value)
+                  }
                   className="bg-white border border-gray-300 rounded-xl h-10"
                 />
               </div>
@@ -152,12 +176,14 @@ const TransformsConfig = ({ transforms, setTransforms,each, updateTransform, new
                   // onChange={(e) =>
                   //   handleChange("destKey", e.target.value)
                   // }
-                  onChange={(e) => updateTransform(name, "destKey", e.target.value)}
+                  onChange={(e) =>
+                    updateTransform(name, "destKey", e.target.value)
+                  }
                   className="bg-white border border-gray-300 rounded-xl h-10"
                 />
               </div>
             </div>
-          ))} 
+          ))}
         </div>
 
         <div className="flex flex-col items-start">
@@ -210,9 +236,7 @@ const TransformsConfig = ({ transforms, setTransforms,each, updateTransform, new
                 ) {
                   return (
                     <div key={key}>
-                      <h4 className="font-bold text-green-400 mb-1">
-                        {key}:
-                      </h4>
+                      <h4 className="font-bold text-green-400 mb-1">{key}:</h4>
                       <pre className="whitespace-pre-wrap">
                         {transformedLogs[key].join("\n")}
                       </pre>
