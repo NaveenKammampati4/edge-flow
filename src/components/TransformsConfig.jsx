@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 const TransformsConfig = ({
+  file,
   transforms,
   setTransforms,
   each,
@@ -11,7 +12,7 @@ const TransformsConfig = ({
   deleteTransformEverywhere,
   updateIputs,
 }) => {
-  const [logFile, setLogFile] = useState(null);
+  const [logFile, setLogFile] = useState(file);
   const [logs, setLogs] = useState([]);
   const [transformedLogs, setTransformedLogs] = useState({});
   const [filterView, setFilterView] = useState("All");
@@ -24,6 +25,8 @@ const TransformsConfig = ({
     updated[index][field] = value;
     setTransforms(updated);
   };
+
+  console.log("logfile",logFile)
 
   // const keyTypes=inputsFormat.props[each-1][newKey];
   // console.log("key Types : ", keyTypes);
@@ -201,6 +204,7 @@ const TransformsConfig = ({
             onChange={(e) => setLogFile(e.target.files[0])}
             className="items-center text-center border border-blue-400 rounded-lg p-2 mt-2"
           />
+          {logFile&& <p>{logFile.name}</p>}
           <button
             onClick={handleReadLogFile}
             className="mt-2 bg-indigo-600 text-white px-3 py-1 rounded-lg"

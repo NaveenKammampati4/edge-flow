@@ -1755,6 +1755,7 @@ const tableHeaders = isCustomLineBreaker
             //   updateIputs={updateIputs}
             // />
             <TransformsConfig
+            file={file}
               key={key}
               each={each}
               newKey={key}
