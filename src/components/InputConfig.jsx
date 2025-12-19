@@ -35,8 +35,9 @@ const InputConfig = ({
     inputsFormat.inputs[each - 1].sourceType || ""
   );
 
-  const existingIndexes = ["users_index", "orders_index", "products_index"];
+  const existingIndexes = ["users_index", "orders_index", "products_index","userData_meterics"];
   const possibleSuffixes = ["_logs", "_data"];
+  
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -51,6 +52,12 @@ const InputConfig = ({
       setSuggestions([]);
     }
   };
+
+  console.log("aaaaab",inputsFormat.inputs[each - 1])
+
+  useEffect(()=>{
+    setTempSourceType(inputsFormat.inputs[each - 1].sourceType || "")
+  },[inputsFormat.inputs[each - 1].sourceType])
 
   useEffect(() => {
     setInputsFormat((prev) => {
@@ -128,13 +135,44 @@ const InputConfig = ({
       return;
     }
     //Duplicate Validation
-    const isDuplicate = inputsFormat.inputs[each - 1].customFields.some(
-      (field) => Object.keys(field)[0] === trimmedKey
-    );
-    if (isDuplicate) {
-      setCustomFieldError("Duplicate key is not allowed");
-      return;
-    }
+    // const isDuplicate = inputsFormat.inputs[each - 1].customFields.some(
+    //   (field) => Object.keys(field)[0] === trimmedKey
+    // );
+    // if (isDuplicate) {
+    //   setCustomFieldError("Duplicate key is not allowed");
+    //   return;
+    // }
+
+    // 🔹 Normalize key
+const keyToCheck = trimmedKey.toLowerCase();
+
+//Check customFields
+const customFields =
+  inputsFormat.inputs?.[each - 1]?.customFields || [];
+
+const isDuplicateCustomField = customFields.some((field) => {
+  const [key] = Object.keys(field);
+  return key?.toLowerCase() === keyToCheck;
+});
+
+if (isDuplicateCustomField) {
+  setCustomFieldError("Duplicate key already exists in custom fields");
+  return;
+}
+
+//Check input-level fields
+const inputFields = inputsFormat.inputs?.[each - 1] || {};
+
+const isDuplicateInputField = Object.keys(inputFields).some(
+  (key) => key.toLowerCase() === keyToCheck
+);
+
+if (isDuplicateInputField) {
+  setCustomFieldError("Key conflicts with existing input field");
+  return;
+}
+
+    
     setCustomFieldError("");
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
@@ -383,10 +421,10 @@ const InputConfig = ({
             timePrefix: "",
             timeFormat: "YYYY-MM-DD HH:mm:ss",
             dateTime: "AUTO",
-            maximum_lookHead: "",
-            lineBreaker: "newline",
-            shouldLine: "",
-            truncate: "",
+            maximum_lookHead: 50,
+            lineBreaker: "",
+            shouldLine: false,
+            truncate: 100,
           },
         },
       };
@@ -649,21 +687,21 @@ const InputConfig = ({
               </button> */}
 
               {!hasProps ? (
-                /* 🟦 ADD MODE */
+                /*ADD MODE */
                 <button
                   onClick={addProps}
                   disabled={!tempSourceType.trim()}
                   className={`px-3 py-2 rounded-lg shadow text-white
-      ${
-        tempSourceType.trim()
-          ? "bg-blue-500 hover:bg-blue-600 cursor-pointer"
-          : "bg-gray-300 cursor-not-allowed"
-      }`}
+              ${
+                tempSourceType.trim()
+                  ? "bg-blue-500 hover:bg-blue-600 cursor-pointer"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
                 >
                   Add Props
                 </button>
               ) : (
-                /* 🟩 UPDATE MODE */
+                /* UPDATE MODE */
                 <button
                   onClick={updateProps}
                   className="px-3 py-2 rounded-lg shadow bg-green-500 text-white hover:bg-green-600"
@@ -673,7 +711,7 @@ const InputConfig = ({
               )}
 
               <button
-                onClick={() => cancelConfig(each)}
+                onClick={() => {cancelConfig(each)}}
                 className=" px-3 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
               >
                 Cancel

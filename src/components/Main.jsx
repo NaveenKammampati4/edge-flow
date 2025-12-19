@@ -45,9 +45,23 @@ const Main = () => {
       indexName: "",
     }));
 
+    // if (value.trim() !== "") {
+    //   const generated = possibleSuffixes.map((suffix) => suffix);
+    //   setSuggestions(generated);
+    // } else {
+    //   setSuggestions([]);
+    // }
+
     if (value.trim() !== "") {
-      const generated = possibleSuffixes.map((suffix) => suffix);
-      setSuggestions(generated);
+      const appBase = inputsFormat.appName?.trim();
+
+      const generated = [
+        value, //user typed
+        appBase, // app name
+        ...(appBase ? possibleSuffixes.map((suf) => `${appBase}${suf}`) : []),
+      ];
+
+      setSuggestions([...new Set(generated.filter(Boolean))]);
     } else {
       setSuggestions([]);
     }
@@ -272,7 +286,8 @@ const Main = () => {
       ? value.slice(0, value.length - matchedSuffix.length)
       : value;
 
-    const generated = existingAppName.map((suf) => `${base}${suf}`);
+    // const generated = existingAppName.map((suf) => `${base}${suf}`);
+    const generated = [value, ...existingAppName.map((suf) => `${base}${suf}`)];
 
     setAppNameSuggestions(generated);
   };
@@ -287,6 +302,8 @@ const Main = () => {
         filePath: "",
         sourceType: "",
         index: "",
+        whiteList: "",
+        blackList: "",
         customFields: [],
       },
     ],
@@ -316,8 +333,51 @@ const Main = () => {
   //   }
   // };
 
+  // const cancelConfig = (val) => {
+  //   // ❌ Prevent deleting last input
+
+  //   val = val - 1;
+  //   console.log("valsss", val);
+  //   console.log("inputtttsssss", inputsFormat);
+  //   if (inputsFormat.inputs.length === 1) {
+  //     setInputDeleteError("At least one input configuration is required.");
+  //     return;
+  //   }
+
+  //   setInputDeleteError("");
+
+  //   setInputsFormat((prev) => {
+  //     // find input being removed
+  //     const removedInput = prev.inputs.find((i, index) => index === val);
+
+  //     // remove input
+  //     const updatedInputs = prev.inputs.filter((i, index) => index == val);
+
+  //     // remove related props
+  //     const updatedProps = { ...prev.props };
+  //     if (removedInput?.sourceType) {
+  //       delete updatedProps[removedInput.sourceType];
+  //     }
+
+  //     return {
+  //       ...prev,
+  //       inputs: updatedInputs,
+  //       props: updatedProps,
+  //     };
+  //   });
+
+  //   // update UI list AFTER main object update
+  //   setInputsConfigList((prev) => prev.filter((id) => id !== val));
+  // };
+
   const cancelConfig = (val) => {
-    // ❌ Prevent deleting last input
+    // alert("value: " + val);
+    // let count = 0;
+    // let count1 = 0;
+    // alert("count1: " + count1);
+    //  Prevent deleting last input
+
+    console.log("val", val)
     if (inputsFormat.inputs.length === 1) {
       setInputDeleteError("At least one input configuration is required.");
       return;
@@ -327,16 +387,32 @@ const Main = () => {
 
     setInputsFormat((prev) => {
       // find input being removed
-      const removedInput = prev.inputs.find((i) => i.id === val);
+      // const removedInput = prev.inputs.find((i) => i.id === val);
+      // alert((count++) + "removed Input: "+removedInput.value);
+      const removedInput = prev.inputs.find((i,index) => index+1 === val);
+
+      if (!removedInput) return;
+
+      Object.entries(removedInput).forEach(([key, value]) => {
+        console.log(`${key}:`, value);
+      });
+
+      // alert(`${count++} Input removed. Check console for details.`);
 
       // remove input
-      const updatedInputs = prev.inputs.filter((i) => i.id !== val);
+      const updatedInputs = prev.inputs.filter((i,index) => index+1 !== val);
 
       // remove related props
-      const updatedProps = { ...prev.props };
+      let updatedProps = { ...prev.props };
       if (removedInput?.sourceType) {
-        delete updatedProps[removedInput.sourceType];
+        // delete updatedProps[removedInput.sourceType];
+        // alert("successfully deleted");
+        updatedProps=Object.fromEntries(
+  Object.entries(updatedProps).filter(([key]) => key !== removedInput.sourceType))
       }
+
+      console.log("updatedInputs", updatedInputs)
+      console.log("updatedProps", updatedProps)
 
       return {
         ...prev,
@@ -405,31 +481,57 @@ const Main = () => {
     }));
   };
 
+  // const handleIndexFocus = () => {
+  //   if (mode === "new" && indexName === "" && inputsFormat.appName !== "") {
+  //     const base = inputsFormat.appName.trim();
+  //     const newSuggestions = base
+  //       ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
+  //       : possibleSuffixes;
+  //     setSuggestions(newSuggestions);
+  //   } else if (mode === "new" && indexName !== "") {
+  //     const base = indexName.trim();
+  //     const newSuggestions = base
+  //       ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
+  //       : possibleSuffixes;
+  //     setSuggestions(newSuggestions);
+  //   }
+  // };
+
   const handleIndexFocus = () => {
-    if (mode === "new" && indexName === "" && inputsFormat.appName !== "") {
-      const base = inputsFormat.appName.trim();
-      const newSuggestions = base
-        ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
-        : possibleSuffixes;
-      setSuggestions(newSuggestions);
-    } else if (mode === "new" && indexName !== "") {
-      const base = indexName.trim();
-      const newSuggestions = base
-        ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
-        : possibleSuffixes;
-      setSuggestions(newSuggestions);
-    }
+    if (mode !== "new") return;
+
+    const appBase = inputsFormat.appName?.trim();
+    if (!appBase) return;
+
+    setSuggestions([
+      appBase,
+      ...possibleSuffixes.map((suf) => `${appBase}${suf}`),
+    ]);
   };
 
+  // useEffect(() => {
+  //   if (mode === "new" && indexName !== "") {
+  //     const base = indexName.trim();
+  //     const newSuggestions = base
+  //       ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
+  //       : possibleSuffixes;
+  //     setSuggestions(newSuggestions);
+  //   }
+  // }, [indexName]);
   useEffect(() => {
-    if (mode === "new" && indexName !== "") {
-      const base = indexName.trim();
-      const newSuggestions = base
-        ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
-        : possibleSuffixes;
-      setSuggestions(newSuggestions);
-    }
-  }, [indexName]);
+    if (mode !== "new") return;
+
+    const appBase = inputsFormat.appName?.trim();
+    if (!indexName || !appBase) return;
+
+    const generated = [
+      indexName, // user typed
+      appBase, // app name
+      ...possibleSuffixes.map((suf) => `${appBase}${suf}`),
+    ];
+
+    setSuggestions([...new Set(generated)]);
+  }, [indexName, mode, inputsFormat.appName]);
 
   return (
     <div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
@@ -726,14 +828,32 @@ const Main = () => {
           )}
 
           <div className="flex flex-col gap-6">
-            {inputsConfigList.map((each) => (
+            {/* {inputsFormat.inputs.map((v, index) => {
+              const each = index + 1;
+              return (
+                <div
+                  key={each}
+                  className="bg-white border border-gray-300 rounded-xl p-4 shadow"
+                >
+                  <InputConfig
+                    cancelConfig={cancelConfig}
+                    each={each}
+                    inputsFormat={inputsFormat}
+                    setInputsFormat={setInputsFormat}
+                    handleTransforms={handleTransforms}
+                  />
+                </div>
+              );
+            })} */}
+
+            {inputsFormat.inputs.map((each,index) => (
               <div
-                key={each}
+                key={index+1}
                 className="bg-white border border-gray-300 rounded-xl p-4 shadow"
               >
                 <InputConfig
                   cancelConfig={cancelConfig}
-                  each={each}
+                  each={index+1}
                   inputsFormat={inputsFormat}
                   setInputsFormat={setInputsFormat}
                   handleTransforms={handleTransforms}

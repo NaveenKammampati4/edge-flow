@@ -122,10 +122,10 @@ const PropsConfigPerSource = ({
     const sType = inputsFormat.inputs[each - 1].sourceType;
 
     setInputsFormat((prev) => {
-      // 1️⃣ remove from transform
+      //remove from transform
       const { [key]: _, ...remainingTransforms } = prev.transform;
 
-      // 2️⃣ remove from props[sourceType]
+      //remove from props[sourceType]
       const updatedSourceProps = { ...prev.props[sType] };
       delete updatedSourceProps[key];
 
@@ -428,74 +428,70 @@ const PropsConfigPerSource = ({
   //   setFileLines(processed);
   // };
 
-
   const updateIputs = (e) => {
-  const { name, value } = e.target;
+    const { name, value } = e.target;
 
-  /* ---------------- TIME FORMAT ---------------- */
-  if (name === "timeFormat") {
-    setCustoms((prev) => ({
-      ...prev,
-      dateTimeCustom: value === "custom",
-      dateTimeCustomError: false,
-    }));
-
-    if (value !== "custom") {
-      setCustomsValue((prev) => ({
+    /* ---------------- TIME FORMAT ---------------- */
+    if (name === "timeFormat") {
+      setCustoms((prev) => ({
         ...prev,
-        dateTimeCustomValue: "",
+        dateTimeCustom: value === "custom",
+        dateTimeCustomError: false,
       }));
+
+      if (value !== "custom") {
+        setCustomsValue((prev) => ({
+          ...prev,
+          dateTimeCustomValue: "",
+        }));
+      }
     }
-  }
 
-  /* ---------------- LINE BREAKER ---------------- */
-  if (name === "lineBreaker") {
-    setCustoms((prev) => ({
-      ...prev,
-      lineBreakerCustom: value === "custom",
-      lineBreakerError: false,
-    }));
-
-    if (value !== "custom") {
-      setCustomsValue((prev) => ({
+    /* ---------------- LINE BREAKER ---------------- */
+    if (name === "lineBreaker") {
+      setCustoms((prev) => ({
         ...prev,
-        lineBreakerRegex: "",
-        lineBreakerTableFormat: "",
+        lineBreakerCustom: value === "custom",
+        lineBreakerError: false,
       }));
+
+      if (value !== "custom") {
+        setCustomsValue((prev) => ({
+          ...prev,
+          lineBreakerRegex: "",
+          lineBreakerTableFormat: "",
+        }));
+      }
     }
-  }
 
-  /* ---------------- SINGLE SOURCE OF TRUTH ---------------- */
-  setInputsFormat((prev) => ({
-    ...prev,
-    props: {
-      ...prev.props,
-      [sourceTypes]: {
-        ...prev.props[sourceTypes],
-        [name]: value, // ✅ ALWAYS UPDATE
-      },
-    },
-  }));
-};
-
-useEffect(() => {
-  if (inputsFormat.props[sourceTypes]?.lineBreaker === "custom") {
+    /* ---------------- SINGLE SOURCE OF TRUTH ---------------- */
     setInputsFormat((prev) => ({
       ...prev,
       props: {
         ...prev.props,
         [sourceTypes]: {
           ...prev.props[sourceTypes],
-          lineBreakerRegex: customsValue.lineBreakerRegex,
-          lineBreakerTableFormat: customsValue.lineBreakerTableFormat,
+          [name]: value, // ✅ ALWAYS UPDATE
         },
       },
     }));
-  }
-}, [
-  customsValue.lineBreakerRegex,
-  customsValue.lineBreakerTableFormat,
-]);
+  };
+
+  useEffect(() => {
+    if (inputsFormat.props[sourceTypes]?.lineBreaker === "custom") {
+      setInputsFormat((prev) => ({
+        ...prev,
+        props: {
+          ...prev.props,
+          [sourceTypes]: {
+            ...prev.props[sourceTypes],
+            lineBreakerRegex: customsValue.lineBreakerRegex,
+            lineBreakerTableFormat: customsValue.lineBreakerTableFormat,
+          },
+        },
+      }));
+    }
+  }, [customsValue.lineBreakerRegex, customsValue.lineBreakerTableFormat]);
 
   const applyConfigToFile = () => {
     if (!fileText) return;
@@ -648,11 +644,10 @@ useEffect(() => {
   // }, [itemList, fileText]);
 
   useEffect(() => {
-  if (fileText) {
-    applyConfigToFile();
-  }
-}, [fileText, inputsFormat.props[sourceTypes]]);
-
+    if (fileText) {
+      applyConfigToFile();
+    }
+  }, [fileText, inputsFormat.props[sourceTypes]]);
 
   function splitLogLine(line) {
     const firstSpace = line.indexOf(" ");
@@ -675,7 +670,7 @@ useEffect(() => {
 
       if (text === fileText) {
         console.log("same");
-        console.log("text Data: ",text);
+        console.log("text Data: ", text);
         return;
       }
 
@@ -937,21 +932,57 @@ useEffect(() => {
   //   console.log("updates : ", updates);
   // };
 
-  const handleCopyConfig = () => {
+  // const handleCopyConfig = () => {
+  //   if (!inputsFormat?.props) {
+  //     console.warn("No props found in inputsFormat");
+  //     return;
+  //   }
+
+  //   // take only props from inputsFormat
+  //   const propsJson = JSON.stringify(inputsFormat.props, null, 2);
+
+  //   console.log("Props JSON:", propsJson);
+
+  //   // Copy to clipboard
+  //   navigator.clipboard.writeText(propsJson);
+
+  //   setIsCopyConfig(true);
+  // };
+
+  const handleCopyConfig = async () => {
     if (!inputsFormat?.props) {
       console.warn("No props found in inputsFormat");
       return;
     }
 
-    // take only props from inputsFormat
     const propsJson = JSON.stringify(inputsFormat.props, null, 2);
 
-    console.log("Props JSON:", propsJson);
+    try {
+      // Modern Clipboard API (secure browsers)
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(propsJson);
+        setIsCopyConfig(true);
+        return;
+      }
 
-    // Copy to clipboard
-    navigator.clipboard.writeText(propsJson);
+      //Fallback for Azure / older browsers
+      const textArea = document.createElement("textarea");
+      textArea.value = propsJson;
+      textArea.style.position = "fixed"; // avoid scrolling
+      textArea.style.opacity = "0";
 
-    setIsCopyConfig(true);
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+
+      setIsCopyConfig(true);
+    } catch (err) {
+      console.error("Copy failed:", err);
+      alert("Copy failed. Please copy manually.");
+    }
   };
 
   //   const config = inputsFormat.props[sourceType] || {
@@ -971,6 +1002,7 @@ useEffect(() => {
   console.log("file linessss : ", fileLines);
 
   const fileFormats = (item, value) => {
+    console.log("aqaqa", item);
     if (item === "timePrefix") {
       return (
         <div className="flex flex-col items-start">
@@ -1219,6 +1251,7 @@ useEffect(() => {
         </div>
       );
     } else if (item === "shouldLine") {
+      console.log("aaaaaaaaa", item.shouldLine);
       return (
         <div className="flex items-center gap-4">
           <label className="w-40 text-sm font-medium text-gray-700">
@@ -1226,7 +1259,7 @@ useEffect(() => {
           </label>
           <select
             name="shouldLine"
-            value={item.shouldLine}
+            value={inputsFormat.props[sourceType].shouldLine}
             // onChange={(e) => {
             //   setConfigData((prev) => ({
             //     ...prev,
@@ -1245,6 +1278,7 @@ useEffect(() => {
         </div>
       );
     } else if (item === "truncate") {
+      console.log("aaaaaaaaa", item.truncate);
       return (
         <div className="flex items-center gap-4">
           <label className="w-40 text-sm font-medium text-gray-700">
@@ -1252,7 +1286,7 @@ useEffect(() => {
           </label>
           <input
             name="truncate"
-            value={item.truncate}
+            value={inputsFormat.props[sourceType].truncate}
             // onChange={(e) => {
             //   setConfigData((prev) => ({
             //     ...prev,
@@ -1351,17 +1385,42 @@ useEffect(() => {
     }
   };
   const isCustomLineBreaker =
-  inputsFormat.props[sourceTypes]?.lineBreaker === "custom";
+    inputsFormat.props[sourceTypes]?.lineBreaker === "custom";
 
-const tableHeaders = isCustomLineBreaker
-  ? (
-      inputsFormat.props[sourceTypes]?.lineBreakerTableFormat || ""
-    )
-      .split(",")
-      .map((h) => h.trim())
-      .filter(Boolean)
-  : ["Date Time", "Event Logs"];
+  // const tableHeaders = isCustomLineBreaker
+  //   ? (
+  //       inputsFormat.props[sourceTypes]?.lineBreakerTableFormat || ""
+  //     )
+  //       .split(",")
+  //       .map((h) => h.trim())
+  //       .filter(Boolean)
+  //   : ["Date Time", "Event Logs"];
 
+  const lineBreaker = inputsFormat.props[sourceTypes]?.lineBreaker;
+
+  const rawFormat =
+    inputsFormat.props[sourceTypes]?.lineBreakerTableFormat ?? "";
+
+  const tableHeaders = (() => {
+    //No selection OR empty/space value
+    if (!lineBreaker || !lineBreaker.trim()) {
+      return [];
+    }
+
+    //Custom
+    if (lineBreaker === "custom") {
+      if (!rawFormat.trim()) {
+        return [];
+      }
+      return rawFormat
+        .split(",")
+        .map((h) => h.trim())
+        .filter(Boolean);
+    }
+
+    //All valid non-custom selections
+    return ["Date Time", "Event Logs"];
+  })();
 
   return (
     <div>
@@ -1755,7 +1814,7 @@ const tableHeaders = isCustomLineBreaker
             //   updateIputs={updateIputs}
             // />
             <TransformsConfig
-            file={file}
+              file={file}
               key={key}
               each={each}
               newKey={key}
@@ -1763,7 +1822,7 @@ const tableHeaders = isCustomLineBreaker
               setInputsFormat={setInputsFormat}
               updateTransform={updateTransform}
               updateIputs={updateIputs}
-              deleteTransformEverywhere={deleteTransformEverywhere} // ✅ PASS
+              deleteTransformEverywhere={deleteTransformEverywhere}
             />
           );
         }

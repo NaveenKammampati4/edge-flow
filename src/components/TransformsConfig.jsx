@@ -12,7 +12,7 @@ const TransformsConfig = ({
   deleteTransformEverywhere,
   updateIputs,
 }) => {
-  const [logFile, setLogFile] = useState(file);
+  const [logFile, setLogFile] = useState(null);
   const [logs, setLogs] = useState([]);
   const [transformedLogs, setTransformedLogs] = useState({});
   const [filterView, setFilterView] = useState("All");
@@ -27,6 +27,12 @@ const TransformsConfig = ({
   };
 
   console.log("logfile",logFile)
+
+  useEffect(()=>{
+    if(file){
+      setLogFile(file)
+    }
+  },[file])
 
   // const keyTypes=inputsFormat.props[each-1][newKey];
   // console.log("key Types : ", keyTypes);
