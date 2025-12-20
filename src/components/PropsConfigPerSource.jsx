@@ -493,6 +493,15 @@ const PropsConfigPerSource = ({
     }
   }, [customsValue.lineBreakerRegex, customsValue.lineBreakerTableFormat]);
 
+  const truncateByLookHead = (text) => {
+    const max = Number(inputsFormat.props[sourceTypes]?.maximum_lookHead);
+
+    if (!text) return "";
+    if (!max || max <= 0) return text;
+
+    return text.substring(0, max);
+  };
+
   const applyConfigToFile = () => {
     if (!fileText) return;
 
@@ -1740,17 +1749,17 @@ const PropsConfigPerSource = ({
 
                 <tbody>
                   {fileLines.map((row, rowIndex) => (
-                    <tr key={rowIndex}>
+                    <tr key={rowIndex} className="hover:bg-gray-50">
                       {tableHeaders.map((header, colIndex) => (
                         <td
                           key={colIndex}
                           className="px-4 py-2 border border-gray-300"
                         >
                           {isCustomLineBreaker
-                            ? row?.[header] ?? ""
+                            ? truncateByLookHead(row?.[header])
                             : colIndex === 0
-                            ? dateFormat(row.date, row.time)
-                            : row?.info}
+                            ? dateFormat(row.date, row.time) 
+                            : truncateByLookHead(row?.info)}{" "} 
                         </td>
                       ))}
                     </tr>
