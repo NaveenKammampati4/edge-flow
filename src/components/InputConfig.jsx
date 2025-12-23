@@ -15,6 +15,8 @@ const InputConfig = ({
     filePath: "",
     sourceType: "",
     index: "",
+    whiteList:"",
+    blackList:"",
   });
   //  const [customConfig, setCustomConfig] = useState(1);
 
@@ -511,8 +513,10 @@ if (isDuplicateInputField) {
             </label>
             <input
               id="whitelist"
+              name="whiteList" 
               type="text"
-              // value={inputsFormat.indexName || ""}
+              value={item.whiteList || ""}
+              onChange={(e) => updateIputs(e)}
               className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
               placeholder="whitelist"
             />
@@ -526,8 +530,10 @@ if (isDuplicateInputField) {
             </label>
             <input
               id="blacklist"
+              name="blackList"
               type="text"
-              // value={inputsFormat.indexName || ""}
+              value={item.blackList || ""}
+              onChange={(e) => updateIputs(e)}
               className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
               placeholder="blacklist"
             />

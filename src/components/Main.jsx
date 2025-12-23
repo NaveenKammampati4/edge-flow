@@ -137,6 +137,12 @@ const Main = () => {
                 <div>
                   <b>Index:</b> {input.index || indexName}
                 </div>
+                <div>
+                  <b>WhiteList:</b> {input.whiteList || "-"}
+                </div>
+                <div>
+                  <b>BlackList:</b> {input.blackList || "-"}
+                </div>
               </div>
             </div>
           ))}
