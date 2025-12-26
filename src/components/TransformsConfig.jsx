@@ -12,12 +12,25 @@ const TransformsConfig = ({
   deleteTransformEverywhere,
   updateIputs,
 }) => {
+  console.log("TransformsConfig props:", {
+    file,
+    transforms,
+    setTransforms,
+    each,
+    updateTransform,
+    newKey,
+    inputsFormat,
+    setInputsFormat,
+    deleteTransformEverywhere,
+    updateIputs,
+  });
   const [logFile, setLogFile] = useState(null);
   const [logs, setLogs] = useState([]);
   const [transformedLogs, setTransformedLogs] = useState({});
-  const [filterView, setFilterView] = useState("All");
-  const d = inputsFormat.transform[newKey];
+  // const [filterView, setFilterView] = useState("All");
+  const d = inputsFormat.transform?.[newKey];
   console.log("d", d);
+  if (!d) return null;
   const transformsVal = { [newKey]: d };
 
   const handleChange = (index, field, value) => {
@@ -26,13 +39,13 @@ const TransformsConfig = ({
     setTransforms(updated);
   };
 
-  console.log("logfile",logFile)
+  console.log("logfile", logFile);
 
-  useEffect(()=>{
-    if(file){
-      setLogFile(file)
+  useEffect(() => {
+    if (file) {
+      setLogFile(file);
     }
-  },[file])
+  }, [file]);
 
   // const keyTypes=inputsFormat.props[each-1][newKey];
   // console.log("key Types : ", keyTypes);
@@ -103,7 +116,14 @@ const TransformsConfig = ({
         }
       });
 
-      if (!drop) {
+      // if (!drop) {
+      //   if (!results[routeKey]) results[routeKey] = [];
+      //   results[routeKey].push(modifiedLine);
+      // }
+      if (drop) {
+        if (!results.nullQueue) results.nullQueue = [];
+        results.nullQueue.push(modifiedLine);
+      } else {
         if (!results[routeKey]) results[routeKey] = [];
         results[routeKey].push(modifiedLine);
       }
@@ -130,7 +150,7 @@ const TransformsConfig = ({
     <div className="flex flex-col mt-3">
       <h2 className="font-bold text-2xl">Transforms Config</h2>
       <hr />
-      <div className="grid grid-cols-[2fr_1fr_1fr] gap-2.5 md:flex-row mt-4">
+      <div className="grid grid-cols-[2fr_1fr] gap-64 md:flex-row mt-4">
         <div className="space-y-4">
           {Object.entries(transformsVal || {}).map(([name, t]) => (
             <div
@@ -142,12 +162,11 @@ const TransformsConfig = ({
                   Transform: <span className="font-bold">{name}</span>
                 </h2>
                 <button
-  onClick={() => deleteTransformEverywhere(newKey)}
-  className="bg-red-500 text-white rounded-xl p-2"
->
-  Delete
-</button>
-
+                  onClick={() => deleteTransformEverywhere(newKey)}
+                  className="bg-red-500 text-white rounded-xl p-2"
+                >
+                  Delete
+                </button>
               </div>
               <div className="flex flex-col mt-2">
                 <label className="text-blue-700">REGEX</label>
@@ -195,13 +214,13 @@ const TransformsConfig = ({
           ))}
         </div>
 
-        <div className="flex flex-col items-start">
+        {/* <div className="flex flex-col items-start">
           <h1 className="font-semibold text-xl">Transforms Editor</h1>
           <textarea
             className="h-54 w-full overflow-auto resize-none border border-gray-300 rounded-lg p-3 text-sm"
             placeholder="Edit or paste transforms.conf here..."
           />
-        </div>
+        </div> */}
 
         <div className="flex flex-col max-w">
           <h2 className="font-semibold text-xl">Log File</h2>
@@ -210,7 +229,7 @@ const TransformsConfig = ({
             onChange={(e) => setLogFile(e.target.files[0])}
             className="items-center text-center border border-blue-400 rounded-lg p-2 mt-2"
           />
-          {logFile&& <p>{logFile.name}</p>}
+          {logFile && <p>{logFile.name}</p>}
           <button
             onClick={handleReadLogFile}
             className="mt-2 bg-indigo-600 text-white px-3 py-1 rounded-lg"
@@ -218,7 +237,7 @@ const TransformsConfig = ({
             Apply Transforms
           </button>
 
-          <div className="mt-3">
+          {/* <div className="mt-3">
             <h3 className="font-semibold">Transform View</h3>
             <select
               value={filterView}
@@ -230,9 +249,9 @@ const TransformsConfig = ({
               <option value="Masking">Masking</option>
               <option value="Filtering">Filtering</option>
             </select>
-          </div>
+          </div> */}
 
-          <div className="flex flex-col mt-2">
+          {/* <div className="flex flex-col mt-2">
             <h3 className="text-xl font-semibold mb-2">Logs Output</h3>
             <div className="h-60 overflow-auto bg-gray-700 text-white rounded-lg p-4 text-sm space-y-4">
               {Object.keys(transformedLogs).map((key) => {
@@ -255,6 +274,24 @@ const TransformsConfig = ({
                 }
                 return null;
               })}
+            </div>
+          </div> */}
+
+          <div className="flex flex-col mt-2">
+            <h3 className="text-xl font-semibold mb-2">Logs Output</h3>
+
+            <div className="h-60 overflow-auto bg-gray-700 text-white rounded-lg p-4 text-sm space-y-4">
+              {Object.entries(transformedLogs).map(([key, logs]) => (
+                <div key={key}>
+                  <h4 className="font-bold text-green-400 mb-1">
+                    {key === "_raw" && "Masking Output"}
+                    {key === "nullQueue" && "Filtered (Dropped)"}
+                    {key !== "_raw" && key !== "nullQueue" && `Routed → ${key}`}
+                  </h4>
+
+                  <pre className="whitespace-pre-wrap">{logs.join("\n")}</pre>
+                </div>
+              ))}
             </div>
           </div>
         </div>

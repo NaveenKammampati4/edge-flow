@@ -12,6 +12,13 @@ const PropsConfigPerSource = ({
   each,
   handleTransforms,
 }) => {
+  console.log("PropsConfigPerSource props:", {
+    sourceType,
+    inputsFormat,
+    setInputsFormat,
+    each,
+    handleTransforms,
+  });
   const [file, setFile] = useState(null);
   const [fileText, setFileText] = useState("");
   const [fileLines, setFileLines] = useState([]);
@@ -34,11 +41,6 @@ const PropsConfigPerSource = ({
     lineBreakerCustom: false,
     lineBreakerError: false,
   });
-  // const [customsValue, setCustomsValue] = useState({
-  //   dateTimeCustomValue: "",
-  //   lineBreakerCustomValue: "",
-  // });
-
   const [customsValue, setCustomsValue] = useState({
     dateTimeCustomValue: "",
     lineBreakerRegex: "",
@@ -91,33 +93,6 @@ const PropsConfigPerSource = ({
       return { ...prev, props: updated };
     });
   };
-
-  // const addLineBreakerCustomField = () => {
-  //   // if (!isValidDateFormat(customsValue.dateTimeCustomValue)) {
-  //   //   setCustoms((prev) => ({
-  //   //     ...prev,
-  //   //     dateTimeCustomError: true
-  //   //   }))
-  //   //   return;
-  //   // }
-  //   setCustoms((prev) => ({
-  //     ...prev,
-  //     lineBreakerCustomError: false,
-  //   }));
-  //   console.log("one", 1);
-  //   setInputsFormat((prev) => {
-  //     const updated = { ...prev.props };
-
-  //     // let updateSource = {
-  //     //   ...updated[sourceType],
-  //     //   lineBreaker: customsValue.lineBreakerCustomValue,
-  //     // };
-  //     console.log("updateSource", updateSource);
-  //     updated[sourceTypes] = { ...updateSource }; // update only sourceType
-  //     return { ...prev, props: updated };
-  //   });
-  // };
-
   const deleteTransformEverywhere = (key) => {
     const sType = inputsFormat.inputs[each - 1].sourceType;
 
@@ -139,294 +114,6 @@ const PropsConfigPerSource = ({
       };
     });
   };
-
-  // const updateIputs = (e) => {
-  //   const { name, value } = e.target;
-  //   if (name === "timeFormat" && value === "custom") {
-  //     setCustoms((prev) => ({
-  //       ...prev,
-  //       dateTimeCustom: true,
-  //     }));
-  //     return;
-  //   } else if (name === "timeFormat" && value !== "custom") {
-  //     setCustoms((prev) => ({
-  //       ...prev,
-  //       dateTimeCustom: false,
-  //     }));
-
-  //     setCustomsValue((prev) => ({
-  //       ...prev,
-  //       dateTimeCustomValue: "",
-  //     }));
-
-  //     setCustoms((prev) => ({
-  //       ...prev,
-  //       dateTimeCustomError: false,
-  //     }));
-  //   }
-
-  //   // if (name === "lineBreaker" && value === "custom") {
-  //   //   setCustoms((prev) => ({
-  //   //     ...prev,
-  //   //     lineBreakerCustom: true,
-  //   //   }));
-  //   //   // return;
-  //   // }
-  //   if (name === "lineBreaker" && value === "custom") {
-  //     setCustoms((prev) => ({
-  //       ...prev,
-  //       lineBreakerCustom: true,
-  //     }));
-
-  //     setInputsFormat((prev) => ({
-  //       ...prev,
-  //       props: {
-  //         ...prev.props,
-  //         [sourceTypes]: {
-  //           ...prev.props[sourceTypes],
-  //           lineBreaker: "custom",
-  //           lineBreakerRegex: customsValue.lineBreakerRegex,
-  //           lineBreakerTableFormat: customsValue.lineBreakerTableFormat,
-  //         },
-  //       },
-  //     }));
-  //   } else if (name === "lineBreaker" && value !== "custom") {
-  //     setCustoms((prev) => ({
-  //       ...prev,
-  //       lineBreakerCustom: false,
-  //     }));
-
-  //     setCustomsValue((prev) => ({
-  //       ...prev,
-  //       lineBreakerRegex: "",
-  //       lineBreakerTableFormat: "",
-  //     }));
-
-  //     setCustoms((prev) => ({
-  //       ...prev,
-  //       lineBreakerError: false,
-  //     }));
-  //   }
-  //   console.log("name", name);
-  //   console.log("value", value);
-  //   console.log("inputs config", inputsFormat);
-  //   // setInputsFormat((prev) => {
-  //   //   const updated = { ...prev.props };
-  //   //   console.log("updated", updated);
-  //   //   let updateSource = { ...updated[sourceType], [name]: value };
-  //   //   updated[sourceTypes] = { ...updateSource }; // update only sourceType
-  //   //   return { ...prev, props: updated };
-  //   // });
-
-  //   if (name !== "lineBreaker") {
-  //     setInputsFormat((prev) => ({
-  //       ...prev,
-  //       props: {
-  //         ...prev.props,
-  //         [sourceTypes]: {
-  //           ...prev.props[sourceTypes],
-  //           [name]: value,
-  //         },
-  //       },
-  //     }));
-  //   }
-
-  //   if (["regex", "format", "destKey", "newKey"].includes(name)) {
-  //     setInputsFormat((prev) => {
-  //       const updated = [...prev.transform];
-  //       updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
-  //       return { ...prev, transform: updated };
-  //     });
-  //   }
-  // };
-
-  // const applyConfigToFile = () => {
-  //   let delimiter = /\r?\n/; // default: newline
-  //   // let lines = fileText.split(delimiter);
-
-  //   console.log("item : ", itemList);
-
-  //   // 1️⃣ Handle LINE_BREAKER
-  //   switch (itemList.lineBreaker) {
-  //     case "double":
-  //       delimiter = /\n\n/;
-  //       break;
-  //     case "windowsDouble":
-  //       delimiter = /\r\n\r\n/;
-  //       break;
-  //     case "date":
-  //       delimiter = /\d{4}-\d{2}-\d{2}/;
-  //       break;
-  //     case "newline":
-  //     default:
-  //       delimiter = /\r?\n/;
-  //       break;
-  //   }
-
-  //   // 2️⃣ Prepare dynamic prefix
-  //   const prefix = inputsFormat.props[sourceType].timePrefix;
-  //   const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
-  //   // 3️⃣ Build dynamic prefix REGEX
-  //   const prefixRegex = escapedPrefix
-  //     ? new RegExp(inputsFormat.props[sourceType].lineBreaker)
-  //     : null;
-
-  //   // 4️⃣ Match ALL log lines (prefix + format1 + format2)
-
-  //   console.log("prefixRegex", prefixRegex);
-  //   let lines =
-  //     fileText.match(
-  //       new RegExp(
-  //         `(?:${escapedPrefix}\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}${escapedPrefix} [A-Z]+ .*?\\(user=.*?\\))|` +
-  //           `(?:\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2} [A-Z]+ .*?\\(user=.*?\\))|` +
-  //           `(?:\\[\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\] [A-Z]+: .*? \\| user=.*?)`,
-  //         "g"
-  //       )
-  //     ) || [];
-
-  //   // 5️⃣ SHOULD_LINE (combine all lines)
-  //   if (itemList.shouldLine === "true") {
-  //     lines = [lines.join(" ")];
-  //   }
-
-  //   // // 6️⃣ TRUNCATE
-  //   // if (itemList.truncate && Number(itemList.truncate) > 0) {
-  //   //   lines = lines.map((line) => line.substring(0, Number(itemList.truncate)));
-  //   // }
-
-  //   // 7️⃣ PROCESS EACH LINE
-  //   const processed = lines.map((line) => {
-  //     let date = "";
-  //     let time = "";
-  //     let info = line;
-  //     let match;
-
-  //     console.log("line:", line);
-  //     const truncateLen = Number(itemList.truncate);
-
-  //     // 7.1️⃣ Try PREFIX FORMAT first if prefix exists
-  //     const sourceProps = inputsFormat.props[sourceType];
-  //     const isCustomLineBreaker = sourceProps.lineBreaker === "custom";
-
-  //     let newRegex = isCustomLineBreaker ? sourceProps.lineBreakerRegex : null;
-
-  //     if (newRegex) {
-  //       // Remove leading/trailing slashes if present
-  //       const cleanPattern = newRegex.replace(/^\/|\/$/g, "");
-  //       const regexObj = new RegExp(cleanPattern);
-
-  //       console.log("regexObj", regexObj);
-
-  //       const pMatch = line.match(regexObj);
-  //       console.log("pMatch", pMatch);
-
-  //       // if (pMatch) {
-  //       //   date = pMatch[1];
-  //       //   time = pMatch[2];
-  //       //   info = pMatch[4];
-  //       //   return { date, time, info };
-  //       // }
-
-  //       // if (pMatch) {
-  //       //   date = pMatch[1];
-  //       //   time = pMatch[2];
-  //       //   info = pMatch[4];
-
-  //       //   if (truncateLen === 0) {
-  //       //     info = ""; //show no data
-  //       //   } else if (truncateLen > 0 && info) {
-  //       //     info = info.substring(0, truncateLen);
-  //       //   }
-
-  //       //   return { date, time, info };
-  //       // }
-
-  //       if (pMatch && isCustomLineBreaker) {
-  //         const headers = sourceProps.lineBreakerTableFormat
-  //           .split(",")
-  //           .map((h) => h.trim());
-
-  //         const row = {};
-  //         headers.forEach((h, i) => {
-  //           row[h] = pMatch[i + 1] || "";
-  //         });
-
-  //         return row;
-  //       }
-  //     }
-
-  //     // 7.2️⃣ FORMAT-1
-  //     const match1 = line.match(
-  //       /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
-  //     );
-
-  //     // if (match1) {
-  //     //   console.log("match", match1);
-  //     //   date = match1[1];
-  //     //   time = match1[2];
-  //     //   info = match1[4];
-  //     //   return { date, time, info };
-  //     // }
-  //     if (match1) {
-  //       date = match1[1];
-  //       time = match1[2];
-  //       info = match1[4];
-
-  //       if (truncateLen === 0) {
-  //         info = ""; //show no data
-  //       } else if (truncateLen > 0 && info) {
-  //         info = info.substring(0, truncateLen);
-  //       }
-
-  //       return { date, time, info };
-  //     }
-
-  //     // 7.3️⃣ FORMAT-2
-  //     const match2 = line.match(
-  //       /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
-  //     );
-
-  //     // if (match2) {
-  //     //   date = match2[1];
-  //     //   time = match2[2];
-  //     //   info = match2[4];
-  //     //   return { date, time, info };
-  //     // }
-
-  //     if (match2) {
-  //       date = match2[1];
-  //       time = match2[2];
-  //       info = match2[4];
-
-  //       if (truncateLen === 0) {
-  //         info = ""; //show no data
-  //       } else if (truncateLen > 0 && info) {
-  //         info = info.substring(0, truncateLen);
-  //       }
-
-  //       return { date, time, info };
-  //     }
-
-  //     // 7.4️⃣ Default: basic date-time extraction
-  //     match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
-
-  //     if (match) {
-  //       date = match[1];
-  //       time = match[2];
-  //     }
-
-  //     if (truncateLen === 0) {
-  //       info = ""; //show no data
-  //     } else if (truncateLen > 0 && info) {
-  //       info = info.substring(0, truncateLen);
-  //     }
-
-  //     return { date, time, info };
-  //   });
-
-  //   setFileLines(processed);
-  // };
 
   const updateIputs = (e) => {
     const { name, value } = e.target;
@@ -471,7 +158,7 @@ const PropsConfigPerSource = ({
         ...prev.props,
         [sourceTypes]: {
           ...prev.props[sourceTypes],
-          [name]: value, // ✅ ALWAYS UPDATE
+          [name]: value, //ALWAYS UPDATE
         },
       },
     }));
@@ -494,41 +181,56 @@ const PropsConfigPerSource = ({
   }, [customsValue.lineBreakerRegex, customsValue.lineBreakerTableFormat]);
 
   const truncateByLookHead = (text) => {
-    const max = Number(inputsFormat.props[sourceTypes]?.maximum_lookHead);
+    const max = Number(inputsFormat.props[sourceTypes]?.truncate);
 
     if (!text) return "";
     if (!max || max <= 0) return text;
-
+    console.log("info data: " + text);
     return text.substring(0, max);
+    // return text;
   };
 
   const applyConfigToFile = () => {
     if (!fileText) return;
 
     const sourceProps = inputsFormat.props[sourceTypes];
+    console.log("source type in props: ", JSON.stringify(sourceProps, null, 2));
+    console.table(
+      "source type in props: ",
+      JSON.stringify(sourceProps, null, 2)
+    );
     const truncateLen = Number(sourceProps.truncate);
+    console.log("truncate length: " + truncateLen);
 
     console.log("LINE BREAKER MODE:", sourceProps.lineBreaker);
-    console.log("REGEX:", sourceProps.lineBreakerRegex);
-    console.log("TABLE FORMAT:", sourceProps.lineBreakerTableFormat);
+    console.log("REGEX:", sourceProps?.lineBreakerRegex);
+    console.log("TABLE FORMAT:", sourceProps?.lineBreakerTableFormat);
 
     let lines = [];
 
     /* -----------------------------
-     1️⃣ SPLIT LINES USING LINE BREAKER
+    SPLIT LINES USING LINE BREAKER
   ----------------------------- */
     switch (sourceProps.lineBreaker) {
       case "double":
-        lines = fileText.split(/\n\n/);
+        // lines = fileText.split(/\n\n/);
+        lines = fileText.split(/\n\s*\n/);
         break;
 
       case "windowsDouble":
-        lines = fileText.split(/\r\n\r\n/);
+        // lines = fileText.split(/\r\n\r\n/);
+        lines = fileText.split(/\r\n\s*\r\n/);
         break;
 
+      // case "date":
+      //   lines =
+      //     fileText.match(/\d{4}-\d{2}-\d{2}.*?(?=\d{4}-\d{2}-\d{2}|$)/gs) || [];
+      //   break;
       case "date":
         lines =
-          fileText.match(/\d{4}-\d{2}-\d{2}.*?(?=\d{4}-\d{2}-\d{2}|$)/gs) || [];
+          fileText.match(
+            /^\[\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\][\s\S]*?(?=^\[\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\]|$)/gm
+          ) || [];
         break;
 
       case "custom":
@@ -543,14 +245,15 @@ const PropsConfigPerSource = ({
     }
 
     /* -----------------------------
-     2️⃣ SHOULD_LINE (combine)
+    SHOULD_LINE (combine)
   ----------------------------- */
     if (sourceProps.shouldLine === "true") {
-      lines = [lines.join(" ")];
+      // lines = [lines.join(" ")];
+      lines = [lines.join("\n")];
     }
 
     /* -----------------------------
-     3️⃣ PROCESS EACH LINE
+    PROCESS EACH LINE
   ----------------------------- */
     const processed = lines
       .map((line) => {
@@ -558,10 +261,10 @@ const PropsConfigPerSource = ({
 
         let date = "";
         let time = "";
-        let info = line;
+        let info = "";
 
         /* -----------------------------
-         3.1️⃣ CUSTOM LINE BREAKER (REGEX)
+         3.1 CUSTOM LINE BREAKER (REGEX)
       ----------------------------- */
         if (
           sourceProps.lineBreaker === "custom" &&
@@ -594,55 +297,74 @@ const PropsConfigPerSource = ({
         }
 
         /* -----------------------------
-         3.2️⃣ FORMAT 1
+         3.2️ FORMAT 1
       ----------------------------- */
+        // const match1 = line.match(
+        //   /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=.*?\)/
+        // );
+        // const match1 = line.match(
+        //   /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*)$/
+        // );
         const match1 = line.match(
-          /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=.*?\)/
+          /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*?)(?:\s*\(.*\))?$/
         );
+        console.log("match1 Data: " + match1);
 
         if (match1) {
           date = match1[1];
           time = match1[2];
-          info = match1[4];
+          info = line;
         }
 
         /* -----------------------------
-         3.3️⃣ FORMAT 2
+         3.3️ FORMAT 2
       ----------------------------- */
+        // const match2 = line.match(
+        //   /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=.*/
+        // );
         const match2 = line.match(
-          /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=.*/
+          /^\[(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\]\s+([A-Z]+):\s+(.*)$/
         );
+        console.log("match2 Data: " + match2);
 
         if (match2) {
           date = match2[1];
           time = match2[2];
-          info = match2[4];
+          info = line;
         }
 
         /* -----------------------------
-         3.4️⃣ DEFAULT DATE MATCH
+         3.4️ DEFAULT DATE MATCH
       ----------------------------- */
         if (!date || !time) {
           const match = line.match(/(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})/);
+          console.log("match of not date and time: " + match);
           if (match) {
             date = match[1];
             time = match[2];
+            info = line;
           }
         }
 
+        console.log("before the trunacate info data: " + info);
+        console.log("INFO RAW >>>\n", info);
+
         /* -----------------------------
-         4️⃣ TRUNCATE
+         4️ TRUNCATE
       ----------------------------- */
         if (truncateLen === 0) {
           info = "";
         } else if (truncateLen > 0 && info) {
           info = info.substring(0, truncateLen);
+          // info=info;
         }
+
+        console.log("info data list: " + info);
 
         return { date, time, info };
       })
       .filter(Boolean);
-
+    console.log("processed Line: " + processed);
     setFileLines(processed);
   };
 
@@ -727,8 +449,11 @@ const PropsConfigPerSource = ({
           // 2. FORMAT 1
           // -----------------------------------------
           const match1 = line.match(
-            /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
+            /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*)$/
           );
+          // const match1 = line.match(
+          //   /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
+          // );
 
           if (match1) {
             return {
@@ -744,8 +469,11 @@ const PropsConfigPerSource = ({
           // -----------------------------------------
           // 3. FORMAT 2
           // -----------------------------------------
+          // const match2 = line.match(
+          //   /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
+          // );
           const match2 = line.match(
-            /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
+            /^\[(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\]\s+([A-Z]+):\s+(.*)$/
           );
 
           if (match2) {
@@ -769,67 +497,6 @@ const PropsConfigPerSource = ({
 
     reader.readAsText(file);
   };
-
-  // const updateIputs = (e) => {
-  //   const { name, value } = e.target;
-  //   console.log("name", name);
-  //   console.log("value", value);
-  //   setInputsFormat((prev) => {
-  //     const updated = [...prev.customInput];
-  //     updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
-  //     return { ...prev, customInput: updated };
-  //   });
-  //   if (name === "sourceType") {
-  //     setInputsFormat((prev) => {
-  //       const updated = [...prev.props];
-  //       updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
-  //       return { ...prev, props: updated };
-  //     });
-  //   }
-  // };
-
-  // const handleAddingKeys = () => {
-  //   // const currentTransform = inputsFormat.transform[each - 1];
-  //   // const newData = { key: item.newKey, value: newValue };
-  //   // setNewKeys([...newKeys, newData]);
-
-  //   // if (item.newKey.toLowerCase().startsWith("transform-")) {
-  //   //   setTransformConfig(true);
-  //   //   setTransforms([
-  //   //     ...transforms,
-  //   //     { key: "", regex: "", format: "", destKey: "" },
-  //   //   ]);
-  //   // }
-
-  //   const data = {
-  //    [newKey] :{
-  //     regex: "",
-  //     format: "",
-  //     destKey: "",
-  //    }
-  //   };
-
-  //   // setInputsFormat((prev) => {
-  //   //   const updated = [...prev.transform];
-  //   //   updated[updated.length] = data;
-  //   //   return { ...prev, transform: updated };
-  //   // });
-  //   setInputsFormat((prev) => ({
-  //   ...prev,
-  //   transform: [...prev.transform, data], // add new transform object
-  // }));
-
-  //   if (newKey.toLowerCase().startsWith("transform-")) {
-  //     setTransformConfig(true);
-  //     setTransforms([
-  //       ...transforms,
-  //       { key: "", regex: "", format: "", destKey: "" },
-  //     ]);
-  //   }
-
-  //   setNewKey("");
-  //   setNewValue("");
-  // };
 
   const deleteKeys = (val) => {
     console.log("val", val);
@@ -926,37 +593,6 @@ const PropsConfigPerSource = ({
       },
     }));
   };
-
-  // const handleCopyConfig = () => {
-  //   const updates = newKeys.reduce((acc, item) => {
-  //     acc[item.key] = item.value;
-  //     return acc;
-  //   }, {});
-
-  //   item((prev) => ({
-  //     ...prev,
-  //     ...updates,
-  //   }));
-  //   setIsCopyConfig(true);
-  //   console.log("updates : ", updates);
-  // };
-
-  // const handleCopyConfig = () => {
-  //   if (!inputsFormat?.props) {
-  //     console.warn("No props found in inputsFormat");
-  //     return;
-  //   }
-
-  //   // take only props from inputsFormat
-  //   const propsJson = JSON.stringify(inputsFormat.props, null, 2);
-
-  //   console.log("Props JSON:", propsJson);
-
-  //   // Copy to clipboard
-  //   navigator.clipboard.writeText(propsJson);
-
-  //   setIsCopyConfig(true);
-  // };
 
   const handleCopyConfig = async () => {
     if (!inputsFormat?.props) {
@@ -1758,8 +1394,8 @@ const PropsConfigPerSource = ({
                           {isCustomLineBreaker
                             ? truncateByLookHead(row?.[header])
                             : colIndex === 0
-                            ? dateFormat(row.date, row.time) 
-                            : truncateByLookHead(row?.info)}{" "} 
+                            ? dateFormat(row.date, row.time)
+                            : truncateByLookHead(row?.info)}{" "}
                         </td>
                       ))}
                     </tr>

@@ -11,6 +11,13 @@ const InputConfig = ({
   setInputsFormat,
   handleTransforms,
 }) => {
+   console.log("InputConfig props:", {
+    cancelConfig,
+    each,
+    inputsFormat,
+    setInputsFormat,
+    handleTransforms,
+  });
   const [inputsConfigData, setInputsConfigData] = useState({
     filePath: "",
     sourceType: "",
@@ -860,7 +867,7 @@ if (isDuplicateInputField) {
             inputsFormat={inputsFormat}
             setInputsFormat={setInputsFormat}
             handleTransforms={handleTransforms}
-          />
+          />      
         )}
       </div>
       {/* <TransformsConfig/> */}
