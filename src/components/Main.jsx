@@ -14,10 +14,46 @@ const Main = () => {
   const [appNameSuggestions, setAppNameSuggestions] = useState([]);
   const [isPreview, setIsPreview] = useState(false);
   const [inputDeleteError, setInputDeleteError] = useState("");
+  const [sourceMode, setSourceMode] = useState(null); // default
+
+  const [inputsFormat, setInputsFormat] = useState({
+    appName: "",
+    indexName: "",
+    indexConfig: {},
+    inputs: [
+      {
+        id: 1,
+        filePath: "",
+        sourceType: "",
+        index: "",
+        whiteList: "",
+        blackList: "",
+        customFields: [],
+      },
+    ],
+    props: {
+      //     sourceType : {
+      //   timeFormat: "",
+      //   dateTime: "",
+      //   lineBreaker: "",
+      //   shouldLine: "",
+      //   truncate: "",
+      //   newKey : "",
+      //   newValue : "",
+      // }
+    },
+    transform: [],
+  });
 
   const existingIndexes = ["users_index", "orders_index", "products_index"];
   const possibleSuffixes = ["_logs", "_data"];
   const existingAppName = ["_logs", "_data", "_metrics"];
+
+  const SOURCE_MODES = {
+    HEC: "HEC",
+    UF: "UF",
+    CONF: "CONF",
+  };
 
   const handleInputChange = (e) => {
     let value = e.target.value;
@@ -88,163 +124,497 @@ const Main = () => {
   //   </div>
   // );
 
-  const PreviewPage = () => {
-    const { appName, indexName, indexConfig, inputs, props } = inputsFormat;
+  // const PreviewPage = () => {
+  //   const { appName, indexName, indexConfig, inputs, props } = inputsFormat;
+
+  //   return (
+  //     <div className="w-full bg-white shadow-md rounded-xl p-6 space-y-6">
+  //       {/* ───────── App / Index Config ───────── */}
+  //       <div className="border rounded-lg p-4">
+  //         <h3 className="text-lg font-semibold text-blue-600 mb-2">
+  //           App Configuration
+  //         </h3>
+
+  //         <div className="grid grid-cols-2 gap-4 text-sm">
+  //           <div>
+  //             <b>App Name:</b> {appName || "-"}
+  //           </div>
+  //           <div>
+  //             <b>Index Name:</b> {indexName || "-"}
+  //           </div>
+
+  //           {Object.entries(indexConfig).map(([idx, cfg]) => (
+  //             <div key={idx}>
+  //               <b>Retention Days ({idx}):</b> {cfg.retentionTime || "-"}
+  //             </div>
+  //           ))}
+  //         </div>
+  //       </div>
+
+  //       {/* ───────── Inputs Config ───────── */}
+  //       <div className="border rounded-lg p-4">
+  //         <h3 className="text-lg font-semibold text-blue-600 mb-3">
+  //           Inputs Configuration
+  //         </h3>
+
+  //         {inputs.map((input, i) => (
+  //           <div
+  //             key={input.id}
+  //             className="border rounded-md p-3 mb-3 bg-gray-50"
+  //           >
+  //             <div className="font-medium mb-1">Input #{i + 1}</div>
+  //             <div className="text-sm grid grid-cols-2 gap-2">
+  //               <div>
+  //                 <b>File Path:</b> {input.filePath || "-"}
+  //               </div>
+  //               <div>
+  //                 <b>Source Type:</b> {input.sourceType || "-"}
+  //               </div>
+  //               <div>
+  //                 <b>Index:</b> {input.index || indexName}
+  //               </div>
+  //               <div>
+  //                 <b>WhiteList:</b> {input.whiteList || "-"}
+  //               </div>
+  //               <div>
+  //                 <b>BlackList:</b> {input.blackList || "-"}
+  //               </div>
+  //             </div>
+  //           </div>
+  //         ))}
+  //       </div>
+
+  //       {/* ───────── Props Config Per Source Type ───────── */}
+  //       {props && Object.keys(props).length > 0 && (
+  //         <div className="border rounded-lg p-4">
+  //           <h3 className="text-lg font-semibold text-blue-600 mb-3">
+  //             Props Configuration (Per Source Type)
+  //           </h3>
+
+  //           {Object.entries(props).map(([sourceType, cfg]) => (
+  //             <div
+  //               key={sourceType}
+  //               className="border rounded-md p-3 mb-3 bg-gray-50"
+  //             >
+  //               <div className="font-medium mb-2">
+  //                 Source Type:{" "}
+  //                 <span className="text-blue-600">{sourceType}</span>
+  //               </div>
+
+  //               <div className="grid grid-cols-2 gap-2 text-sm">
+  //                 <div>
+  //                   <b>Time Format:</b> {cfg.timeFormat || "-"}
+  //                 </div>
+  //                 <div>
+  //                   <b>Date Time:</b> {cfg.dateTime || "-"}
+  //                 </div>
+  //                 <div>
+  //                   <b>Line Breaker:</b> {cfg.lineBreaker || "-"}
+  //                 </div>
+  //                 <div>
+  //                   <b>Should Line:</b> {cfg.shouldLine || "-"}
+  //                 </div>
+  //                 <div>
+  //                   <b>Truncate:</b> {cfg.truncate || "-"}
+  //                 </div>
+  //               </div>
+
+  //               {/* ───────── Global Transforms Config ───────── */}
+  //               {inputsFormat.transform &&
+  //                 Object.keys(inputsFormat.transform).length > 0 && (
+  //                   <div className="border rounded-lg p-4">
+  //                     <h3 className="text-lg font-semibold text-blue-600 mb-3">
+  //                       Transforms Configuration
+  //                     </h3>
+
+  //                     {Object.entries(inputsFormat.transform).map(
+  //                       ([key, t], index) => (
+  //                         <div
+  //                           key={key}
+  //                           className="border rounded-md p-3 mb-3 bg-gray-50 text-sm"
+  //                         >
+  //                           <div className="font-medium mb-2">
+  //                             Transform #{index + 1}
+  //                           </div>
+
+  //                           <div>
+  //                             <b>Regex:</b> {t.regex || "-"}
+  //                           </div>
+  //                           <div>
+  //                             <b>Format:</b> {t.format || "-"}
+  //                           </div>
+  //                           <div>
+  //                             <b>Destination Key:</b> {t.destKey || "-"}
+  //                           </div>
+  //                           <div>
+  //                             <b>New Key:</b> {t.newKey || "-"}
+  //                           </div>
+  //                           <div>
+  //                             <b>New Value:</b> {t.newValue || "-"}
+  //                           </div>
+  //                         </div>
+  //                       )
+  //                     )}
+  //                   </div>
+  //                 )}
+  //             </div>
+  //           ))}
+  //         </div>
+  //       )}
+
+  //       {/* ───────── Actions ───────── */}
+  //       <div className="flex justify-end gap-4">
+  //         <button
+  //           className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+  //           onClick={() => setIsPreview(false)}
+  //         >
+  //           Back
+  //         </button>
+
+  //         {/* <button
+  //         className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
+  //         onClick={handleCreateApp}
+  //       >
+  //         Confirm & Create
+  //       </button> */}
+  //       </div>
+  //     </div>
+  //   );
+  // };
+
+  // const PreviewPage = ({ inputsFormat, onBack }) => {
+  //   if (!inputsFormat) return null;
+
+  //   const { appName, indexName, indexConfig, inputs, props, transform } =
+  //     inputsFormat;
+
+  //   return (
+  //     <div className="w-full bg-white shadow-md rounded-xl p-6 space-y-6">
+  //       {/* ───────── App Config ───────── */}
+  //       <Section title="App Configuration">
+  //         <Row label="App Name" value={appName} />
+  //         <Row label="Index Name" value={indexName} />
+
+  //         {indexConfig && Object.keys(indexConfig).length > 0 && (
+  //           <>
+  //             <Divider />
+  //             <div className="font-semibold">Index Config</div>
+  //             {Object.entries(indexConfig).map(([idx, cfg]) => (
+  //               <Row
+  //                 key={idx}
+  //                 label={`Retention (${idx})`}
+  //                 value={cfg.retentionTime}
+  //               />
+  //             ))}
+  //           </>
+  //         )}
+  //       </Section>
+
+  //       {/* ───────── Inputs ───────── */}
+  //       {inputs?.length > 0 && (
+  //         <Section title="Inputs Configuration">
+  //           {inputs.map((input, i) => (
+  //             <div
+  //               key={input.id || i}
+  //               className="border rounded-md p-3 mb-3 bg-gray-50"
+  //             >
+  //               <div className="font-medium mb-2">Input #{i + 1}</div>
+
+  //               <Row label="File Path" value={input.filePath} />
+  //               <Row label="Source Type" value={input.sourceType} />
+  //               <Row label="Index" value={input.index || indexName} />
+  //               <Row label="WhiteList" value={input.whiteList} />
+  //               <Row label="BlackList" value={input.blackList} />
+
+  //               {/* {input.customFields?.length > 0 && (
+  //                 <>
+  //                   <Divider />
+  //                   <div className="font-semibold">Custom Fields</div>
+  //                   {input.customFields.map((cf, idx) => (
+  //                     <Row key={idx} label={cf.key} value={cf.value} />
+  //                   ))}
+  //                 </>
+  //               )} */}
+
+  //               {input.customFields &&
+  //                 (Array.isArray(input.customFields)
+  //                   ? input.customFields.length > 0
+  //                   : Object.keys(input.customFields).length > 0) && (
+  //                   <>
+  //                     <Divider />
+  //                     <div className="font-semibold">Custom Fields</div>
+
+  //                     {/* {Array.isArray(input.customFields)
+  //                       ? input.customFields.map((cf, idx) => (
+  //                           <Row key={idx} label={cf.key} value={cf.value} />
+  //                         ))
+  //                       : Object.entries(input.customFields).map(([k, v]) => (
+  //                           <Row key={k} label={k} value={v} />
+  //                         ))} */}
+
+  //                     {Array.isArray(input.customFields)
+  //                       ? input.customFields.map((cf, idx) => {
+  //                           const key = Object.keys(cf)[0];
+  //                           const value = cf[key];
+
+  //                           return <Row key={idx} label={key} value={value} />;
+  //                         })
+  //                       : Object.entries(input.customFields).map(([k, v]) => (
+  //                           <Row key={k} label={k} value={v} />
+  //                         ))}
+  //                   </>
+  //                 )}
+  //             </div>
+  //           ))}
+  //         </Section>
+  //       )}
+
+  //       {/* ───────── Props ───────── */}
+  //       {props && Object.keys(props).length > 0 && (
+  //         <Section title="Props Configuration">
+  //           {Object.entries(props).map(([sourceType, cfg]) => (
+  //             <div
+  //               key={sourceType}
+  //               className="border rounded-md p-3 mb-3 bg-gray-50"
+  //             >
+  //               <div className="font-semibold text-blue-600 mb-2">
+  //                 {sourceType}
+  //               </div>
+
+  //               {Object.entries(cfg).map(([k, v]) => (
+  //                 <Row key={k} label={k} value={v} />
+  //               ))}
+  //             </div>
+  //           ))}
+  //         </Section>
+  //       )}
+
+  //       {/* ───────── Transforms ───────── */}
+  //       {transform?.length > 0 && (
+  //         <Section title="Transforms">
+  //           {transform.map((t, i) => (
+  //             <div key={i} className="border rounded-md p-3 mb-3 bg-gray-50">
+  //               <div className="font-medium mb-2">Transform #{i + 1}</div>
+
+  //               <Row label="Regex" value={t.regex} />
+  //               <Row label="Format" value={t.format} />
+  //               <Row label="Destination Key" value={t.destKey} />
+  //               <Row label="New Key" value={t.newKey} />
+  //               <Row label="New Value" value={t.newValue} />
+  //             </div>
+  //           ))}
+  //         </Section>
+  //       )}
+
+  //       {/* ───────── Actions ───────── */}
+  //       <div className="flex justify-end">
+  //         <button
+  //           className="bg-gray-500 text-white px-4 py-2 rounded"
+  //           onClick={onBack}
+  //         >
+  //           Back
+  //         </button>
+  //       </div>
+  //     </div>
+  //   );
+  // };
+
+  const PreviewPage = ({ inputsFormat, onBack }) => {
+    if (!inputsFormat) return null;
+
+    const { appName, indexName, indexConfig, inputs, props, transform } =
+      inputsFormat;
 
     return (
-      <div className="w-full bg-white shadow-md rounded-xl p-6 space-y-6">
-        {/* ───────── App / Index Config ───────── */}
-        <div className="border rounded-lg p-4">
-          <h3 className="text-lg font-semibold text-blue-600 mb-2">
-            App Configuration
+      <div className="w-full bg-gray-50 rounded-xl p-6 space-y-6">
+        {/* ===== Header ===== */}
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-blue-600">
+            App Configuration Preview
+          </h2>
+          <button
+            onClick={onBack}
+            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
+          >
+            Back
+          </button>
+        </div>
+
+        {/* ===== App & Index ===== */}
+        <div className="bg-white rounded-lg shadow p-5">
+          <h3 className="text-lg font-semibold text-blue-500 mb-4">
+            App & Index Configuration
           </h3>
 
-          <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <b>App Name:</b> {appName || "-"}
-            </div>
-            <div>
-              <b>Index Name:</b> {indexName || "-"}
-            </div>
+          <div className="grid grid-cols-2 gap-4">
+            <Row label="App Name" value={appName} />
+            <Row label="Index Name" value={indexName} />
+          </div>
 
-            {Object.entries(indexConfig).map(([idx, cfg]) => (
-              <div key={idx}>
-                <b>Retention Days ({idx}):</b> {cfg.retentionTime || "-"}
+          {indexConfig && Object.keys(indexConfig).length > 0 && (
+            <>
+              <Divider />
+              <h4 className="font-semibold mb-2">Index Retention</h4>
+
+              {Object.entries(indexConfig).map(([idx, cfg]) => (
+                <div
+                  key={idx}
+                  className="grid grid-cols-2 gap-4 text-sm bg-gray-50 p-3 rounded mb-2"
+                >
+                  <div className="font-medium">{idx}</div>
+                  <div>{cfg.retentionTime}</div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+
+        {/* ===== Inputs ===== */}
+        {inputs?.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-5">
+            <h3 className="text-lg font-semibold text-blue-500 mb-4">
+              Inputs Configuration
+            </h3>
+
+            {inputs.map((input, i) => (
+              <div
+                key={input.id || i}
+                className="border rounded-lg p-4 mb-4 bg-gray-50"
+              >
+                <div className="font-semibold mb-3 text-gray-700">
+                  Input #{i + 1}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Row label="File Path" value={input.filePath} />
+                  <Row label="Source Type" value={input.sourceType} />
+                  <Row label="Index" value={input.index || indexName} />
+                  <Row label="WhiteList" value={input.whiteList} />
+                  <Row label="BlackList" value={input.blackList} />
+                </div>
+
+                {/* Custom Fields */}
+                {input.customFields?.length > 0 && (
+                  <>
+                    <Divider />
+                    <h4 className="font-semibold mb-2">Custom Fields</h4>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      {input.customFields.map((cf, idx) => {
+                        const key = Object.keys(cf)[0];
+                        const value = cf[key];
+                        return <Row key={idx} label={key} value={value} />;
+                      })}
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
-        </div>
+        )}
 
-        {/* ───────── Inputs Config ───────── */}
-        <div className="border rounded-lg p-4">
-          <h3 className="text-lg font-semibold text-blue-600 mb-3">
-            Inputs Configuration
-          </h3>
-
-          {inputs.map((input, i) => (
-            <div
-              key={input.id}
-              className="border rounded-md p-3 mb-3 bg-gray-50"
-            >
-              <div className="font-medium mb-1">Input #{i + 1}</div>
-              <div className="text-sm grid grid-cols-2 gap-2">
-                <div>
-                  <b>File Path:</b> {input.filePath || "-"}
-                </div>
-                <div>
-                  <b>Source Type:</b> {input.sourceType || "-"}
-                </div>
-                <div>
-                  <b>Index:</b> {input.index || indexName}
-                </div>
-                <div>
-                  <b>WhiteList:</b> {input.whiteList || "-"}
-                </div>
-                <div>
-                  <b>BlackList:</b> {input.blackList || "-"}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* ───────── Props Config Per Source Type ───────── */}
+        {/* ===== Props ===== */}
         {props && Object.keys(props).length > 0 && (
-          <div className="border rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-blue-600 mb-3">
+          <div className="bg-white rounded-lg shadow p-5">
+            <h3 className="text-lg font-semibold text-blue-500 mb-4">
               Props Configuration (Per Source Type)
             </h3>
 
             {Object.entries(props).map(([sourceType, cfg]) => (
               <div
                 key={sourceType}
-                className="border rounded-md p-3 mb-3 bg-gray-50"
+                className="border rounded-lg p-4 mb-4 bg-gray-50"
               >
-                <div className="font-medium mb-2">
-                  Source Type:{" "}
-                  <span className="text-blue-600">{sourceType}</span>
+                <div className="font-semibold text-blue-600 mb-3">
+                  Source Type: {sourceType}
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>
-                    <b>Time Format:</b> {cfg.timeFormat || "-"}
-                  </div>
-                  <div>
-                    <b>Date Time:</b> {cfg.dateTime || "-"}
-                  </div>
-                  <div>
-                    <b>Line Breaker:</b> {cfg.lineBreaker || "-"}
-                  </div>
-                  <div>
-                    <b>Should Line:</b> {cfg.shouldLine || "-"}
-                  </div>
-                  <div>
-                    <b>Truncate:</b> {cfg.truncate || "-"}
-                  </div>
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(cfg).map(([k, v]) => (
+                    <Row key={k} label={k} value={v} />
+                  ))}
                 </div>
-
-                {/* ───────── Global Transforms Config ───────── */}
-                {inputsFormat.transform &&
-                  Object.keys(inputsFormat.transform).length > 0 && (
-                    <div className="border rounded-lg p-4">
-                      <h3 className="text-lg font-semibold text-blue-600 mb-3">
-                        Transforms Configuration
-                      </h3>
-
-                      {Object.entries(inputsFormat.transform).map(
-                        ([key, t], index) => (
-                          <div
-                            key={key}
-                            className="border rounded-md p-3 mb-3 bg-gray-50 text-sm"
-                          >
-                            <div className="font-medium mb-2">
-                              Transform #{index + 1}
-                            </div>
-
-                            <div>
-                              <b>Regex:</b> {t.regex || "-"}
-                            </div>
-                            <div>
-                              <b>Format:</b> {t.format || "-"}
-                            </div>
-                            <div>
-                              <b>Destination Key:</b> {t.destKey || "-"}
-                            </div>
-                            <div>
-                              <b>New Key:</b> {t.newKey || "-"}
-                            </div>
-                            <div>
-                              <b>New Value:</b> {t.newValue || "-"}
-                            </div>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  )}
               </div>
             ))}
           </div>
         )}
 
-        {/* ───────── Actions ───────── */}
-        <div className="flex justify-end gap-4">
-          <button
-            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-            onClick={() => setIsPreview(false)}
-          >
-            Back
-          </button>
+        {transform && transform.length > 0 && (
+          <div className="bg-white rounded-lg shadow p-5">
+            <h3 className="text-lg font-semibold text-blue-500 mb-4">
+              Transforms Configuration
+            </h3>
 
-          {/* <button
-          className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
-          onClick={handleCreateApp}
-        >
-          Confirm & Create
-        </button> */}
-        </div>
+            {transform.map((t, i) => {
+              const hasAnyValue = Object.values(t).some(
+                (v) => v !== undefined && v !== null && v !== ""
+              );
+
+              return (
+                <div key={i} className="border rounded-lg p-4 mb-4 bg-gray-50">
+                  <div className="font-semibold mb-2">Transform #{i + 1}</div>
+
+                  {/* Rows (hidden automatically if empty) */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <Row label="Regex" value={t.regex} />
+                    <Row label="Format" value={t.format} />
+                    <Row label="Destination Key" value={t.destKey} />
+                    <Row label="New Key" value={t.newKey} />
+                    <Row label="New Value" value={t.newValue} />
+                  </div>
+
+                  {/* Explicit empty state message */}
+                  {!hasAnyValue && (
+                    <div className="text-sm text-gray-400 italic mt-2">
+                      No transform values configured yet
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   };
+
+  const Section = ({ title, children }) => (
+    <div className="border rounded-lg p-4">
+      <h3 className="text-lg font-semibold text-blue-600 mb-3">{title}</h3>
+      {children}
+    </div>
+  );
+
+  // const Row = ({ label, value }) => (
+  //   <div className="text-sm grid grid-cols-2 gap-4 mb-1">
+  //     <div className="font-medium">{label || "-"}:</div>
+  //     <div>
+  //       {value === true
+  //         ? "true"
+  //         : value === false
+  //         ? "false"
+  //         : value !== undefined && value !== null
+  //         ? value
+  //         : "-"}
+  //     </div>
+  //   </div>
+  // );
+
+  const Row = ({ label, value }) => {
+    // DO NOT RENDER if value is empty
+    if (value === undefined || value === null || value === "") {
+      return null;
+    }
+
+    return (
+      <div className="text-sm grid grid-cols-2 gap-4 mb-1">
+        <div className="font-medium">{label}:</div>
+        <div>{value === true ? "true" : value === false ? "false" : value}</div>
+      </div>
+    );
+  };
+
+  const Divider = () => <hr className="my-2 border-gray-300" />;
 
   const handleInputChangeInAppName = (e) => {
     let value = e.target.value;
@@ -298,35 +668,6 @@ const Main = () => {
     setAppNameSuggestions(generated);
   };
 
-  const [inputsFormat, setInputsFormat] = useState({
-    appName: "",
-    indexName: "",
-    indexConfig: {},
-    inputs: [
-      {
-        id: 1,
-        filePath: "",
-        sourceType: "",
-        index: "",
-        whiteList: "",
-        blackList: "",
-        customFields: [],
-      },
-    ],
-    props: {
-      //     sourceType : {
-      //   timeFormat: "",
-      //   dateTime: "",
-      //   lineBreaker: "",
-      //   shouldLine: "",
-      //   truncate: "",
-      //   newKey : "",
-      //   newValue : "",
-      // }
-    },
-    transform: [],
-  });
-
   useEffect(() => {
     const arr = Array.from({ length: inputsConfig }, (_, i) => i + 1);
     setInputsConfigList(arr);
@@ -340,7 +681,7 @@ const Main = () => {
   // };
 
   // const cancelConfig = (val) => {
-  //   // ❌ Prevent deleting last input
+  //   // Prevent deleting last input
 
   //   val = val - 1;
   //   console.log("valsss", val);
@@ -383,7 +724,7 @@ const Main = () => {
     // alert("count1: " + count1);
     //  Prevent deleting last input
 
-    console.log("val", val)
+    console.log("val", val);
     if (inputsFormat.inputs.length === 1) {
       setInputDeleteError("At least one input configuration is required.");
       return;
@@ -395,7 +736,7 @@ const Main = () => {
       // find input being removed
       // const removedInput = prev.inputs.find((i) => i.id === val);
       // alert((count++) + "removed Input: "+removedInput.value);
-      const removedInput = prev.inputs.find((i,index) => index+1 === val);
+      const removedInput = prev.inputs.find((i, index) => index + 1 === val);
 
       if (!removedInput) return;
 
@@ -406,19 +747,22 @@ const Main = () => {
       // alert(`${count++} Input removed. Check console for details.`);
 
       // remove input
-      const updatedInputs = prev.inputs.filter((i,index) => index+1 !== val);
+      const updatedInputs = prev.inputs.filter((i, index) => index + 1 !== val);
 
       // remove related props
       let updatedProps = { ...prev.props };
       if (removedInput?.sourceType) {
         // delete updatedProps[removedInput.sourceType];
         // alert("successfully deleted");
-        updatedProps=Object.fromEntries(
-  Object.entries(updatedProps).filter(([key]) => key !== removedInput.sourceType))
+        updatedProps = Object.fromEntries(
+          Object.entries(updatedProps).filter(
+            ([key]) => key !== removedInput.sourceType
+          )
+        );
       }
 
-      console.log("updatedInputs", updatedInputs)
-      console.log("updatedProps", updatedProps)
+      console.log("updatedInputs", updatedInputs);
+      console.log("updatedProps", updatedProps);
 
       return {
         ...prev,
@@ -545,11 +889,16 @@ const Main = () => {
         Dynamic Splunk App Builder
       </h2>
       {isPreview ? (
-        <PreviewPage />
+        // <PreviewPage />
+        <PreviewPage
+          inputsFormat={inputsFormat}
+          onBack={() => setIsPreview(false)}
+        />
       ) : (
         <div className="w-full  bg-white shadow-md rounded-xl p-6">
           <div className="grid grid-cols-2 gap-6 mb-6">
-            <div className="flex flex-col relative">
+            {/* old functionality of app name */}
+            {/* <div className="flex flex-col relative">
               <label htmlFor="appName" className="font-medium mb-1">
                 App Name
               </label>
@@ -579,10 +928,10 @@ const Main = () => {
                         setInputsFormat((prev) => ({
                           ...prev,
                           appName: sug,
-                          indexName: "", // ✅ RESET
-                          indexConfig: {}, // ✅ CLEAR OLD INDEXES
+                          indexName: "", // RESET
+                          indexConfig: {}, //CLEAR OLD INDEXES
                         }));
-                        setIndexName(""); // ✅ RESET LOCAL STATE
+                        setIndexName(""); //RESET LOCAL STATE
                         setAppNameSuggestions([]);
                       }}
                     >
@@ -591,7 +940,58 @@ const Main = () => {
                   ))}
                 </ul>
               )}
+            </div> */}
+            {/* upto here */}
+
+            {/* new ui app name */}
+            {/* ───────── App Name Card ───────── */}
+            <div className="flex flex-col relative">
+              <label htmlFor="appName" className="font-medium mb-1">
+                App Name
+              </label>
+
+              {/* Input */}
+              <input
+                value={inputsFormat.appName}
+                onChange={handleInputChangeInAppName}
+                placeholder="Enter App Name"
+                className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+              />
+              {/* Suggestions */}
+              {appNameSuggestions.length > 0 && (
+                <div className="mt-4 bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+                  <p className="font-medium text-gray-700 mb-3">
+                    Suggestions names:
+                  </p>
+
+                  <div className="flex flex-wrap gap-3">
+                    {appNameSuggestions.map((sug) => (
+                      <button
+                        key={sug}
+                        type="button"
+                        onClick={() => {
+                          setInputsFormat((prev) => ({
+                            ...prev,
+                            appName: sug,
+                            indexName: "",
+                            indexConfig: {},
+                          }));
+                          setIndexName("");
+                          setAppNameSuggestions([]);
+                        }}
+                        className="px-4 py-2 rounded-xl border border-gray-300
+                     bg-gray-100 hover:bg-blue-50 hover:border-blue-400
+                     text-sm transition shadow-sm"
+                      >
+                        {sug}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* ---------------------------- */}
             {/* <div className="flex flex-col bg-white shadow rounded-lg p-4">
             <label htmlFor="indexName" className="font-medium mb-1">
               Index Name
@@ -610,6 +1010,8 @@ const Main = () => {
 
 
           </div> */}
+
+            {/* ------------------------ */}
 
             <div className="flex flex-row bg-white shadow rounded-lg p-4 space-y-3 gap-20 ">
               <div>
@@ -781,23 +1183,47 @@ const Main = () => {
                     className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
                     name="retentionTime"
                     type="text"
+                    /*1. CONTROL THE INPUT */
+                    value={
+                      inputsFormat.indexConfig[inputsFormat.indexName]
+                        ?.retentionTime || ""
+                    }
+                    /*2. PRESERVE EXISTING INDEX CONFIG */
                     onChange={(e) => {
-                      setInputsFormat((prev) => ({
-                        ...prev,
-                        // indexConfig: {
-                        //   ...prev.indexConfig,
-                        //   [indexName]: {
-                        //     ...prev.indexConfig[indexName],
-                        //     retentionTime: e.target.value,
-                        //   },
-                        // },
-                        indexConfig: {
-                          [indexName]: {
-                            ...prev.indexConfig[indexName],
-                            retentionTime: e.target.value,
+                      const value = e.target.value;
+
+                      // allow empty delete
+                      if (value === "") {
+                        setInputsFormat((prev) => {
+                          if (!prev.indexName) return prev;
+                          return {
+                            ...prev,
+                            indexConfig: {
+                              [prev.indexName]: {
+                                retentionTime: "",
+                              },
+                            },
+                          };
+                        });
+                        return;
+                      }
+
+                      // allow only numbers
+                      if (!/^\d+$/.test(value)) return;
+
+                      setInputsFormat((prev) => {
+                        if (!prev.indexName) return prev;
+
+                        return {
+                          ...prev,
+                          // IMPORTANT: overwrite indexConfig completely
+                          indexConfig: {
+                            [prev.indexName]: {
+                              retentionTime: value,
+                            },
                           },
-                        },
-                      }));
+                        };
+                      });
                     }}
                     placeholder="Enter Retention Days"
                   />
@@ -806,16 +1232,101 @@ const Main = () => {
             </div>
           </div>
 
+          {/* ───────── Source Type + Mode Selection ───────── */}
+          <div className="bg-white shadow rounded-lg p-4 mb-6">
+            {/* Source Type Input */}
+            <div className="flex flex-col mb-4">
+              <label className="font-medium mb-1">Source Type</label>
+              <input
+                type="text"
+                placeholder="Enter source type (e.g. csv, json)"
+                className="border border-gray-300 rounded-lg px-3 py-2"
+                value={inputsFormat.inputs[0]?.sourceType || ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setInputsFormat((prev) => {
+                    const inputs = [...prev.inputs];
+                    inputs[0] = { ...inputs[0], sourceType: value };
+                    return { ...prev, inputs };
+                  });
+                }}
+              />
+            </div>
+
+            {/* Radio Buttons */}
+            <div className="flex gap-8">
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="sourceMode"
+                  value={SOURCE_MODES.HEC}
+                  checked={sourceMode === SOURCE_MODES.HEC}
+                  onChange={() => setSourceMode(SOURCE_MODES.HEC)}
+                  className="accent-blue-600"
+                />
+                <span>HEC Token</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="sourceMode"
+                  value={SOURCE_MODES.UF}
+                  checked={sourceMode === SOURCE_MODES.UF}
+                  onChange={() => setSourceMode(SOURCE_MODES.UF)}
+                  className="accent-blue-600"
+                />
+                <span>Universal Forwarder</span>
+              </label>
+
+              <label className="flex items-center gap-2">
+                <input
+                  type="radio"
+                  name="sourceMode"
+                  value={SOURCE_MODES.CONF}
+                  checked={sourceMode === SOURCE_MODES.CONF}
+                  onChange={() => setSourceMode(SOURCE_MODES.CONF)}
+                  className="accent-blue-600"
+                />
+                <span>Configuration Files</span>
+              </label>
+            </div>
+          </div>
+
+          {sourceMode === SOURCE_MODES.HEC && (
+            <div className="border rounded-lg p-6 mb-6 bg-gray-50">
+              <h2 className="text-lg font-semibold mb-2">
+                HEC Token Configuration
+              </h2>
+              <div className="h-24 border border-dashed rounded-md flex items-center justify-center text-gray-400">
+                HEC Token inputs go here
+              </div>
+            </div>
+          )}
+
+          {sourceMode === SOURCE_MODES.UF && (
+            <div className="border rounded-lg p-6 mb-6 bg-gray-50">
+              <h2 className="text-lg font-semibold mb-2">
+                Universal Forwarder Configuration
+              </h2>
+              <div className="h-24 border border-dashed rounded-md flex items-center justify-center text-gray-400">
+                Universal Forwarder config goes here
+              </div>
+            </div>
+          )}
+
           {/* {Object.keys(inputsFormat.indexConfig).length > 0 &&
           <IndexConfig key={Object.keys(inputsFormat.indexConfig)[0]} indexName={Object.keys(inputsFormat.indexConfig)[0]} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
         } */}
 
-          <div>
-            <h2 className="text-xl font-semibold mb-2">Inputs Config</h2>
-            <hr className="mb-4 text-blue-500" />
-          </div>
+          {sourceMode === SOURCE_MODES.CONF && (
+            <>
+              <div>
+                <h2 className="text-xl font-semibold mb-2">Inputs Config</h2>
+                <hr className="mb-4 text-blue-500" />
+              </div>
 
-          {/* <div className="flex flex-col gap-6">
+              {/* <div className="flex flex-col gap-6">
           {inputsConfigList.map((each) => (
             <InputConfig
               key={each}
@@ -827,14 +1338,14 @@ const Main = () => {
             />
           ))}
         </div> */}
-          {inputDeleteError && (
-            <p className="text-red-500 text-sm mb-3 font-medium">
-              {inputDeleteError}
-            </p>
-          )}
+              {inputDeleteError && (
+                <p className="text-red-500 text-sm mb-3 font-medium">
+                  {inputDeleteError}
+                </p>
+              )}
 
-          <div className="flex flex-col gap-6">
-            {/* {inputsFormat.inputs.map((v, index) => {
+              <div className="flex flex-col gap-6">
+                {/* {inputsFormat.inputs.map((v, index) => {
               const each = index + 1;
               return (
                 <div
@@ -852,29 +1363,31 @@ const Main = () => {
               );
             })} */}
 
-            {inputsFormat.inputs.map((each,index) => (
-              <div
-                key={index+1}
-                className="bg-white border border-gray-300 rounded-xl p-4 shadow"
-              >
-                <InputConfig
-                  cancelConfig={cancelConfig}
-                  each={index+1}
-                  inputsFormat={inputsFormat}
-                  setInputsFormat={setInputsFormat}
-                  handleTransforms={handleTransforms}
-                />
+                {inputsFormat.inputs.map((each, index) => (
+                  <div
+                    key={index + 1}
+                    className="bg-white border border-gray-300 rounded-xl p-4 shadow"
+                  >
+                    <InputConfig
+                      cancelConfig={cancelConfig}
+                      each={index + 1}
+                      inputsFormat={inputsFormat}
+                      setInputsFormat={setInputsFormat}
+                      handleTransforms={handleTransforms}
+                    />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="mt-6 flex justify-end">
-            <button
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600"
-              onClick={handleInputConfigs}
-            >
-              + Add Input
-            </button>
-          </div>
+              <div className="mt-6 flex justify-end">
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600"
+                  onClick={handleInputConfigs}
+                >
+                  + Add Input
+                </button>
+              </div>
+            </>
+          )}
           <div className="flex flex-row gap-1.5">
             <button
               className="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600"

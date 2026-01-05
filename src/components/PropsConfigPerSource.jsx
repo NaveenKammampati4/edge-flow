@@ -47,6 +47,20 @@ const PropsConfigPerSource = ({
     lineBreakerTableFormat: "",
   });
 
+  const [hasAppliedProps, setHasAppliedProps] = useState(false);
+
+  const fileName = file?.name || "";
+
+  const isJsonFile = fileName.toLowerCase().endsWith(".json");
+  const isXmlFile = fileName.toLowerCase().endsWith(".xml");
+  const isCsvFile = fileName.toLowerCase().endsWith(".csv");
+  const isTxtFile = !isJsonFile && !isCsvFile;
+
+  // Debug (optional)
+  console.log("fileName:", fileName);
+  console.log("isJsonFile:", isJsonFile);
+  console.log("isTxtFile:", isTxtFile);
+
   console.log("each", each);
   console.log("inputss : ", inputsFormat);
   const sourceTypes = inputsFormat.inputs[each - 1].sourceType;
@@ -180,14 +194,27 @@ const PropsConfigPerSource = ({
     }
   }, [customsValue.lineBreakerRegex, customsValue.lineBreakerTableFormat]);
 
-  const truncateByLookHead = (text) => {
+  // const truncateByLookHead = (text) => {
+  //   const max = Number(inputsFormat.props[sourceTypes]?.truncate);
+
+  //   if (!text) return "";
+  //   if (!max || max <= 0) return text;
+  //   console.log("info data: " + text);
+  //   return text.substring(0, max);
+  //   // return text;
+  // };
+
+  const truncateByLookHead = (value) => {
     const max = Number(inputsFormat.props[sourceTypes]?.truncate);
 
-    if (!text) return "";
+    if (value === null || value === undefined) return "";
+
+    // Convert everything to string safely
+    const text = typeof value === "string" ? value : JSON.stringify(value);
+
     if (!max || max <= 0) return text;
-    console.log("info data: " + text);
+
     return text.substring(0, max);
-    // return text;
   };
 
   const applyConfigToFile = () => {
@@ -374,11 +401,24 @@ const PropsConfigPerSource = ({
   //   }
   // }, [itemList, fileText]);
 
+  // useEffect(() => {
+  //   if (fileText) {
+  //     applyConfigToFile();
+  //   }
+  // }, [fileText, inputsFormat.props[sourceTypes]]);
+
   useEffect(() => {
-    if (fileText) {
-      applyConfigToFile();
-    }
-  }, [fileText, inputsFormat.props[sourceTypes]]);
+    if (!hasAppliedProps) return; // only after Apply
+    if (!fileText) return;
+    if (!isTxtFile) return;
+
+    applyConfigToFile();
+  }, [fileText, inputsFormat.props[sourceTypes], isTxtFile, hasAppliedProps]);
+  useEffect(() => {
+    setHasAppliedProps(false);
+    setFileText("");
+    setFileLines([]);
+  }, [file]);
 
   function splitLogLine(line) {
     const firstSpace = line.indexOf(" ");
@@ -391,6 +431,129 @@ const PropsConfigPerSource = ({
     return [part1, part2, part3];
   }
 
+  // const handleReadFile = () => {
+  //   if (!file) return;
+
+  //   const reader = new FileReader();
+
+  //   reader.onload = (event) => {
+  //     const text = event.target.result;
+
+  //     if (text === fileText) {
+  //       console.log("same");
+  //       console.log("text Data: ", text);
+  //       return;
+  //     }
+
+  //     console.log("text", text);
+
+  //     // Split lines
+  //     const textData = text.split("\n").filter((line) => line.trim() !== "");
+  //     console.log("textData", textData);
+
+  //     setFileText(text);
+
+  //     // -----------------------------------------
+  //     // Get prefix dynamically (example: from input)
+  //     // -----------------------------------------
+  //     const prefix = inputsFormat.props[sourceType].timePrefix;
+  //     const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  //     // -----------------------------------------
+  //     // Dynamic prefix log pattern
+  //     // -----------------------------------------
+  //     const prefixRegex = new RegExp(
+  //       inputsFormat.props[sourceType].lineBreaker
+  //     );
+
+  //     const processedLines = textData
+  //       .map((line) => {
+  //         // -----------------------------------------
+  //         // 1. PREFIX FORMAT (dynamic)
+  //         // -----------------------------------------
+  //         const matchPrefix = line.match(prefixRegex);
+
+  //         console.log("matchPrefix", matchPrefix);
+  //         if (matchPrefix) {
+  //           return {
+  //             type: "FORMAT1",
+  //             date: matchPrefix[1],
+  //             time: matchPrefix[2],
+  //             level: matchPrefix[3],
+  //             message: matchPrefix[4],
+  //             user: matchPrefix[5],
+  //           };
+  //         }
+
+  //         // -----------------------------------------
+  //         // 2. FORMAT 1
+  //         // -----------------------------------------
+  //         const match1 = line.match(
+  //           /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*)$/
+  //         );
+  //         // const match1 = line.match(
+  //         //   /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
+  //         // );
+
+  //         if (match1) {
+  //           return {
+  //             type: "FORMAT1",
+  //             date: match1[1],
+  //             time: match1[2],
+  //             level: match1[3],
+  //             message: match1[4],
+  //             user: match1[5],
+  //           };
+  //         }
+
+  //         // -----------------------------------------
+  //         // 3. FORMAT 2
+  //         // -----------------------------------------
+  //         // const match2 = line.match(
+  //         //   /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
+  //         // );
+  //         const match2 = line.match(
+  //           /^\[(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\]\s+([A-Z]+):\s+(.*)$/
+  //         );
+
+  //         if (match2) {
+  //           return {
+  //             type: "FORMAT2",
+  //             date: match2[1],
+  //             time: match2[2],
+  //             level: match2[3],
+  //             message: match2[4],
+  //             user: match2[5],
+  //           };
+  //         }
+
+  //         return null;
+  //       })
+  //       .filter(Boolean);
+
+  //     setFileLines(processedLines);
+  //     console.log("processed", processedLines);
+  //   };
+
+  //   reader.readAsText(file);
+  // };
+
+  const parseCSV = (text) => {
+    const lines = text.split(/\r?\n/).filter(Boolean);
+    if (lines.length < 2) return [];
+
+    const headers = lines[0].split(",").map((h) => h.trim());
+
+    return lines.slice(1).map((line) => {
+      const values = line.split(",");
+      const obj = {};
+      headers.forEach((h, i) => {
+        obj[h] = values[i]?.trim() ?? "";
+      });
+      return obj;
+    });
+  };
+
   const handleReadFile = () => {
     if (!file) return;
 
@@ -398,6 +561,57 @@ const PropsConfigPerSource = ({
 
     reader.onload = (event) => {
       const text = event.target.result;
+      setFileText(text);
+
+      /* =======================
+       JSON FILE
+    ======================= */
+      if (isJsonFile) {
+        try {
+          const parsed = JSON.parse(text);
+
+          if (!Array.isArray(parsed)) {
+            console.error("JSON must be an array");
+            setFileLines([]);
+            setHasAppliedProps(false);
+            return;
+          }
+
+          setFileLines(parsed); //JSON rows
+          setHasAppliedProps(true);
+          return; // stop here
+        } catch (e) {
+          console.error("Invalid JSON file", e);
+          setFileLines([]);
+          setHasAppliedProps(false);
+          return;
+        }
+      }
+
+      /* =======================
+          CSV FILE
+        ======================= */
+      if (isCsvFile) {
+        try {
+          const rows = parseCSV(text);
+
+          if (!Array.isArray(rows) || rows.length === 0) {
+            console.error("Invalid or empty CSV file");
+            setFileLines([]);
+            setHasAppliedProps(false);
+            return;
+          }
+
+          setFileLines(rows); // CSV rows = array of objects
+          setHasAppliedProps(true);
+          return; //STOP here (no TXT parsing)
+        } catch (e) {
+          console.error("CSV parsing failed", e);
+          setFileLines([]);
+          setHasAppliedProps(false);
+          return;
+        }
+      }
 
       if (text === fileText) {
         console.log("same");
@@ -493,6 +707,7 @@ const PropsConfigPerSource = ({
 
       setFileLines(processedLines);
       console.log("processed", processedLines);
+      setHasAppliedProps(true);
     };
 
     reader.readAsText(file);
@@ -1047,6 +1262,13 @@ const PropsConfigPerSource = ({
     inputsFormat.props[sourceTypes]?.lineBreakerTableFormat ?? "";
 
   const tableHeaders = (() => {
+    // // JSON → dynamic keys
+    // if (isJsonFile && fileLines.length > 0) {
+    //   return Object.keys(fileLines[0]);
+    // }
+    if ((isJsonFile || isCsvFile) && fileLines.length > 0) {
+    return Object.keys(fileLines[0]);
+  }
     //No selection OR empty/space value
     if (!lineBreaker || !lineBreaker.trim()) {
       return [];
@@ -1085,143 +1307,6 @@ const PropsConfigPerSource = ({
             </div>
           </div>
           <div className="space-y-4 mt-3.5">
-            {/* <div className="flex items-center gap-4">
-              <label className="w-40 text-sm font-medium text-gray-700">
-                TIME FORMAT
-              </label>
-              <select
-                name="timeFormat"
-                value={item.timeFormat}
-                // onChange={(e) => {
-                //   setConfigData((prev) => ({
-                //     ...prev,
-                //     timeFormat: e.target.value,
-                //   }));
-                // }}
-                onChange={(e) => updateIputs(e)}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Select TIME_FORMAT</option>
-                <option value="%Y-%m-%d %H:%M:%S">YYYY-MM-DD HH:mm:ss</option>
-                <option value="%m-%d-%Y %H:%M">MM-DD-YYYY HH:mm</option>
-                <option value="%d-%m-%Y %H:%M:%S">DD-MM-YYYY HH:mm:ss</option>
-                <option value="epoch">Epoch Time (seconds)</option>
-                <option value="iso8601">ISO 8601</option>
-                <option value="custom">Custom</option>
-              </select>
-              <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
-                Delete
-              </button>
-            </div>
-            <div className="flex items-center gap-4">
-              <label className="w-40 text-sm font-medium text-gray-700">
-                DATE TIME CONFIG
-              </label>
-              <select
-                name="dateTime"
-                value={item.dateTime}
-                // onChange={(e) => {
-                //   setConfigData((prev) => ({
-                //     ...prev,
-                //     dateTime: e.target.value,
-                //   }));
-                // }}
-                onChange={(e) => updateIputs(e)}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">--Select DATETIME_CONFIG--</option>
-                <option value="NONE">NONE</option>
-                <option value="AUTO">AUTO</option>
-                <option value="CURRENT">CURRENT</option>
-                <option value="GMT">GMT</option>
-                <option value="UTC">UTC</option>
-                <option value="SA">SA</option>
-                <option value="US">US</option>
-                <option value="EU">EU</option>
-                <option value="APAC">APAC</option>
-              </select>
-              <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
-                Delete
-              </button>
-            </div>
-            <div className="flex items-center gap-4">
-              <label className="w-40 text-sm font-medium text-gray-700">
-                LINE BREAKER
-              </label>
-              <select
-                name="lineBreaker"
-                value={item.lineBreaker}
-                // onChange={(e) => {
-                //   setConfigData((prev) => ({
-                //     ...prev,
-                //     lineBreaker: e.target.value,
-                //   }));
-                // }}
-                onChange={(e) => updateIputs(e)}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">Select Line Breaker</option>
-                <option value="newline">New Line (\r\n)</option>
-                <option value="double">Double New Line (\n\n)</option>
-                <option value="windowsDouble">
-                  Windows Double New Line (\r\n\r\n)
-                </option>
-                <option value="date">Date Format (YYYY-MM-DD)</option>
-                <option value="custom">Custom</option>
-              </select>
-              <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
-                Delete
-              </button>
-            </div>
-            <div className="flex items-center gap-4">
-              <label className="w-40 text-sm font-medium text-gray-700">
-                SHOULD LINE
-              </label>
-              <select
-                name="shouldLine"
-                value={item.shouldLine}
-                // onChange={(e) => {
-                //   setConfigData((prev) => ({
-                //     ...prev,
-                //     shouldLine: e.target.value,
-                //   }));
-                // }}
-                onChange={(e) => updateIputs(e)}
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="true">true</option>
-                <option value="false">false</option>
-              </select>
-              <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
-                Delete
-              </button>
-            </div>
-            <div className="flex items-center gap-4">
-              <label className="w-40 text-sm font-medium text-gray-700">
-                TRUNCATE
-              </label>
-              <input
-                name="truncate"
-                value={item.truncate}
-                // onChange={(e) => {
-                //   setConfigData((prev) => ({
-                //     ...prev,
-                //     truncate: e.target.value,
-                //   }));
-                // }}
-                onChange={(e) => updateIputs(e)}
-                type="number"
-                min="0"
-                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-              <button className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400">
-                Delete
-              </button>
-            </div> */}
-            {/* {Object.entries(itemList).map(([key, value], index) => {
-              return fileFormats(key, value);
-            })} */}
-
             {Object.entries(itemList)
               .filter(
                 ([key]) =>
@@ -1229,62 +1314,6 @@ const PropsConfigPerSource = ({
               )
               .map(([key, value]) => fileFormats(key, value))}
           </div>
-          {/* {Object.keys(inputsFormat.transform).map((key, index) =>
-            key !== "" ? (
-              <div className="flex items-center gap-4 mt-3.5" key={index}>
-                <label className="w-40 text-sm font-medium text-gray-700">
-                  {key}
-                </label>
-                <input
-                  name="newValue"
-                  // value={item.newValue || ""}
-                  value={inputsFormat.props[sourceTypes][key] || ""}
-                  // onChange={(e) => {
-                  //   const { value } = e.target;
-                  //   setInputsFormat((prev) => {
-                  //     const updated = [...prev.transform];
-                  //     updated[index] = { ...updated[index], newValue: value };
-                  //     return { ...prev, transform: updated };
-                  //   });
-                  // }}
-                  onChange={(e) => {
-                    const { value } = e.target;
-                    setInputsFormat((prev) => ({
-                      ...prev,
-                      transform: {
-                        ...prev.transform,
-                        [key]: {
-                          ...prev.transform[key],
-                          newValue: value
-                        }
-                      }
-                    }));
-                  }}
-                  type="text"
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-                <button
-                  // onClick={() => {
-                  //   setInputsFormat((prev) => {
-                  //     const updated = prev.transform.filter(
-                  //       (_, i) => i !== index
-                  //     );
-                  //     return { ...prev, transform: updated };
-                  //   });
-                  // }}
-                  onClick={() => {
-                    setInputsFormat((prev) => {
-                      const { [key]: _, ...rest } = prev.transform; // remove key
-                      return { ...prev, transform: rest };
-                    });
-                  }}
-                  className="px-3 py-1 bg-red-500 text-white text-sm rounded-lg hover:bg-red-600 focus:ring-2 focus:ring-red-400"
-                >
-                  Delete
-                </button>
-              </div>
-            ) : null
-          )} */}
 
           <div className="flex items-center gap-4 mt-3.5">
             <input
@@ -1340,68 +1369,68 @@ const PropsConfigPerSource = ({
               Customized Props File Preview After Props Update
             </h3>
             <div className="h-64 overflow-y-auto border border-gray-300 rounded-lg p-3 text-sm bg-white shadow">
-              {/* <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-100 text-left">
-                    <th className="px-4 py-2 border border-gray-300 text-sm font-semibold">
-                      Date Time
-                    </th>
-                    <th className="px-4 py-2 border border-gray-300 text-sm font-semibold">
-                      Event Logs
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {console.log("FIle lines", fileLines)}
-                  {fileLines.map((each, index) => (
-                    <tr className="hover:bg-gray-50" key={index}>
-                      <td className="px-4 py-2 border border-gray-300">
-                        {dateFormat(each.date, each.time)}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300">
-                        {each?.info?.substring(
-                          0,
-                          inputsFormat.props[sourceType].maximum_lookHead
+              {hasAppliedProps &&
+                fileLines.length > 0 &&
+                tableHeaders.length > 0 && (
+                  <table className="w-full border-collapse">
+                    <thead>
+                      <tr className="bg-gray-100">
+                        {(isJsonFile || isCsvFile) && (
+                          <th className="px-4 py-2 border border-gray-300 text-sm font-semibold">
+                            DATETIME
+                          </th>
                         )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table> */}
+                        {tableHeaders.map((header) => (
+                          <th
+                            key={header}
+                            className="px-4 py-2 border border-gray-300 text-sm font-semibold"
+                          >
+                            {header.toUpperCase()}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
 
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-100">
-                    {tableHeaders.map((header) => (
-                      <th
-                        key={header}
-                        className="px-4 py-2 border border-gray-300 text-sm font-semibold"
-                      >
-                        {header.toUpperCase()}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
+                    <tbody>
+                      {fileLines.map((row, rowIndex) => (
+                        <tr key={rowIndex} className="hover:bg-gray-50">
+                          {(isJsonFile || isCsvFile) && (
+                            <>
+                              <td className="px-4 py-2 border border-gray-300">
+                                {dateFormat(
+                                  row.timestamp?.split(" ")[0],
+                                  row.timestamp?.split(" ")[1]
+                                )}
+                              </td>
+                              {tableHeaders.map((key) => (
+                                <td
+                                  key={key}
+                                  className="px-4 py-2 border border-gray-300"
+                                >
+                                  {truncateByLookHead(row?.[key])}
+                                </td>
+                              ))}
+                            </>
+                          )}
 
-                <tbody>
-                  {fileLines.map((row, rowIndex) => (
-                    <tr key={rowIndex} className="hover:bg-gray-50">
-                      {tableHeaders.map((header, colIndex) => (
-                        <td
-                          key={colIndex}
-                          className="px-4 py-2 border border-gray-300"
-                        >
-                          {isCustomLineBreaker
-                            ? truncateByLookHead(row?.[header])
-                            : colIndex === 0
-                            ? dateFormat(row.date, row.time)
-                            : truncateByLookHead(row?.info)}{" "}
-                        </td>
+                          {isTxtFile &&
+                            tableHeaders.map((header, colIndex) => (
+                              <td
+                                key={colIndex}
+                                className="px-4 py-2 border border-gray-300"
+                              >
+                                {isCustomLineBreaker
+                                  ? truncateByLookHead(row?.[header])
+                                  : colIndex === 0
+                                  ? dateFormat(row.date, row.time)
+                                  : truncateByLookHead(row?.info)}
+                              </td>
+                            ))}
+                        </tr>
                       ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                    </tbody>
+                  </table>
+                )}
             </div>
           </div>
           <div className="flex flex-col space-y-2">
@@ -1430,18 +1459,6 @@ const PropsConfigPerSource = ({
           </div>
         </div>
       </div>
-
-      {/* {transformConfig && (
-        <TransformsConfig
-          key={each}
-          each={each}
-          newKey={item.newKey}
-          inputsFormat={inputsFormat}
-          setInputsFormat={setInputsFormat}
-          transforms={transforms}
-          setTransforms={setTransforms}
-        />
-      )} */}
       {Object.keys(inputsFormat.transform).map((key, index) => {
         const value = inputsFormat.transform[key];
         if (itemListTransform.includes(key)) {
