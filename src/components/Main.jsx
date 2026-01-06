@@ -286,148 +286,13 @@ const Main = () => {
   //   );
   // };
 
-  // const PreviewPage = ({ inputsFormat, onBack }) => {
-  //   if (!inputsFormat) return null;
-
-  //   const { appName, indexName, indexConfig, inputs, props, transform } =
-  //     inputsFormat;
-
-  //   return (
-  //     <div className="w-full bg-white shadow-md rounded-xl p-6 space-y-6">
-  //       {/* ───────── App Config ───────── */}
-  //       <Section title="App Configuration">
-  //         <Row label="App Name" value={appName} />
-  //         <Row label="Index Name" value={indexName} />
-
-  //         {indexConfig && Object.keys(indexConfig).length > 0 && (
-  //           <>
-  //             <Divider />
-  //             <div className="font-semibold">Index Config</div>
-  //             {Object.entries(indexConfig).map(([idx, cfg]) => (
-  //               <Row
-  //                 key={idx}
-  //                 label={`Retention (${idx})`}
-  //                 value={cfg.retentionTime}
-  //               />
-  //             ))}
-  //           </>
-  //         )}
-  //       </Section>
-
-  //       {/* ───────── Inputs ───────── */}
-  //       {inputs?.length > 0 && (
-  //         <Section title="Inputs Configuration">
-  //           {inputs.map((input, i) => (
-  //             <div
-  //               key={input.id || i}
-  //               className="border rounded-md p-3 mb-3 bg-gray-50"
-  //             >
-  //               <div className="font-medium mb-2">Input #{i + 1}</div>
-
-  //               <Row label="File Path" value={input.filePath} />
-  //               <Row label="Source Type" value={input.sourceType} />
-  //               <Row label="Index" value={input.index || indexName} />
-  //               <Row label="WhiteList" value={input.whiteList} />
-  //               <Row label="BlackList" value={input.blackList} />
-
-  //               {/* {input.customFields?.length > 0 && (
-  //                 <>
-  //                   <Divider />
-  //                   <div className="font-semibold">Custom Fields</div>
-  //                   {input.customFields.map((cf, idx) => (
-  //                     <Row key={idx} label={cf.key} value={cf.value} />
-  //                   ))}
-  //                 </>
-  //               )} */}
-
-  //               {input.customFields &&
-  //                 (Array.isArray(input.customFields)
-  //                   ? input.customFields.length > 0
-  //                   : Object.keys(input.customFields).length > 0) && (
-  //                   <>
-  //                     <Divider />
-  //                     <div className="font-semibold">Custom Fields</div>
-
-  //                     {/* {Array.isArray(input.customFields)
-  //                       ? input.customFields.map((cf, idx) => (
-  //                           <Row key={idx} label={cf.key} value={cf.value} />
-  //                         ))
-  //                       : Object.entries(input.customFields).map(([k, v]) => (
-  //                           <Row key={k} label={k} value={v} />
-  //                         ))} */}
-
-  //                     {Array.isArray(input.customFields)
-  //                       ? input.customFields.map((cf, idx) => {
-  //                           const key = Object.keys(cf)[0];
-  //                           const value = cf[key];
-
-  //                           return <Row key={idx} label={key} value={value} />;
-  //                         })
-  //                       : Object.entries(input.customFields).map(([k, v]) => (
-  //                           <Row key={k} label={k} value={v} />
-  //                         ))}
-  //                   </>
-  //                 )}
-  //             </div>
-  //           ))}
-  //         </Section>
-  //       )}
-
-  //       {/* ───────── Props ───────── */}
-  //       {props && Object.keys(props).length > 0 && (
-  //         <Section title="Props Configuration">
-  //           {Object.entries(props).map(([sourceType, cfg]) => (
-  //             <div
-  //               key={sourceType}
-  //               className="border rounded-md p-3 mb-3 bg-gray-50"
-  //             >
-  //               <div className="font-semibold text-blue-600 mb-2">
-  //                 {sourceType}
-  //               </div>
-
-  //               {Object.entries(cfg).map(([k, v]) => (
-  //                 <Row key={k} label={k} value={v} />
-  //               ))}
-  //             </div>
-  //           ))}
-  //         </Section>
-  //       )}
-
-  //       {/* ───────── Transforms ───────── */}
-  //       {transform?.length > 0 && (
-  //         <Section title="Transforms">
-  //           {transform.map((t, i) => (
-  //             <div key={i} className="border rounded-md p-3 mb-3 bg-gray-50">
-  //               <div className="font-medium mb-2">Transform #{i + 1}</div>
-
-  //               <Row label="Regex" value={t.regex} />
-  //               <Row label="Format" value={t.format} />
-  //               <Row label="Destination Key" value={t.destKey} />
-  //               <Row label="New Key" value={t.newKey} />
-  //               <Row label="New Value" value={t.newValue} />
-  //             </div>
-  //           ))}
-  //         </Section>
-  //       )}
-
-  //       {/* ───────── Actions ───────── */}
-  //       <div className="flex justify-end">
-  //         <button
-  //           className="bg-gray-500 text-white px-4 py-2 rounded"
-  //           onClick={onBack}
-  //         >
-  //           Back
-  //         </button>
-  //       </div>
-  //     </div>
-  //   );
-  // };
-
   const PreviewPage = ({ inputsFormat, onBack }) => {
     if (!inputsFormat) return null;
 
     const { appName, indexName, indexConfig, inputs, props, transform } =
       inputsFormat;
+    console.log("DEBUG TRANSFORM:", inputsFormat.transform);
+    console.log("DEBUG PROPS:", inputsFormat.props);
 
     return (
       <div className="w-full bg-gray-50 rounded-xl p-6 space-y-6">
@@ -543,41 +408,60 @@ const Main = () => {
           </div>
         )}
 
-        {transform && transform.length > 0 && (
-          <div className="bg-white rounded-lg shadow p-5">
-            <h3 className="text-lg font-semibold text-blue-500 mb-4">
-              Transforms Configuration
-            </h3>
+        {/* ===== Transforms ===== */}
+        {transform &&
+          (Array.isArray(transform)
+            ? transform.length > 0
+            : Object.keys(transform).length > 0) && (
+            <div className="bg-white rounded-lg shadow p-5">
+              <h3 className="text-lg font-semibold text-blue-500 mb-4">
+                Transforms Configuration
+              </h3>
 
-            {transform.map((t, i) => {
-              const hasAnyValue = Object.values(t).some(
-                (v) => v !== undefined && v !== null && v !== ""
-              );
+              {(Array.isArray(transform)
+                ? transform.map((t, i) => ({
+                    __name: `Transform ${i + 1}`,
+                    ...t,
+                  }))
+                : Object.entries(transform).map(([name, t]) => ({
+                    __name: name, // REAL transform name
+                    ...t,
+                  }))
+              ).map((t, i) => {
+                const hasAnyValue = Object.values(t).some(
+                  (v) => v !== undefined && v !== null && v !== ""
+                );
 
-              return (
-                <div key={i} className="border rounded-lg p-4 mb-4 bg-gray-50">
-                  <div className="font-semibold mb-2">Transform #{i + 1}</div>
-
-                  {/* Rows (hidden automatically if empty) */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <Row label="Regex" value={t.regex} />
-                    <Row label="Format" value={t.format} />
-                    <Row label="Destination Key" value={t.destKey} />
-                    <Row label="New Key" value={t.newKey} />
-                    <Row label="New Value" value={t.newValue} />
-                  </div>
-
-                  {/* Explicit empty state message */}
-                  {!hasAnyValue && (
-                    <div className="text-sm text-gray-400 italic mt-2">
-                      No transform values configured yet
+                return (
+                  <div
+                    key={t.__name || i}
+                    className="border rounded-lg p-4 mb-4 bg-gray-50"
+                  >
+                    {/*Transform Title */}
+                    <div className="font-semibold mb-2 text-blue-700">
+                      Transform Name:{" "}
+                      <span className="text-gray-800">{t.__name}</span>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+
+                    {/* Values */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <Row label="Regex" value={t.regex} />
+                      <Row label="Format" value={t.format} />
+                      <Row label="Destination Key" value={t.destKey} />
+                      <Row label="New Key" value={t.newKey} />
+                      <Row label="New Value" value={t.newValue} />
+                    </div>
+
+                    {!hasAnyValue && (
+                      <div className="text-sm text-gray-400 italic mt-2">
+                        No transform values configured yet
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
       </div>
     );
   };
@@ -889,114 +773,115 @@ const Main = () => {
 
   return (
     <div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
-      <h2 className="text-blue-600 font-bold text-2xl mb-6">
+      {/* <h2 className="text-blue-600 font-bold text-2xl mb-6">
         Dynamic Splunk App Builder
       </h2>
-      {isPreview ? (
+
+      <button className="flex items-center gap-2 px-4 py-2 border rounded-lg hover:bg-gray-50">
+        🔗 Connect GitHub
+      </button> */}
+
+      <div className="w-full flex items-center justify-between mb-8">
+        <h1 className="text-2xl font-semibold text-blue-600">
+          Dynamic Splunk App Builder
+        </h1>
+
+        {/* GitHub Button */}
+        <button
+          className="
+flex items-center gap-2
+  px-5 py-2
+  border border-gray-300
+  rounded-full
+  text-sm font-medium
+  bg-white
+  text-gray-700
+
+  hover:bg-gray-100
+  hover:border-gray-400
+
+  active:bg-gray-200
+  active:scale-95
+
+  focus:outline-none
+  focus:ring-2
+  focus:ring-blue-500
+  focus:ring-offset-2
+
+  transition
+"
+        >
+          🔗 Connect GitHub
+        </button>
+      </div>
+
+      {/* {isPreview ? (
         // <PreviewPage />
         <PreviewPage
           inputsFormat={inputsFormat}
           onBack={() => setIsPreview(false)}
         />
-      ) : (
-        <div className="w-full  bg-white shadow-md rounded-xl p-6">
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            {/* old functionality of app name */}
-            {/* <div className="flex flex-col relative">
-              <label htmlFor="appName" className="font-medium mb-1">
-                App Name
-              </label>
-              <input
-                id="appName"
-                value={inputsFormat.appName} // ✅ ADD THIS
-                className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                onChange={handleInputChangeInAppName}
-                placeholder="Enter App Name"
-              />
+      ) : ( */}
+      <div style={{ display: isPreview ? "block" : "none", width: "100%" }}>
+        <PreviewPage
+          inputsFormat={inputsFormat}
+          onBack={() => setIsPreview(false)}
+        />
+      </div>
+      <div
+        className="w-full  bg-white shadow-md rounded-xl p-6"
+        style={{ display: isPreview ? "none" : "block" }}
+      >
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          {/* ───────── App Name Card ───────── */}
+          <div className="flex flex-col relative">
+            <label htmlFor="appName" className="font-medium mb-1">
+              App Name
+            </label>
 
-              {appNameSuggestions.length > 0 && (
-                <ul className="top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
+            {/* Input */}
+            <input
+              value={inputsFormat.appName}
+              onChange={handleInputChangeInAppName}
+              placeholder="Enter App Name"
+              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+            />
+            {/* Suggestions */}
+            {appNameSuggestions.length > 0 && (
+              <div className="mt-4 bg-white border border-gray-200 rounded-xl shadow-sm p-4">
+                <p className="font-medium text-gray-700 mb-3">
+                  Suggestions names:
+                </p>
+
+                <div className="flex flex-wrap gap-3">
                   {appNameSuggestions.map((sug) => (
-                    <li
+                    <button
                       key={sug}
-                      className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                      // onMouseDown={() => {
-                      //   setInputsFormat((prev) => ({
-                      //     ...prev,
-                      //     appName: sug,
-                      //   }));
-                      //   // setAppName(sug);
-                      //   setAppNameSuggestions([]);
-                      // }}
-                      onMouseDown={() => {
+                      type="button"
+                      onClick={() => {
                         setInputsFormat((prev) => ({
                           ...prev,
                           appName: sug,
-                          indexName: "", // RESET
-                          indexConfig: {}, //CLEAR OLD INDEXES
+                          indexName: "",
+                          indexConfig: {},
                         }));
-                        setIndexName(""); //RESET LOCAL STATE
+                        setIndexName("");
                         setAppNameSuggestions([]);
                       }}
-                    >
-                      {sug}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div> */}
-            {/* upto here */}
-
-            {/* new ui app name */}
-            {/* ───────── App Name Card ───────── */}
-            <div className="flex flex-col relative">
-              <label htmlFor="appName" className="font-medium mb-1">
-                App Name
-              </label>
-
-              {/* Input */}
-              <input
-                value={inputsFormat.appName}
-                onChange={handleInputChangeInAppName}
-                placeholder="Enter App Name"
-                className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-              />
-              {/* Suggestions */}
-              {appNameSuggestions.length > 0 && (
-                <div className="mt-4 bg-white border border-gray-200 rounded-xl shadow-sm p-4">
-                  <p className="font-medium text-gray-700 mb-3">
-                    Suggestions names:
-                  </p>
-
-                  <div className="flex flex-wrap gap-3">
-                    {appNameSuggestions.map((sug) => (
-                      <button
-                        key={sug}
-                        type="button"
-                        onClick={() => {
-                          setInputsFormat((prev) => ({
-                            ...prev,
-                            appName: sug,
-                            indexName: "",
-                            indexConfig: {},
-                          }));
-                          setIndexName("");
-                          setAppNameSuggestions([]);
-                        }}
-                        className="px-4 py-2 rounded-xl border border-gray-300
+                      className="px-4 py-2 rounded-xl border border-gray-300
                      bg-gray-100 hover:bg-blue-50 hover:border-blue-400
                      text-sm transition shadow-sm"
-                      >
-                        {sug}
-                      </button>
-                    ))}
-                  </div>
+                    >
+                      {sug}
+                    </button>
+                  ))}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+          </div>
 
-            {/* ---------------------------- */}
-            {/* <div className="flex flex-col bg-white shadow rounded-lg p-4">
+          {/* ---------------------------- */}
+          {/* <div className="flex flex-col bg-white shadow rounded-lg p-4">
             <label htmlFor="indexName" className="font-medium mb-1">
               Index Name
             </label>
@@ -1015,104 +900,104 @@ const Main = () => {
 
           </div> */}
 
-            {/* ------------------------ */}
+          {/* ------------------------ */}
 
-            <div className="flex flex-row bg-white shadow rounded-lg p-4 space-y-3 gap-20 ">
-              <div>
-                <div className="flex space-x-6">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      value="existing"
-                      checked={mode === "existing"}
-                      onChange={() => {
-                        setMode("existing"),
-                          setInputsFormat((prev) => ({
-                            ...prev,
-                            indexName: "",
-                          }));
-                      }}
-                      className="accent-blue-600"
-                    />
-                    <span>Existing Index</span>
-                  </label>
-
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      value="new"
-                      checked={mode === "new"}
-                      onChange={() => {
-                        setMode("new"),
-                          setInputsFormat((prev) => ({
-                            ...prev,
-                            indexName: "",
-                          }));
-                      }}
-                      className="accent-blue-600"
-                    />
-                    <span>New Index</span>
-                  </label>
-                </div>
-
-                {mode === "existing" ? (
-                  <div className="flex flex-col">
-                    <label htmlFor="existingIndex" className="font-medium mb-1">
-                      Select Existing Index
-                    </label>
-                    <select
-                      id="existingIndex"
-                      className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                      onChange={(e) => {
-                        // setInputsFormat((prev) => {
-                        //   return {
-                        //     ...prev,
-                        //     indexName: e.target.value,
-                        //     indexConfig: {
-                        //       ...prev.indexConfig,
-                        //       [e.target.value]: {
-                        //         retentionTime: "",
-                        //         customFields: [],
-                        //       },
-                        //     },
-                        //   };
-                        // });
+          <div className="flex flex-row bg-white shadow rounded-lg p-4 space-y-3 gap-20 ">
+            <div>
+              <div className="flex space-x-6">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    value="existing"
+                    checked={mode === "existing"}
+                    onChange={() => {
+                      setMode("existing"),
                         setInputsFormat((prev) => ({
                           ...prev,
-                          indexName: e.target.value,
-                          indexConfig: {
-                            [e.target.value]: {
-                              retentionTime: "",
-                              customFields: [],
-                            },
-                          },
+                          indexName: "",
                         }));
-                      }}
-                    >
-                      <option value="">-- Choose an index --</option>
-                      {existingIndexes.map((index) => (
-                        <option key={index} value={index}>
-                          {index}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                ) : (
-                  <div className="flex flex-col relative">
-                    <label htmlFor="newIndex" className="font-medium mb-1">
-                      Enter New Index
-                    </label>
-                    <input
-                      id="newIndex"
-                      value={indexName}
-                      onFocus={handleIndexFocus}
-                      onChange={handleInputChange}
-                      placeholder="Enter index name"
-                      className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                    />
+                    }}
+                    className="accent-blue-600"
+                  />
+                  <span>Existing Index</span>
+                </label>
 
-                    {/* Suggestions */}
-                    {/* {(suggestions.length > 0 && inputsFormat.indexName !== indexName) && (
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    value="new"
+                    checked={mode === "new"}
+                    onChange={() => {
+                      setMode("new"),
+                        setInputsFormat((prev) => ({
+                          ...prev,
+                          indexName: "",
+                        }));
+                    }}
+                    className="accent-blue-600"
+                  />
+                  <span>New Index</span>
+                </label>
+              </div>
+
+              {mode === "existing" ? (
+                <div className="flex flex-col">
+                  <label htmlFor="existingIndex" className="font-medium mb-1">
+                    Select Existing Index
+                  </label>
+                  <select
+                    id="existingIndex"
+                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                    onChange={(e) => {
+                      // setInputsFormat((prev) => {
+                      //   return {
+                      //     ...prev,
+                      //     indexName: e.target.value,
+                      //     indexConfig: {
+                      //       ...prev.indexConfig,
+                      //       [e.target.value]: {
+                      //         retentionTime: "",
+                      //         customFields: [],
+                      //       },
+                      //     },
+                      //   };
+                      // });
+                      setInputsFormat((prev) => ({
+                        ...prev,
+                        indexName: e.target.value,
+                        indexConfig: {
+                          [e.target.value]: {
+                            retentionTime: "",
+                            customFields: [],
+                          },
+                        },
+                      }));
+                    }}
+                  >
+                    <option value="">-- Choose an index --</option>
+                    {existingIndexes.map((index) => (
+                      <option key={index} value={index}>
+                        {index}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="flex flex-col relative">
+                  <label htmlFor="newIndex" className="font-medium mb-1">
+                    Enter New Index
+                  </label>
+                  <input
+                    id="newIndex"
+                    value={indexName}
+                    onFocus={handleIndexFocus}
+                    onChange={handleInputChange}
+                    placeholder="Enter index name"
+                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                  />
+
+                  {/* Suggestions */}
+                  {/* {(suggestions.length > 0 && inputsFormat.indexName !== indexName) && (
                   <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
                     {suggestions.map((sug) => (
                       <li
@@ -1147,190 +1032,189 @@ const Main = () => {
                     ))}
                   </ul>
                 )} */}
-                    {suggestions.length > 0 &&
-                      inputsFormat.indexName === "" && (
-                        <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
-                          {suggestions.map((sug) => (
-                            <li
-                              key={sug}
-                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                              onClick={() => {
-                                setInputsFormat((prev) => ({
-                                  ...prev,
-                                  indexName: sug,
-                                  indexConfig: {
-                                    ...prev.indexConfig,
-                                    [sug]: {
-                                      retentionTime: "",
-                                      customFields: [],
-                                    },
-                                  },
-                                }));
-                                setIndexName(sug);
-                                setSuggestions([]);
-                              }}
-                            >
-                              {sug}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                  </div>
-                )}
-              </div>
-              {mode === "new" && (
-                <div className="flex flex-col  rounded-lg mt-5">
-                  <label htmlFor="appName" className="font-medium mb-1">
-                    Retention Days
-                  </label>
-                  <input
-                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                    name="retentionTime"
-                    type="text"
-                    /*1. CONTROL THE INPUT */
-                    value={
-                      inputsFormat.indexConfig[inputsFormat.indexName]
-                        ?.retentionTime || ""
-                    }
-                    /*2. PRESERVE EXISTING INDEX CONFIG */
-                    onChange={(e) => {
-                      const value = e.target.value;
-
-                      // allow empty delete
-                      if (value === "") {
-                        setInputsFormat((prev) => {
-                          if (!prev.indexName) return prev;
-                          return {
-                            ...prev,
-                            indexConfig: {
-                              [prev.indexName]: {
-                                retentionTime: "",
+                  {suggestions.length > 0 && inputsFormat.indexName === "" && (
+                    <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
+                      {suggestions.map((sug) => (
+                        <li
+                          key={sug}
+                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                          onClick={() => {
+                            setInputsFormat((prev) => ({
+                              ...prev,
+                              indexName: sug,
+                              indexConfig: {
+                                ...prev.indexConfig,
+                                [sug]: {
+                                  retentionTime: "",
+                                  customFields: [],
+                                },
                               },
-                            },
-                          };
-                        });
-                        return;
-                      }
+                            }));
+                            setIndexName(sug);
+                            setSuggestions([]);
+                          }}
+                        >
+                          {sug}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+            {mode === "new" && (
+              <div className="flex flex-col  rounded-lg mt-5">
+                <label htmlFor="appName" className="font-medium mb-1">
+                  Retention Days
+                </label>
+                <input
+                  className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                  name="retentionTime"
+                  type="text"
+                  /*1. CONTROL THE INPUT */
+                  value={
+                    inputsFormat.indexConfig[inputsFormat.indexName]
+                      ?.retentionTime || ""
+                  }
+                  /*2. PRESERVE EXISTING INDEX CONFIG */
+                  onChange={(e) => {
+                    const value = e.target.value;
 
-                      // allow only numbers
-                      if (!/^\d+$/.test(value)) return;
-
+                    // allow empty delete
+                    if (value === "") {
                       setInputsFormat((prev) => {
                         if (!prev.indexName) return prev;
-
                         return {
                           ...prev,
-                          // IMPORTANT: overwrite indexConfig completely
                           indexConfig: {
                             [prev.indexName]: {
-                              retentionTime: value,
+                              retentionTime: "",
                             },
                           },
                         };
                       });
-                    }}
-                    placeholder="Enter Retention Days"
-                  />
-                </div>
-              )}
-            </div>
+                      return;
+                    }
+
+                    // allow only numbers
+                    if (!/^\d+$/.test(value)) return;
+
+                    setInputsFormat((prev) => {
+                      if (!prev.indexName) return prev;
+
+                      return {
+                        ...prev,
+                        // IMPORTANT: overwrite indexConfig completely
+                        indexConfig: {
+                          [prev.indexName]: {
+                            retentionTime: value,
+                          },
+                        },
+                      };
+                    });
+                  }}
+                  placeholder="Enter Retention Days"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ───────── Source Type + Mode Selection ───────── */}
+        <div className="bg-white shadow rounded-lg p-4 mb-6">
+          {/* Source Type Input */}
+          <div className="flex flex-col mb-4">
+            <label className="font-medium mb-1">Source Type</label>
+            <input
+              type="text"
+              placeholder="Enter source type (e.g. csv, json)"
+              className="border border-gray-300 rounded-lg px-3 py-2"
+              value={inputsFormat.inputs[0]?.sourceType || ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                setInputsFormat((prev) => {
+                  const inputs = [...prev.inputs];
+                  inputs[0] = { ...inputs[0], sourceType: value };
+                  return { ...prev, inputs };
+                });
+              }}
+            />
           </div>
 
-          {/* ───────── Source Type + Mode Selection ───────── */}
-          <div className="bg-white shadow rounded-lg p-4 mb-6">
-            {/* Source Type Input */}
-            <div className="flex flex-col mb-4">
-              <label className="font-medium mb-1">Source Type</label>
+          {/* Radio Buttons */}
+          <div className="flex gap-8">
+            <label className="flex items-center gap-2">
               <input
-                type="text"
-                placeholder="Enter source type (e.g. csv, json)"
-                className="border border-gray-300 rounded-lg px-3 py-2"
-                value={inputsFormat.inputs[0]?.sourceType || ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setInputsFormat((prev) => {
-                    const inputs = [...prev.inputs];
-                    inputs[0] = { ...inputs[0], sourceType: value };
-                    return { ...prev, inputs };
-                  });
-                }}
+                type="radio"
+                name="sourceMode"
+                value={SOURCE_MODES.HEC}
+                checked={sourceMode === SOURCE_MODES.HEC}
+                onChange={() => setSourceMode(SOURCE_MODES.HEC)}
+                className="accent-blue-600"
               />
-            </div>
+              <span>HEC Token</span>
+            </label>
 
-            {/* Radio Buttons */}
-            <div className="flex gap-8">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="sourceMode"
-                  value={SOURCE_MODES.HEC}
-                  checked={sourceMode === SOURCE_MODES.HEC}
-                  onChange={() => setSourceMode(SOURCE_MODES.HEC)}
-                  className="accent-blue-600"
-                />
-                <span>HEC Token</span>
-              </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="sourceMode"
+                value={SOURCE_MODES.UF}
+                checked={sourceMode === SOURCE_MODES.UF}
+                onChange={() => setSourceMode(SOURCE_MODES.UF)}
+                className="accent-blue-600"
+              />
+              <span>Universal Forwarder</span>
+            </label>
 
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="sourceMode"
-                  value={SOURCE_MODES.UF}
-                  checked={sourceMode === SOURCE_MODES.UF}
-                  onChange={() => setSourceMode(SOURCE_MODES.UF)}
-                  className="accent-blue-600"
-                />
-                <span>Universal Forwarder</span>
-              </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="radio"
+                name="sourceMode"
+                value={SOURCE_MODES.CONF}
+                checked={sourceMode === SOURCE_MODES.CONF}
+                onChange={() => setSourceMode(SOURCE_MODES.CONF)}
+                className="accent-blue-600"
+              />
+              <span>Configuration Files</span>
+            </label>
+          </div>
+        </div>
 
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name="sourceMode"
-                  value={SOURCE_MODES.CONF}
-                  checked={sourceMode === SOURCE_MODES.CONF}
-                  onChange={() => setSourceMode(SOURCE_MODES.CONF)}
-                  className="accent-blue-600"
-                />
-                <span>Configuration Files</span>
-              </label>
+        {sourceMode === SOURCE_MODES.HEC && (
+          <div className="border rounded-lg p-6 mb-6 bg-gray-50">
+            <h2 className="text-lg font-semibold mb-2">
+              HEC Token Configuration
+            </h2>
+            <div className="h-24 border border-dashed rounded-md flex items-center justify-center text-gray-400">
+              HEC Token inputs go here
             </div>
           </div>
+        )}
 
-          {sourceMode === SOURCE_MODES.HEC && (
-            <div className="border rounded-lg p-6 mb-6 bg-gray-50">
-              <h2 className="text-lg font-semibold mb-2">
-                HEC Token Configuration
-              </h2>
-              <div className="h-24 border border-dashed rounded-md flex items-center justify-center text-gray-400">
-                HEC Token inputs go here
-              </div>
+        {sourceMode === SOURCE_MODES.UF && (
+          <div className="border rounded-lg p-6 mb-6 bg-gray-50">
+            <h2 className="text-lg font-semibold mb-2">
+              Universal Forwarder Configuration
+            </h2>
+            <div className="h-24 border border-dashed rounded-md flex items-center justify-center text-gray-400">
+              Universal Forwarder config goes here
             </div>
-          )}
+          </div>
+        )}
 
-          {sourceMode === SOURCE_MODES.UF && (
-            <div className="border rounded-lg p-6 mb-6 bg-gray-50">
-              <h2 className="text-lg font-semibold mb-2">
-                Universal Forwarder Configuration
-              </h2>
-              <div className="h-24 border border-dashed rounded-md flex items-center justify-center text-gray-400">
-                Universal Forwarder config goes here
-              </div>
-            </div>
-          )}
-
-          {/* {Object.keys(inputsFormat.indexConfig).length > 0 &&
+        {/* {Object.keys(inputsFormat.indexConfig).length > 0 &&
           <IndexConfig key={Object.keys(inputsFormat.indexConfig)[0]} indexName={Object.keys(inputsFormat.indexConfig)[0]} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
         } */}
 
-          {sourceMode === SOURCE_MODES.CONF && (
-            <>
-              <div>
-                <h2 className="text-xl font-semibold mb-2">Inputs Config</h2>
-                <hr className="mb-4 text-blue-500" />
-              </div>
+        {sourceMode === SOURCE_MODES.CONF && (
+          <>
+            <div>
+              <h2 className="text-xl font-semibold mb-2">Inputs Config</h2>
+              <hr className="mb-4 text-blue-500" />
+            </div>
 
-              {/* <div className="flex flex-col gap-6">
+            {/* <div className="flex flex-col gap-6">
           {inputsConfigList.map((each) => (
             <InputConfig
               key={each}
@@ -1342,14 +1226,14 @@ const Main = () => {
             />
           ))}
         </div> */}
-              {inputDeleteError && (
-                <p className="text-red-500 text-sm mb-3 font-medium">
-                  {inputDeleteError}
-                </p>
-              )}
+            {inputDeleteError && (
+              <p className="text-red-500 text-sm mb-3 font-medium">
+                {inputDeleteError}
+              </p>
+            )}
 
-              <div className="flex flex-col gap-6">
-                {/* {inputsFormat.inputs.map((v, index) => {
+            <div className="flex flex-col gap-6">
+              {/* {inputsFormat.inputs.map((v, index) => {
               const each = index + 1;
               return (
                 <div
@@ -1367,51 +1251,47 @@ const Main = () => {
               );
             })} */}
 
-                {inputsFormat.inputs.map((each, index) => (
-                  <div
-                    key={index + 1}
-                    className="bg-white border border-gray-300 rounded-xl p-4 shadow"
-                  >
-                    <InputConfig
-                      cancelConfig={cancelConfig}
-                      each={index + 1}
-                      inputsFormat={inputsFormat}
-                      setInputsFormat={setInputsFormat}
-                      handleTransforms={handleTransforms}
-                    />
-                  </div>
-                ))}
-              </div>
-              <div className="mt-6 flex justify-end">
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600"
-                  onClick={handleInputConfigs}
+              {inputsFormat.inputs.map((each, index) => (
+                <div
+                  key={index + 1}
+                  className="bg-white border border-gray-300 rounded-xl p-4 shadow"
                 >
-                  + Add Input
-                </button>
-              </div>
-            </>
-          )}
-          <div className="flex flex-row gap-1.5">
-            <button
-              className="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600"
-              onClick={handleCreateApp}
-            >
-              Create App
-            </button>
-            <button
-              className="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600"
-              onClick={() => setIsPreview(true)}
-            >
-              Preview
-            </button>
-          </div>
+                  <InputConfig
+                    cancelConfig={cancelConfig}
+                    each={index + 1}
+                    inputsFormat={inputsFormat}
+                    setInputsFormat={setInputsFormat}
+                    handleTransforms={handleTransforms}
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600"
+                onClick={handleInputConfigs}
+              >
+                + Add Input
+              </button>
+            </div>
+          </>
+        )}
+        <div className="flex flex-row gap-1.5">
+          <button
+            className="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600"
+            onClick={handleCreateApp}
+          >
+            Create App
+          </button>
+          <button
+            className="bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600"
+            onClick={() => setIsPreview(true)}
+          >
+            Preview
+          </button>
         </div>
-        
-      )}
-      <button className="border p-2 mt-2 flex justify-start cursor-pointer"
-      onClick={handleGitHubLogin}
-      >Authrize Git</button>
+      </div>
+      {/* )} */}
     </div>
   );
 };
