@@ -45,6 +45,10 @@ const Main = () => {
     transform: [],
   });
 
+  const handleGitHubLogin =()=>{
+    window.location.href = 'http://localhost:8080/oauth2/authorization/github';
+  }
+
   const existingIndexes = ["users_index", "orders_index", "products_index"];
   const possibleSuffixes = ["_logs", "_data"];
   const existingAppName = ["_logs", "_data", "_metrics"];
@@ -1403,7 +1407,11 @@ const Main = () => {
             </button>
           </div>
         </div>
+        
       )}
+      <button className="border p-2 mt-2 flex justify-start cursor-pointer"
+      onClick={handleGitHubLogin}
+      >Authrize Git</button>
     </div>
   );
 };
