@@ -2,8 +2,11 @@ import React, { useState, useEffect, use } from "react";
 import InputConfig from "./InputConfig";
 import TransformsConfig from "./TransformsConfig";
 import { IndexConfig } from "./IndexConfig";
+import { useParams } from "react-router-dom";
+import axios from "axios";
 
 const Main = () => {
+  const { userName, token } = useParams();
   const [inputsConfig, setInputsConfig] = useState([1]);
   const [inputsConfigList, setInputsConfigList] = useState([]);
 
@@ -44,6 +47,32 @@ const Main = () => {
     },
     transform: [],
   });
+
+  const [repos, setRepos]=useState([]);
+
+ const fetchRepos = async () => {
+  try {
+    if (!userName || !token) return;
+
+    const response = await axios.get(
+      `http://127.0.0.1:5000/get-repos/${userName}/${token}`
+    );
+
+    console.log("Repos:", response.data);
+    setRepos(response.data)
+     
+  } catch (e) {
+    console.error("Fetch repos error:", e);
+  }
+};
+
+  useEffect(() => {
+  console.log("username", userName)
+  console.log("token", token)
+    fetchRepos();
+   
+}, [userName]);
+
 
   const existingIndexes = ["users_index", "orders_index", "products_index"];
   const possibleSuffixes = ["_logs", "_data"];
@@ -103,184 +132,7 @@ const Main = () => {
     }
   };
 
-  //   const PreviewPage = () => (
-  //   <div className="w-full bg-white shadow-md rounded-xl p-6">
-  //     <h2 className="text-2xl font-bold mb-4 text-blue-600">
-  //       App Configuration Preview
-  //     </h2>
-
-  //     <div className="bg-gray-100 rounded-lg p-4 overflow-auto max-h-[500px] text-sm">
-  //       <pre>{JSON.stringify(inputsFormat, null, 2)}</pre>
-  //     </div>
-
-  //     <div className="flex justify-end mt-6">
-  //       <button
-  //         className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-  //         onClick={() => setIsPreview(false)}
-  //       >
-  //         Back
-  //       </button>
-  //     </div>
-  //   </div>
-  // );
-
-  // const PreviewPage = () => {
-  //   const { appName, indexName, indexConfig, inputs, props } = inputsFormat;
-
-  //   return (
-  //     <div className="w-full bg-white shadow-md rounded-xl p-6 space-y-6">
-  //       {/* ───────── App / Index Config ───────── */}
-  //       <div className="border rounded-lg p-4">
-  //         <h3 className="text-lg font-semibold text-blue-600 mb-2">
-  //           App Configuration
-  //         </h3>
-
-  //         <div className="grid grid-cols-2 gap-4 text-sm">
-  //           <div>
-  //             <b>App Name:</b> {appName || "-"}
-  //           </div>
-  //           <div>
-  //             <b>Index Name:</b> {indexName || "-"}
-  //           </div>
-
-  //           {Object.entries(indexConfig).map(([idx, cfg]) => (
-  //             <div key={idx}>
-  //               <b>Retention Days ({idx}):</b> {cfg.retentionTime || "-"}
-  //             </div>
-  //           ))}
-  //         </div>
-  //       </div>
-
-  //       {/* ───────── Inputs Config ───────── */}
-  //       <div className="border rounded-lg p-4">
-  //         <h3 className="text-lg font-semibold text-blue-600 mb-3">
-  //           Inputs Configuration
-  //         </h3>
-
-  //         {inputs.map((input, i) => (
-  //           <div
-  //             key={input.id}
-  //             className="border rounded-md p-3 mb-3 bg-gray-50"
-  //           >
-  //             <div className="font-medium mb-1">Input #{i + 1}</div>
-  //             <div className="text-sm grid grid-cols-2 gap-2">
-  //               <div>
-  //                 <b>File Path:</b> {input.filePath || "-"}
-  //               </div>
-  //               <div>
-  //                 <b>Source Type:</b> {input.sourceType || "-"}
-  //               </div>
-  //               <div>
-  //                 <b>Index:</b> {input.index || indexName}
-  //               </div>
-  //               <div>
-  //                 <b>WhiteList:</b> {input.whiteList || "-"}
-  //               </div>
-  //               <div>
-  //                 <b>BlackList:</b> {input.blackList || "-"}
-  //               </div>
-  //             </div>
-  //           </div>
-  //         ))}
-  //       </div>
-
-  //       {/* ───────── Props Config Per Source Type ───────── */}
-  //       {props && Object.keys(props).length > 0 && (
-  //         <div className="border rounded-lg p-4">
-  //           <h3 className="text-lg font-semibold text-blue-600 mb-3">
-  //             Props Configuration (Per Source Type)
-  //           </h3>
-
-  //           {Object.entries(props).map(([sourceType, cfg]) => (
-  //             <div
-  //               key={sourceType}
-  //               className="border rounded-md p-3 mb-3 bg-gray-50"
-  //             >
-  //               <div className="font-medium mb-2">
-  //                 Source Type:{" "}
-  //                 <span className="text-blue-600">{sourceType}</span>
-  //               </div>
-
-  //               <div className="grid grid-cols-2 gap-2 text-sm">
-  //                 <div>
-  //                   <b>Time Format:</b> {cfg.timeFormat || "-"}
-  //                 </div>
-  //                 <div>
-  //                   <b>Date Time:</b> {cfg.dateTime || "-"}
-  //                 </div>
-  //                 <div>
-  //                   <b>Line Breaker:</b> {cfg.lineBreaker || "-"}
-  //                 </div>
-  //                 <div>
-  //                   <b>Should Line:</b> {cfg.shouldLine || "-"}
-  //                 </div>
-  //                 <div>
-  //                   <b>Truncate:</b> {cfg.truncate || "-"}
-  //                 </div>
-  //               </div>
-
-  //               {/* ───────── Global Transforms Config ───────── */}
-  //               {inputsFormat.transform &&
-  //                 Object.keys(inputsFormat.transform).length > 0 && (
-  //                   <div className="border rounded-lg p-4">
-  //                     <h3 className="text-lg font-semibold text-blue-600 mb-3">
-  //                       Transforms Configuration
-  //                     </h3>
-
-  //                     {Object.entries(inputsFormat.transform).map(
-  //                       ([key, t], index) => (
-  //                         <div
-  //                           key={key}
-  //                           className="border rounded-md p-3 mb-3 bg-gray-50 text-sm"
-  //                         >
-  //                           <div className="font-medium mb-2">
-  //                             Transform #{index + 1}
-  //                           </div>
-
-  //                           <div>
-  //                             <b>Regex:</b> {t.regex || "-"}
-  //                           </div>
-  //                           <div>
-  //                             <b>Format:</b> {t.format || "-"}
-  //                           </div>
-  //                           <div>
-  //                             <b>Destination Key:</b> {t.destKey || "-"}
-  //                           </div>
-  //                           <div>
-  //                             <b>New Key:</b> {t.newKey || "-"}
-  //                           </div>
-  //                           <div>
-  //                             <b>New Value:</b> {t.newValue || "-"}
-  //                           </div>
-  //                         </div>
-  //                       )
-  //                     )}
-  //                   </div>
-  //                 )}
-  //             </div>
-  //           ))}
-  //         </div>
-  //       )}
-
-  //       {/* ───────── Actions ───────── */}
-  //       <div className="flex justify-end gap-4">
-  //         <button
-  //           className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-  //           onClick={() => setIsPreview(false)}
-  //         >
-  //           Back
-  //         </button>
-
-  //         {/* <button
-  //         className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
-  //         onClick={handleCreateApp}
-  //       >
-  //         Confirm & Create
-  //       </button> */}
-  //       </div>
-  //     </div>
-  //   );
-  // };
+ 
 
   const PreviewPage = ({ inputsFormat, onBack }) => {
     if (!inputsFormat) return null;
@@ -767,6 +619,12 @@ const Main = () => {
     setSuggestions([...new Set(generated)]);
   }, [indexName, mode, inputsFormat.appName]);
 
+  const loginWithGitHub = () => {
+  window.location.href = "http://127.0.0.1:5000/login/github";
+};
+
+console.log("rposs", repos);
+
   return (
     <div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
       {/* <h2 className="text-blue-600 font-bold text-2xl mb-6">
@@ -806,6 +664,7 @@ flex items-center gap-2
 
   transition
 "
+onClick={loginWithGitHub}
         >
           🔗 Connect GitHub
         </button>
@@ -836,12 +695,21 @@ flex items-center gap-2
             </label>
 
             {/* Input */}
-            <input
+            {/* <input
               value={inputsFormat.appName}
               onChange={handleInputChangeInAppName}
               placeholder="Enter App Name"
               className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-            />
+            /> */}
+
+            <select value={inputsFormat.appName}
+              onChange={handleInputChangeInAppName}
+              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2">
+              <option value="">Select Repo</option>
+              {repos.map((each)=>
+                <option value={each.name}>{each.name}</option>
+              )}
+            </select>
             {/* Suggestions */}
             {appNameSuggestions.length > 0 && (
               <div className="mt-4 bg-white border border-gray-200 rounded-xl shadow-sm p-4">
