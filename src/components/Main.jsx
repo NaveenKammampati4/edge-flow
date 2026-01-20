@@ -18,6 +18,8 @@ const Main = () => {
   const [isPreview, setIsPreview] = useState(false);
   const [inputDeleteError, setInputDeleteError] = useState("");
   const [sourceMode, setSourceMode] = useState(null); // default
+  const [indexMode, setIndexMode] = useState("new");
+  const [appMode, setAppMode] = useState("new");
 
   const [inputsFormat, setInputsFormat] = useState({
     appName: "",
@@ -48,31 +50,30 @@ const Main = () => {
     transform: [],
   });
 
-  const [repos, setRepos]=useState([]);
+  const [repos, setRepos] = useState([]);
+  const [repoNames, setRepoNames] = useState([]);
 
- const fetchRepos = async () => {
-  try {
-    if (!userName || !token) return;
+  const fetchRepos = async () => {
+    try {
+      if (!userName || !token) return;
 
-    const response = await axios.get(
-      `http://127.0.0.1:5000/get-repos/${userName}/${token}`
-    );
+      const response = await axios.get(
+        `http://127.0.0.1:5000/get-repos/${userName}/${token}`,
+      );
 
-    console.log("Repos:", response.data);
-    setRepos(response.data)
-     
-  } catch (e) {
-    console.error("Fetch repos error:", e);
-  }
-};
+      console.log("Repos:", response.data);
+      setRepos(response.data);
+      setRepoNames(response.data.map((repo) => repo.name));
+    } catch (e) {
+      console.error("Fetch repos error:", e);
+    }
+  };
 
   useEffect(() => {
-  console.log("username", userName)
-  console.log("token", token)
+    console.log("username", userName);
+    console.log("token", token);
     fetchRepos();
-   
-}, [userName]);
-
+  }, [userName]);
 
   const existingIndexes = ["users_index", "orders_index", "products_index"];
   const possibleSuffixes = ["_logs", "_data"];
@@ -90,11 +91,11 @@ const Main = () => {
       let changedIndexName = inputsFormat.indexName.split("_");
       console.log(
         "changed INdex Name",
-        changedIndexName[changedIndexName.length - 1]
+        changedIndexName[changedIndexName.length - 1],
       );
       if (
         possibleSuffixes.includes(
-          "_" + changedIndexName[changedIndexName.length - 1]
+          "_" + changedIndexName[changedIndexName.length - 1],
         )
       ) {
         let lastIndex = inputsFormat.indexName.lastIndexOf("_");
@@ -131,8 +132,6 @@ const Main = () => {
       setSuggestions([]);
     }
   };
-
- 
 
   const PreviewPage = ({ inputsFormat, onBack }) => {
     if (!inputsFormat) return null;
@@ -277,7 +276,7 @@ const Main = () => {
                   }))
               ).map((t, i) => {
                 const hasAnyValue = Object.values(t).some(
-                  (v) => v !== undefined && v !== null && v !== ""
+                  (v) => v !== undefined && v !== null && v !== "",
                 );
 
                 return (
@@ -364,7 +363,7 @@ const Main = () => {
       console.log("changedAppName", changedAppName[changedAppName.length - 1]);
       if (
         existingAppName.includes(
-          "_" + changedAppName[changedAppName.length - 1]
+          "_" + changedAppName[changedAppName.length - 1],
         )
       ) {
         let lastIndex = inputsFormat.appName.lastIndexOf("_");
@@ -492,8 +491,8 @@ const Main = () => {
         // alert("successfully deleted");
         updatedProps = Object.fromEntries(
           Object.entries(updatedProps).filter(
-            ([key]) => key !== removedInput.sourceType
-          )
+            ([key]) => key !== removedInput.sourceType,
+          ),
         );
       }
 
@@ -620,10 +619,10 @@ const Main = () => {
   }, [indexName, mode, inputsFormat.appName]);
 
   const loginWithGitHub = () => {
-  window.location.href = "http://127.0.0.1:5000/login/github";
-};
+    window.location.href = "http://127.0.0.1:5000/login/github";
+  };
 
-console.log("rposs", repos);
+  console.log("rposs", repos);
 
   return (
     <div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
@@ -664,7 +663,7 @@ flex items-center gap-2
 
   transition
 "
-onClick={loginWithGitHub}
+          onClick={loginWithGitHub}
         >
           🔗 Connect GitHub
         </button>
@@ -690,58 +689,127 @@ onClick={loginWithGitHub}
         <div className="grid grid-cols-2 gap-6 mb-6">
           {/* ───────── App Name Card ───────── */}
           <div className="flex flex-col relative">
-            <label htmlFor="appName" className="font-medium mb-1">
-              App Name
-            </label>
-
-            {/* Input */}
-            {/* <input
-              value={inputsFormat.appName}
-              onChange={handleInputChangeInAppName}
-              placeholder="Enter App Name"
-              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-            /> */}
-
-            <select value={inputsFormat.appName}
-              onChange={handleInputChangeInAppName}
-              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2">
-              <option value="">Select Repo</option>
-              {repos.map((each)=>
-                <option value={each.name}>{each.name}</option>
-              )}
-            </select>
-            {/* Suggestions */}
-            {appNameSuggestions.length > 0 && (
-              <div className="mt-4 bg-white border border-gray-200 rounded-xl shadow-sm p-4">
-                <p className="font-medium text-gray-700 mb-3">
-                  Suggestions names:
-                </p>
-
-                <div className="flex flex-wrap gap-3">
-                  {appNameSuggestions.map((sug) => (
-                    <button
-                      key={sug}
-                      type="button"
-                      onClick={() => {
+            <div>
+              <div className="flex space-x-6">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    value="existing"
+                    checked={appMode === "existing"}
+                     onChange={() => {
+                      setAppMode("existing"),
+                      setAppName("");
                         setInputsFormat((prev) => ({
                           ...prev,
-                          appName: sug,
-                          indexName: "",
-                          indexConfig: {},
+                          appName: "",
                         }));
-                        setIndexName("");
-                        setAppNameSuggestions([]);
-                      }}
-                      className="px-4 py-2 rounded-xl border border-gray-300
-                     bg-gray-100 hover:bg-blue-50 hover:border-blue-400
-                     text-sm transition shadow-sm"
-                    >
-                      {sug}
-                    </button>
-                  ))}
-                </div>
+                    }}
+                    className="accent-blue-600"
+                  />
+                  <span>Existing App</span>
+                </label>
+
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    value="new"
+                    checked={appMode === "new"}
+                    onChange={() => {
+                      setAppMode("new");
+                      setAppName("");
+                      setInputsFormat((prev) => ({
+                        ...prev,
+                        appName: "",
+                      }));
+                    }}
+                    className="accent-blue-600"
+                  />
+                  <span>New App</span>
+                </label>
               </div>
-            )}
+
+              {appMode === "existing" ? (
+                <div className="flex flex-col">
+                  <label htmlFor="existingAppName" className="font-medium mb-1">
+                    Select Existing App name
+                  </label>
+                  <select
+                    id="existingAppName"
+                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                    onChange={(e) => {
+                      setInputsFormat((prev) => ({
+                        ...prev,
+                        appName: e.target.value,
+                        // indexConfig: {
+                        //   [e.target.value]: {
+                        //     retentionTime: "",
+                        //     customFields: [],
+                        //   },
+                        // },
+                      }));
+                    }}
+                  >
+                    <option value="">-- Choose an app name --</option>
+                    {repoNames.map((index) => (
+                      <option key={index} value={index}>
+                        {index}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="flex flex-col relative">
+                  <label htmlFor="newAppName" className="font-medium mb-1">
+                    Enter New App Name
+                  </label>
+
+                  <input
+                    id="newAppName"
+                    value={inputsFormat.appName}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setAppName(value);
+
+                      setInputsFormat((prev) => ({
+                        ...prev,
+                        appName: value,
+                      }));
+                    }}
+                    placeholder="Enter App name"
+                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                  />
+
+                  {appNameSuggestions.length > 0 &&
+                    inputsFormat.appName === "" && (
+                      <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
+                        {appNameSuggestions.map((sug) => (
+                          <li
+                            key={sug}
+                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setInputsFormat((prev) => ({
+                                ...prev,
+                                appName: sug,
+                                // indexConfig: {
+                                //   ...prev.indexConfig,
+                                //   [sug]: {
+                                //     retentionTime: "",
+                                //     customFields: [],
+                                //   },
+                                // },
+                              }));
+                              setAppName(sug);
+                              setAppNameSuggestions([]);
+                            }}
+                          >
+                            {sug}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ---------------------------- */}
@@ -775,11 +843,11 @@ onClick={loginWithGitHub}
                     value="existing"
                     checked={mode === "existing"}
                     onChange={() => {
-                      setMode("existing"),
+                      (setMode("existing"),
                         setInputsFormat((prev) => ({
                           ...prev,
                           indexName: "",
-                        }));
+                        })));
                     }}
                     className="accent-blue-600"
                   />
@@ -792,11 +860,11 @@ onClick={loginWithGitHub}
                     value="new"
                     checked={mode === "new"}
                     onChange={() => {
-                      setMode("new"),
+                      (setMode("new"),
                         setInputsFormat((prev) => ({
                           ...prev,
                           indexName: "",
-                        }));
+                        })));
                     }}
                     className="accent-blue-600"
                   />
