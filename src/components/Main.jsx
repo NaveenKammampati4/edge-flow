@@ -1,9 +1,11 @@
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import InputConfig from "./InputConfig";
 import TransformsConfig from "./TransformsConfig";
 import { IndexConfig } from "./IndexConfig";
+import { useNavigate } from "react-router-dom";
 
 const Main = () => {
+  const navigate = useNavigate();
   const [inputsConfig, setInputsConfig] = useState([1]);
   const [inputsConfigList, setInputsConfigList] = useState([]);
 
@@ -15,6 +17,16 @@ const Main = () => {
   const [isPreview, setIsPreview] = useState(false);
   const [inputDeleteError, setInputDeleteError] = useState("");
   const [sourceMode, setSourceMode] = useState(null); // default
+  const [indexMode, setIndexMode] = useState("new");
+  const [appMode, setAppMode] = useState("new");
+
+  const [githubConnected, setGithubConnected] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+  const [repos, setRepos] = useState([]);
+  const [repoNames, setRepoNames] = useState([]);
 
   const [inputsFormat, setInputsFormat] = useState({
     appName: "",
@@ -45,9 +57,51 @@ const Main = () => {
     transform: [],
   });
 
-  const handleGitHubLogin =()=>{
-    window.location.href = 'http://localhost:8080/oauth2/authorization/github';
-  }
+  const handleGitHubLogin = () => {
+    window.location.href = "http://localhost:8080/oauth2/authorization/github";
+  };
+  const loadUserData = async () => {
+    try {
+      const userRes = await fetch("http://localhost:8080/api/my", {
+        credentials: "include",
+      });
+
+      if (!userRes.ok) {
+        if (userRes.status === 401) {
+          setGithubConnected(false);
+          setLoading(false);
+          return;
+        }
+        throw new Error("Failed to load user");
+      }
+
+      const userData = await userRes.json();
+      setUser(userData);
+      setGithubConnected(true);
+
+      const repoRes = await fetch("http://localhost:8080/api/my/repos", {
+        credentials: "include",
+      });
+
+      if (repoRes.ok) {
+        const repoData = await repoRes.json();
+        setRepos(repoData);
+        setRepoNames(repoData.map((repo) => repo.name));
+      }
+
+      // navigate("/home");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+      setCheckingAuth(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUserData();
+  }, []);
+  console.log("Git Repos JSON:", JSON.stringify(repos, null, 2));
 
   const existingIndexes = ["users_index", "orders_index", "products_index"];
   const possibleSuffixes = ["_logs", "_data"];
@@ -57,6 +111,41 @@ const Main = () => {
     HEC: "HEC",
     UF: "UF",
     CONF: "CONF",
+  };
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("http://localhost:8080/api/my", {
+          credentials: "include",
+        });
+        setGithubConnected(res.ok);
+      } catch {
+        setGithubConnected(false);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleGitHubClick = async () => {
+    if (!githubConnected) {
+      handleGitHubLogin();
+      return;
+    }
+
+    // LOGOUT
+    await fetch("http://localhost:8080/api/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+
+    setGithubConnected(false);
+    setUser(null);
+    setRepos([]);
+    navigate("/");
   };
 
   const handleInputChange = (e) => {
@@ -77,12 +166,12 @@ const Main = () => {
         value = inputsFormat.indexName.slice(0, lastIndex);
       }
     }
-    setIndexName(value);
+    setAppName(value);
     console.log("Typed:", value);
     console.log("Current suggestions:", suggestions);
     setInputsFormat((prev) => ({
       ...prev,
-      indexName: "",
+      appName: "",
     }));
 
     // if (value.trim() !== "") {
@@ -106,185 +195,6 @@ const Main = () => {
       setSuggestions([]);
     }
   };
-
-  //   const PreviewPage = () => (
-  //   <div className="w-full bg-white shadow-md rounded-xl p-6">
-  //     <h2 className="text-2xl font-bold mb-4 text-blue-600">
-  //       App Configuration Preview
-  //     </h2>
-
-  //     <div className="bg-gray-100 rounded-lg p-4 overflow-auto max-h-[500px] text-sm">
-  //       <pre>{JSON.stringify(inputsFormat, null, 2)}</pre>
-  //     </div>
-
-  //     <div className="flex justify-end mt-6">
-  //       <button
-  //         className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-  //         onClick={() => setIsPreview(false)}
-  //       >
-  //         Back
-  //       </button>
-  //     </div>
-  //   </div>
-  // );
-
-  // const PreviewPage = () => {
-  //   const { appName, indexName, indexConfig, inputs, props } = inputsFormat;
-
-  //   return (
-  //     <div className="w-full bg-white shadow-md rounded-xl p-6 space-y-6">
-  //       {/* ───────── App / Index Config ───────── */}
-  //       <div className="border rounded-lg p-4">
-  //         <h3 className="text-lg font-semibold text-blue-600 mb-2">
-  //           App Configuration
-  //         </h3>
-
-  //         <div className="grid grid-cols-2 gap-4 text-sm">
-  //           <div>
-  //             <b>App Name:</b> {appName || "-"}
-  //           </div>
-  //           <div>
-  //             <b>Index Name:</b> {indexName || "-"}
-  //           </div>
-
-  //           {Object.entries(indexConfig).map(([idx, cfg]) => (
-  //             <div key={idx}>
-  //               <b>Retention Days ({idx}):</b> {cfg.retentionTime || "-"}
-  //             </div>
-  //           ))}
-  //         </div>
-  //       </div>
-
-  //       {/* ───────── Inputs Config ───────── */}
-  //       <div className="border rounded-lg p-4">
-  //         <h3 className="text-lg font-semibold text-blue-600 mb-3">
-  //           Inputs Configuration
-  //         </h3>
-
-  //         {inputs.map((input, i) => (
-  //           <div
-  //             key={input.id}
-  //             className="border rounded-md p-3 mb-3 bg-gray-50"
-  //           >
-  //             <div className="font-medium mb-1">Input #{i + 1}</div>
-  //             <div className="text-sm grid grid-cols-2 gap-2">
-  //               <div>
-  //                 <b>File Path:</b> {input.filePath || "-"}
-  //               </div>
-  //               <div>
-  //                 <b>Source Type:</b> {input.sourceType || "-"}
-  //               </div>
-  //               <div>
-  //                 <b>Index:</b> {input.index || indexName}
-  //               </div>
-  //               <div>
-  //                 <b>WhiteList:</b> {input.whiteList || "-"}
-  //               </div>
-  //               <div>
-  //                 <b>BlackList:</b> {input.blackList || "-"}
-  //               </div>
-  //             </div>
-  //           </div>
-  //         ))}
-  //       </div>
-
-  //       {/* ───────── Props Config Per Source Type ───────── */}
-  //       {props && Object.keys(props).length > 0 && (
-  //         <div className="border rounded-lg p-4">
-  //           <h3 className="text-lg font-semibold text-blue-600 mb-3">
-  //             Props Configuration (Per Source Type)
-  //           </h3>
-
-  //           {Object.entries(props).map(([sourceType, cfg]) => (
-  //             <div
-  //               key={sourceType}
-  //               className="border rounded-md p-3 mb-3 bg-gray-50"
-  //             >
-  //               <div className="font-medium mb-2">
-  //                 Source Type:{" "}
-  //                 <span className="text-blue-600">{sourceType}</span>
-  //               </div>
-
-  //               <div className="grid grid-cols-2 gap-2 text-sm">
-  //                 <div>
-  //                   <b>Time Format:</b> {cfg.timeFormat || "-"}
-  //                 </div>
-  //                 <div>
-  //                   <b>Date Time:</b> {cfg.dateTime || "-"}
-  //                 </div>
-  //                 <div>
-  //                   <b>Line Breaker:</b> {cfg.lineBreaker || "-"}
-  //                 </div>
-  //                 <div>
-  //                   <b>Should Line:</b> {cfg.shouldLine || "-"}
-  //                 </div>
-  //                 <div>
-  //                   <b>Truncate:</b> {cfg.truncate || "-"}
-  //                 </div>
-  //               </div>
-
-  //               {/* ───────── Global Transforms Config ───────── */}
-  //               {inputsFormat.transform &&
-  //                 Object.keys(inputsFormat.transform).length > 0 && (
-  //                   <div className="border rounded-lg p-4">
-  //                     <h3 className="text-lg font-semibold text-blue-600 mb-3">
-  //                       Transforms Configuration
-  //                     </h3>
-
-  //                     {Object.entries(inputsFormat.transform).map(
-  //                       ([key, t], index) => (
-  //                         <div
-  //                           key={key}
-  //                           className="border rounded-md p-3 mb-3 bg-gray-50 text-sm"
-  //                         >
-  //                           <div className="font-medium mb-2">
-  //                             Transform #{index + 1}
-  //                           </div>
-
-  //                           <div>
-  //                             <b>Regex:</b> {t.regex || "-"}
-  //                           </div>
-  //                           <div>
-  //                             <b>Format:</b> {t.format || "-"}
-  //                           </div>
-  //                           <div>
-  //                             <b>Destination Key:</b> {t.destKey || "-"}
-  //                           </div>
-  //                           <div>
-  //                             <b>New Key:</b> {t.newKey || "-"}
-  //                           </div>
-  //                           <div>
-  //                             <b>New Value:</b> {t.newValue || "-"}
-  //                           </div>
-  //                         </div>
-  //                       )
-  //                     )}
-  //                   </div>
-  //                 )}
-  //             </div>
-  //           ))}
-  //         </div>
-  //       )}
-
-  //       {/* ───────── Actions ───────── */}
-  //       <div className="flex justify-end gap-4">
-  //         <button
-  //           className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-  //           onClick={() => setIsPreview(false)}
-  //         >
-  //           Back
-  //         </button>
-
-  //         {/* <button
-  //         className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600"
-  //         onClick={handleCreateApp}
-  //       >
-  //         Confirm & Create
-  //       </button> */}
-  //       </div>
-  //     </div>
-  //   );
-  // };
 
   const PreviewPage = ({ inputsFormat, onBack }) => {
     if (!inputsFormat) return null;
@@ -561,57 +471,7 @@ const Main = () => {
     setInputsConfigList(arr);
   }, [inputsConfig]);
 
-  // const cancelConfig = (val) => {
-  //   if (inputsConfigList.length > 1) {
-  //     const inputs = inputsConfigList.filter((each) => each !== val);
-  //     setInputsConfigList(inputs);
-  //   }
-  // };
-
-  // const cancelConfig = (val) => {
-  //   // Prevent deleting last input
-
-  //   val = val - 1;
-  //   console.log("valsss", val);
-  //   console.log("inputtttsssss", inputsFormat);
-  //   if (inputsFormat.inputs.length === 1) {
-  //     setInputDeleteError("At least one input configuration is required.");
-  //     return;
-  //   }
-
-  //   setInputDeleteError("");
-
-  //   setInputsFormat((prev) => {
-  //     // find input being removed
-  //     const removedInput = prev.inputs.find((i, index) => index === val);
-
-  //     // remove input
-  //     const updatedInputs = prev.inputs.filter((i, index) => index == val);
-
-  //     // remove related props
-  //     const updatedProps = { ...prev.props };
-  //     if (removedInput?.sourceType) {
-  //       delete updatedProps[removedInput.sourceType];
-  //     }
-
-  //     return {
-  //       ...prev,
-  //       inputs: updatedInputs,
-  //       props: updatedProps,
-  //     };
-  //   });
-
-  //   // update UI list AFTER main object update
-  //   setInputsConfigList((prev) => prev.filter((id) => id !== val));
-  // };
-
   const cancelConfig = (val) => {
-    // alert("value: " + val);
-    // let count = 0;
-    // let count1 = 0;
-    // alert("count1: " + count1);
-    //  Prevent deleting last input
-
     console.log("val", val);
     if (inputsFormat.inputs.length === 1) {
       setInputDeleteError("At least one input configuration is required.");
@@ -621,9 +481,6 @@ const Main = () => {
     setInputDeleteError("");
 
     setInputsFormat((prev) => {
-      // find input being removed
-      // const removedInput = prev.inputs.find((i) => i.id === val);
-      // alert((count++) + "removed Input: "+removedInput.value);
       const removedInput = prev.inputs.find((i, index) => index + 1 === val);
 
       if (!removedInput) return;
@@ -719,22 +576,6 @@ const Main = () => {
     }));
   };
 
-  // const handleIndexFocus = () => {
-  //   if (mode === "new" && indexName === "" && inputsFormat.appName !== "") {
-  //     const base = inputsFormat.appName.trim();
-  //     const newSuggestions = base
-  //       ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
-  //       : possibleSuffixes;
-  //     setSuggestions(newSuggestions);
-  //   } else if (mode === "new" && indexName !== "") {
-  //     const base = indexName.trim();
-  //     const newSuggestions = base
-  //       ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
-  //       : possibleSuffixes;
-  //     setSuggestions(newSuggestions);
-  //   }
-  // };
-
   const handleIndexFocus = () => {
     if (mode !== "new") return;
 
@@ -747,15 +588,6 @@ const Main = () => {
     ]);
   };
 
-  // useEffect(() => {
-  //   if (mode === "new" && indexName !== "") {
-  //     const base = indexName.trim();
-  //     const newSuggestions = base
-  //       ? possibleSuffixes.map((suffix) => `${base}${suffix}`)
-  //       : possibleSuffixes;
-  //     setSuggestions(newSuggestions);
-  //   }
-  // }, [indexName]);
   useEffect(() => {
     if (mode !== "new") return;
 
@@ -781,47 +613,38 @@ const Main = () => {
         🔗 Connect GitHub
       </button> */}
 
-      <div className="w-full flex items-center justify-between mb-8">
+      <div className="w-full flex items-start justify-between mb-8">
         <h1 className="text-2xl font-semibold text-blue-600">
           Dynamic Splunk App Builder
         </h1>
 
-        {/* GitHub Button */}
-        <button
-          className="
-flex items-center gap-2
-  px-5 py-2
-  border border-gray-300
-  rounded-full
-  text-sm font-medium
-  bg-white
-  text-gray-700
+        <div className="flex flex-col items-end gap-1">
+          <button
+            onClick={handleGitHubClick}
+            className={`
+      flex items-center gap-2 px-5 py-2
+      border rounded-full text-sm font-medium
+      transition
+      ${
+        githubConnected
+          ? "bg-green-50 border-green-400 text-green-700 hover:bg-red-50 hover:border-red-400 hover:text-red-600"
+          : "bg-white border-gray-300 text-gray-700 hover:bg-gray-100"
+      }
+    `}
+          >
+            🔗{" "}
+            {githubConnected ? "GitHub Connected (Logout)" : "Connect GitHub"}
+          </button>
 
-  hover:bg-gray-100
-  hover:border-gray-400
-
-  active:bg-gray-200
-  active:scale-95
-
-  focus:outline-none
-  focus:ring-2
-  focus:ring-blue-500
-  focus:ring-offset-2
-
-  transition
-"
-        >
-          🔗 Connect GitHub
-        </button>
+          {githubConnected && (
+            <div className="flex items-center gap-2 text-sm text-green-600">
+              <span className="w-2.5 h-2.5 bg-green-500 rounded-full"></span>
+              Connected as <b>{user?.login}</b>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* {isPreview ? (
-        // <PreviewPage />
-        <PreviewPage
-          inputsFormat={inputsFormat}
-          onBack={() => setIsPreview(false)}
-        />
-      ) : ( */}
       <div style={{ display: isPreview ? "block" : "none", width: "100%" }}>
         <PreviewPage
           inputsFormat={inputsFormat}
@@ -835,49 +658,127 @@ flex items-center gap-2
         <div className="grid grid-cols-2 gap-6 mb-6">
           {/* ───────── App Name Card ───────── */}
           <div className="flex flex-col relative">
-            <label htmlFor="appName" className="font-medium mb-1">
-              App Name
-            </label>
-
-            {/* Input */}
-            <input
-              value={inputsFormat.appName}
-              onChange={handleInputChangeInAppName}
-              placeholder="Enter App Name"
-              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-            />
-            {/* Suggestions */}
-            {appNameSuggestions.length > 0 && (
-              <div className="mt-4 bg-white border border-gray-200 rounded-xl shadow-sm p-4">
-                <p className="font-medium text-gray-700 mb-3">
-                  Suggestions names:
-                </p>
-
-                <div className="flex flex-wrap gap-3">
-                  {appNameSuggestions.map((sug) => (
-                    <button
-                      key={sug}
-                      type="button"
-                      onClick={() => {
+            <div>
+              <div className="flex space-x-6">
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    value="existing"
+                    checked={appMode === "existing"}
+                    onChange={() => {
+                      setAppMode("existing"),
+                      setAppName("");
                         setInputsFormat((prev) => ({
                           ...prev,
-                          appName: sug,
-                          indexName: "",
-                          indexConfig: {},
+                          appName: "",
                         }));
-                        setIndexName("");
-                        setAppNameSuggestions([]);
-                      }}
-                      className="px-4 py-2 rounded-xl border border-gray-300
-                     bg-gray-100 hover:bg-blue-50 hover:border-blue-400
-                     text-sm transition shadow-sm"
-                    >
-                      {sug}
-                    </button>
-                  ))}
-                </div>
+                    }}
+                    className="accent-blue-600"
+                  />
+                  <span>Existing App</span>
+                </label>
+
+                <label className="flex items-center space-x-2">
+                  <input
+                    type="radio"
+                    value="new"
+                    checked={appMode === "new"}
+                    onChange={() => {
+                      setAppMode("new");
+                      setAppName("");
+                        setInputsFormat((prev) => ({
+                          ...prev,
+                          appName: "",
+                        }));
+                    }}
+                    className="accent-blue-600"
+                  />
+                  <span>New App</span>
+                </label>
               </div>
-            )}
+
+              {appMode === "existing" ? (
+                <div className="flex flex-col">
+                  <label htmlFor="existingAppName" className="font-medium mb-1">
+                    Select Existing App name
+                  </label>
+                  <select
+                    id="existingAppName"
+                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                    onChange={(e) => {
+                      setInputsFormat((prev) => ({
+                        ...prev,
+                        appName: e.target.value,
+                        // indexConfig: {
+                        //   [e.target.value]: {
+                        //     retentionTime: "",
+                        //     customFields: [],
+                        //   },
+                        // },
+                      }));
+                    }}
+                  >
+                    <option value="">-- Choose an app name --</option>
+                    {repoNames.map((index) => (
+                      <option key={index} value={index}>
+                        {index}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              ) : (
+                <div className="flex flex-col relative">
+                  <label htmlFor="newAppName" className="font-medium mb-1">
+                    Enter New App Name
+                  </label>
+                 
+                  <input
+                    id="newAppName"
+                    value={inputsFormat.appName}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setAppName(value);
+
+                      setInputsFormat((prev) => ({
+                        ...prev,
+                        appName: value,
+                      }));
+                    }}
+                    placeholder="Enter App name"
+                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                  />
+
+                  {appNameSuggestions.length > 0 &&
+                    inputsFormat.appName === "" && (
+                      <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
+                        {appNameSuggestions.map((sug) => (
+                          <li
+                            key={sug}
+                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setInputsFormat((prev) => ({
+                                ...prev,
+                                appName: sug,
+                                // indexConfig: {
+                                //   ...prev.indexConfig,
+                                //   [sug]: {
+                                //     retentionTime: "",
+                                //     customFields: [],
+                                //   },
+                                // },
+                              }));
+                              setAppName(sug);
+                              setAppNameSuggestions([]);
+                            }}
+                          >
+                            {sug}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* ---------------------------- */}
@@ -1176,7 +1077,7 @@ flex items-center gap-2
                 onChange={() => setSourceMode(SOURCE_MODES.CONF)}
                 className="accent-blue-600"
               />
-              <span>Configuration Files</span>
+              <span>Sys Files</span>
             </label>
           </div>
         </div>

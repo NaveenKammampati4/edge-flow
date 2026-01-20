@@ -1,39 +1,39 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import './App.css'
-import Main from './components/Main'
-import UserRepos from './components/UserRepos'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import UserRepos from "./components/UserRepos";
+import Main from "./components/Main";
 
-function App() {
+const ProtectedRoute = ({ children }) => {
+  const [checking, setChecking] = useState(true);
+  const [allowed, setAllowed] = useState(false);
 
+  useEffect(() => {
+    fetch("http://localhost:8080/api/my", {
+      credentials: "include",
+    })
+      .then((res) => setAllowed(res.ok))
+      .finally(() => setChecking(false));
+  }, []);
+
+  if (checking) return <div>Checking authentication...</div>;
+
+  return allowed ? children : <Navigate to="/" replace />;
+};
+
+export default function App() {
   return (
-    <>
-     {/* <Main/>  */}
-     {/* <UserRepos /> */}
-     <BrowserRouter>
-     <Routes>
-      <Route path='/' element={<UserRepos />} />
-     </Routes>
-     </BrowserRouter>
-    </>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<UserRepos />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Main />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
 }
-
-export default App
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
