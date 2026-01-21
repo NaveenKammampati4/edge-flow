@@ -1108,7 +1108,7 @@ flex items-center gap-2
                 onChange={() => setSourceMode(SOURCE_MODES.CONF)}
                 className="accent-blue-600"
               />
-              <span>Configuration Files</span>
+              <span>Sys Log</span>
             </label>
           </div>
         </div>
