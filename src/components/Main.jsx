@@ -17,7 +17,10 @@ const Main = () => {
   const [appNameSuggestions, setAppNameSuggestions] = useState([]);
   const [isPreview, setIsPreview] = useState(false);
   const [inputDeleteError, setInputDeleteError] = useState("");
-  const [sourceMode, setSourceMode] = useState(null); // default
+  const [sourceMode, setSourceMode] = useState(null); 
+  const [repoContents, setRepoContents] = useState([]);
+  const [path, setPath] = useState("");
+  const [existingConfig, setExistingConfig] = useState(null);
 
   const [inputsFormat, setInputsFormat] = useState({
     appName: "",
@@ -49,6 +52,21 @@ const Main = () => {
   });
 
   const [repos, setRepos]=useState([]);
+  
+
+  const fetchConfigFiles=async()=>{
+    try {
+       const response = await axios.get(
+      `http://127.0.0.1:5000/config-files`
+    );
+
+    console.log("Configss:", response.data);
+    setExistingConfig(response.data)
+    }
+    catch (e) {
+      console.error("Fetch config files error:", e);
+    }
+  }
 
  const fetchRepos = async () => {
   try {
@@ -66,10 +84,77 @@ const Main = () => {
   }
 };
 
+
+
+const fetchRepoContents = async (owner, repoName, token) => {
+  try {
+    const response = await axios.get(
+      `http://127.0.0.1:5000/get-repos/contents/${owner}/${repoName}/`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    console.log(response.data);
+    setRepoContents(response.data);
+  } catch (error) {
+    console.error(
+      'Error fetching repo contents:',
+      error.response?.data || error.message
+    );
+  }
+};
+
+const fetchRepoContentsByPath = async (owner, repoName, path, token) => {
+  try {
+    const response = await axios.get(
+      `http://127.0.0.1:5000/get-repos/contents/path/${owner}/${repoName}/${path}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+
+    console.log(response.data);
+    setRepoContents(response.data);
+  } catch (error) {
+    console.error(
+      'Error fetching repo contents:',
+      error.response?.data || error.message
+    );
+  }
+}
+
+useEffect(() => {
+  if (!token || !inputsFormat.appName || !path) return;
+
+  fetchRepoContentsByPath(
+    userName,
+    inputsFormat.appName,
+    path,
+    token
+  );
+}, [inputsFormat.appName, path]);
+
+useEffect(() => {
+  if (!token || !inputsFormat.appName) return;
+
+  fetchRepoContents(
+    userName,
+    inputsFormat.appName,
+    token
+  );
+}, [inputsFormat.appName]);
+
+
   useEffect(() => {
   console.log("username", userName)
   console.log("token", token)
     fetchRepos();
+    fetchConfigFiles();
    
 }, [userName]);
 
@@ -839,7 +924,7 @@ onClick={loginWithGitHub}
                     }}
                   >
                     <option value="">-- Choose an index --</option>
-                    {existingIndexes.map((index) => (
+                    {existingConfig.map((index) => (
                       <option key={index} value={index}>
                         {index}
                       </option>
@@ -982,6 +1067,10 @@ onClick={loginWithGitHub}
               </div>
             )}
           </div>
+        </div>
+
+        <div>
+          {repoContents.map((each,index)=>(<div onClick={()=>setPath(each.path)} key={index}>{each.name}</div>))}
         </div>
 
         {/* ───────── Source Type + Mode Selection ───────── */}
