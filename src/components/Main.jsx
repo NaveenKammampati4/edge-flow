@@ -20,6 +20,14 @@ const Main = () => {
   const [sourceMode, setSourceMode] = useState(null); // default
   const [indexMode, setIndexMode] = useState("new");
   const [appMode, setAppMode] = useState("new");
+  let propsList = [
+    "timePrefix",
+    "timeFormat",
+    "lineBreaker",
+    "maximum_lookAhead",
+    "truncate",
+    "dateTime",
+  ]
 
   const [inputsFormat, setInputsFormat] = useState({
     appName: "",
@@ -52,6 +60,24 @@ const Main = () => {
 
   const [repos, setRepos] = useState([]);
   const [repoNames, setRepoNames] = useState([]);
+  const [existingConfig, setExistingConfig] = useState(null);
+  const [branches, setBranches] = useState([]);
+  const [selectedBranch, setSelectedBranch] = useState("");
+  const [configFiles, setConfigFiles] = useState([]);
+
+  const fetchConfigFiles = async () => {
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:5000/config-files`
+      );
+
+      console.log("Configss:", response.data);
+      setExistingConfig(response.data)
+    }
+    catch (e) {
+      console.error("Fetch config files error:", e);
+    }
+  }
 
   const fetchRepos = async () => {
     try {
@@ -73,7 +99,213 @@ const Main = () => {
     console.log("username", userName);
     console.log("token", token);
     fetchRepos();
+    fetchConfigFiles();
   }, [userName]);
+
+  const fetchRepoBranches = async (owner, repoName, token) => {
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:5000/repo-branches/${owner}/${repoName}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      console.log(response.data);
+      setBranches(response.data);
+    } catch (error) {
+      console.error(
+        'Error fetching repo contents:',
+        error.response?.data || error.message
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (!token || !inputsFormat.appName) return;
+
+    fetchRepoBranches(
+      userName,
+      inputsFormat.appName,
+      token
+    );
+  }, [inputsFormat.appName]);
+
+  const fetchRepoFiles = async (owner, repoName, token, branch) => {
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:5000/repo-tree/${owner}/${repoName}/${branch}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      console.log("Files:", response.data);
+
+    } catch (error) {
+      console.error(
+        'Error fetching repo contents:',
+        error.response?.data || error.message
+      );
+    }
+  };
+
+  const fetchRepoConfigFiles = async (owner, repoName, token, branch) => {
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:5000/read-splunk-configs/${owner}/${repoName}/${branch}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      console.log("Files:", response.data);
+      setConfigFiles(response.data.files);
+
+    } catch (error) {
+      console.error(
+        'Error fetching repo contents:',
+        error.response?.data || error.message
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (!token || !inputsFormat.appName || !selectedBranch) return;
+
+    fetchRepoFiles(
+      userName,
+      inputsFormat.appName,
+      token,
+      selectedBranch
+    );
+    fetchRepoConfigFiles(
+      userName,
+      inputsFormat.appName,
+      token,
+      selectedBranch
+    );
+  }, [inputsFormat.appName, selectedBranch]);
+
+  const getFormattedValue = (content) => {
+    const lines = content
+      .split("\n")
+      .map(line => line.trim())
+      .filter(line => line.length > 0); // remove empty lines
+
+    const parseValue = (val) => {
+      if (val === "true") return true;
+      if (val === "false") return false;
+      return val;
+    };
+
+    const formatted = {
+      
+      ...Object.fromEntries(
+        lines.slice(1).map(line => {
+          const parts = line.split("=");
+          if (parts.length < 2) return []; // skip invalid lines
+
+          const key = parts[0].trim();
+          const value = parseValue(parts.slice(1).join("=").trim());
+
+          return [key, value];
+        }).filter(entry => entry.length) // remove skipped lines
+      )
+    };
+
+    return formatted;
+  }
+
+  const handleConfigFiles = () => {
+    console.log("configFiles:", configFiles);
+    const inputsContent = configFiles.filter(file => file.file_name === "inputs.conf")[0].content;
+
+    const inputsFormatted = getFormattedValue(inputsContent);
+
+    const propsContent = configFiles.filter(file => file.file_name === "props.conf")[0].content;
+
+    const propsFormatted = getFormattedValue(propsContent);
+
+    console.log("Formatted Inputs Config:", inputsFormatted);
+
+    console.log("props content", propsContent);
+
+    console.log("Formatted Props Config:", propsFormatted);
+    setInputsFormat((prev) => {
+      let updatedInputs = [...prev.inputs];
+      updatedInputs[0].sourceType = inputsFormatted.sourceType || "";
+      updatedInputs[0].index = inputsFormatted.appName || "";
+
+      let updatedProps = { ...prev.props };
+
+      //     sourceType : {
+      //   timeFormat: "",
+      //   dateTime: "",
+      //   lineBreaker: "",
+      //   shouldLine: "",
+      //   truncate: "",
+      //   newKey : "",
+      //   newValue : "",
+      // }
+
+      updatedProps[inputsFormatted.sourceType] = {
+        timePrefix: propsFormatted.timePrefix || "",
+        timeFormat: propsFormatted.timeFormat || "",
+        lineBreaker: propsFormatted.lineBreaker || "",
+        maximum_lookAhead: propsFormatted.maximum_lookAhead || "",
+        truncate: propsFormatted.truncate || "",
+        dateTime: propsFormatted.dateTime || "",
+      };
+
+      //  transform: {
+      //     ...prev.transform,
+      //     [newKey]: {
+      //       regex: "",
+      //       format: "",
+      //       destKey: "",
+      //     },
+      //   },
+
+      let transformObj = { ...prev.transform };
+
+      console.log("propsList", propsFormatted);
+
+      for (const key of Object.keys(propsFormatted)) {
+        if (!propsList.includes(key)){
+           updatedProps[inputsFormatted.sourceType] = {
+        ...updatedProps[inputsFormatted.sourceType],
+            [key]: propsFormatted[key],     
+      };
+
+      transformObj[key] = { 
+            newKey: "", 
+            format:"",
+            destKey:""
+            }
+        } 
+      }
+      return {
+        ...prev,
+        inputs: updatedInputs,
+        props: updatedProps,
+        transform: transformObj,
+      };
+    });
+  }
+
+
+  useEffect(() => {
+    if (configFiles.length === 0) return;
+    handleConfigFiles();
+
+  }, [configFiles]);
 
   const existingIndexes = ["users_index", "orders_index", "products_index"];
   const possibleSuffixes = ["_logs", "_data"];
@@ -267,13 +499,13 @@ const Main = () => {
 
               {(Array.isArray(transform)
                 ? transform.map((t, i) => ({
-                    __name: `Transform ${i + 1}`,
-                    ...t,
-                  }))
+                  __name: `Transform ${i + 1}`,
+                  ...t,
+                }))
                 : Object.entries(transform).map(([name, t]) => ({
-                    __name: name, // REAL transform name
-                    ...t,
-                  }))
+                  __name: name, // REAL transform name
+                  ...t,
+                }))
               ).map((t, i) => {
                 const hasAnyValue = Object.values(t).some(
                   (v) => v !== undefined && v !== null && v !== "",
@@ -696,13 +928,13 @@ flex items-center gap-2
                     type="radio"
                     value="existing"
                     checked={appMode === "existing"}
-                     onChange={() => {
+                    onChange={() => {
                       setAppMode("existing"),
-                      setAppName("");
-                        setInputsFormat((prev) => ({
-                          ...prev,
-                          appName: "",
-                        }));
+                        setAppName("");
+                      setInputsFormat((prev) => ({
+                        ...prev,
+                        appName: "",
+                      }));
                     }}
                     className="accent-blue-600"
                   />
@@ -756,7 +988,24 @@ flex items-center gap-2
                       </option>
                     ))}
                   </select>
+                  <label htmlFor="existingAppName" className="font-medium mb-1">
+                    Select Branches
+                  </label>
+
+                  <select
+                    id="braches"
+                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                    onChange={(e) => setSelectedBranch(e.target.value)}
+                  >
+                    <option value="">-- Choose an app name --</option>
+                    {branches.map((branch) => (
+                      <option key={branch} value={branch}>
+                        {branch}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
               ) : (
                 <div className="flex flex-col relative">
                   <label htmlFor="newAppName" className="font-medium mb-1">
@@ -907,7 +1156,7 @@ flex items-center gap-2
                     }}
                   >
                     <option value="">-- Choose an index --</option>
-                    {existingIndexes.map((index) => (
+                    {existingConfig.map((index) => (
                       <option key={index} value={index}>
                         {index}
                       </option>
@@ -1189,6 +1438,7 @@ flex items-center gap-2
                   className="bg-white border border-gray-300 rounded-xl p-4 shadow"
                 >
                   <InputConfig
+                    configFiles={configFiles}
                     cancelConfig={cancelConfig}
                     each={index + 1}
                     inputsFormat={inputsFormat}

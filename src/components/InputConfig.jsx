@@ -5,6 +5,7 @@ import TransformsConfig from "./TransformsConfig";
 import { IndexConfig } from "./IndexConfig";
 
 const InputConfig = ({
+  configFiles,
   cancelConfig,
   each,
   inputsFormat,
