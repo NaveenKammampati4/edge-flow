@@ -19,6 +19,10 @@ const InputConfig = ({
     setInputsFormat,
     handleTransforms,
   });
+
+   const inputIndex = inputsFormat.inputs.findIndex(i => i.id === each);
+  if (inputIndex === -1) return null;
+  const item = inputsFormat.inputs[inputIndex];
   const [inputsConfigData, setInputsConfigData] = useState({
     filePath: "",
     sourceType: "",
@@ -30,8 +34,8 @@ const InputConfig = ({
 
   // const[customField, setCustomField]=useState(false);
   // const[cancelCustomField, setCancelCustomField]=useState(false);
-  const [inputCustomFields, setInputCustomFields] = useState(
-    inputsFormat.inputs[each - 1].customFields
+   const [inputCustomFields, setInputCustomFields] = useState(
+    item?.customFields || []
   );
   const [newkey, setNewKey] = useState("");
   const [value, setValue] = useState("");
@@ -42,7 +46,7 @@ const InputConfig = ({
   const [editCustomField, setEditCustomField] = useState({});
   const [customFieldRowErrors, setCustomFieldRowErrors] = useState({});
   const [tempSourceType, setTempSourceType] = useState(
-    inputsFormat.inputs[each - 1].sourceType || ""
+    item?.sourceType || ""
   );
 
   const existingIndexes = ["users_index", "orders_index", "products_index","userData_meterics"];
@@ -63,17 +67,17 @@ const InputConfig = ({
     }
   };
 
-  console.log("aaaaab",inputsFormat.inputs[each - 1])
+  console.log("aaaaab",inputsFormat.inputs[inputIndex])
 
   useEffect(()=>{
-    setTempSourceType(inputsFormat.inputs[each - 1].sourceType || "")
-  },[inputsFormat.inputs[each - 1].sourceType])
+    setTempSourceType(inputsFormat.inputs[inputIndex].sourceType || "")
+  },[inputsFormat.inputs[inputIndex].sourceType])
 
   useEffect(() => {
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      updatedInputs[each - 1] = {
-        ...updatedInputs[each - 1],
+      updatedInputs[inputIndex] = {
+        ...updatedInputs[inputIndex],
         index: inputsFormat.indexName,
       };
       return {
@@ -88,15 +92,15 @@ const InputConfig = ({
   //   if (newkey !== "" && value !== "") {
   //     setInputsFormat((prev) => {
   //       const updatedInputs = [...prev.inputs];
-  //       console.log("update", updatedInputs[each - 1]);
+  //       console.log("update", updatedInputs[inputIndex]);
 
   //       const updatedCustomInputs = [
-  //         ...updatedInputs[each - 1].customFields,
+  //         ...updatedInputs[inputIndex].customFields,
   //         { [newkey]: value }
   //       ];
 
-  //       updatedInputs[each - 1] = {
-  //         ...updatedInputs[each - 1],
+  //       updatedInputs[inputIndex] = {
+  //         ...updatedInputs[inputIndex],
   //         customFields: updatedCustomInputs
   //       };
 
@@ -109,15 +113,15 @@ const InputConfig = ({
   //   else {
   //     setInputsFormat((prev) => {
   //       const updatedInputs = [...prev.inputs];
-  //       console.log("update", updatedInputs[each - 1]);
+  //       console.log("update", updatedInputs[inputIndex]);
 
   //       const updatedCustomInputs = [
-  //         ...updatedInputs[each - 1].customFields,
+  //         ...updatedInputs[inputIndex].customFields,
   //         {}
   //       ];
 
-  //       updatedInputs[each - 1] = {
-  //         ...updatedInputs[each - 1],
+  //       updatedInputs[inputIndex] = {
+  //         ...updatedInputs[inputIndex],
   //         customFields: updatedCustomInputs
   //       };
 
@@ -145,7 +149,7 @@ const InputConfig = ({
       return;
     }
     //Duplicate Validation
-    // const isDuplicate = inputsFormat.inputs[each - 1].customFields.some(
+    // const isDuplicate = inputsFormat.inputs[inputIndex].customFields.some(
     //   (field) => Object.keys(field)[0] === trimmedKey
     // );
     // if (isDuplicate) {
@@ -158,7 +162,7 @@ const keyToCheck = trimmedKey.toLowerCase();
 
 //Check customFields
 const customFields =
-  inputsFormat.inputs?.[each - 1]?.customFields || [];
+  inputsFormat.inputs?.[inputIndex]?.customFields || [];
 
 const isDuplicateCustomField = customFields.some((field) => {
   const [key] = Object.keys(field);
@@ -171,7 +175,8 @@ if (isDuplicateCustomField) {
 }
 
 //Check input-level fields
-const inputFields = inputsFormat.inputs?.[each - 1] || {};
+const inputFields =
+  inputsFormat.inputs?.[inputIndex] || {};
 
 const isDuplicateInputField = Object.keys(inputFields).some(
   (key) => key.toLowerCase() === keyToCheck
@@ -186,10 +191,10 @@ if (isDuplicateInputField) {
     setCustomFieldError("");
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      updatedInputs[each - 1] = {
-        ...updatedInputs[each - 1],
+      updatedInputs[inputIndex] = {
+        ...updatedInputs[inputIndex],
         customFields: [
-          ...updatedInputs[each - 1].customFields,
+          ...updatedInputs[inputIndex].customFields,
           { [trimmedKey]: trimmedValue },
         ],
       };
@@ -226,7 +231,7 @@ if (isDuplicateInputField) {
     }
 
     //Duplicate validation
-    const isDuplicate = inputsFormat.inputs[each - 1].customFields.some(
+    const isDuplicate = inputsFormat.inputs[inputIndex].customFields.some(
       (field, i) => i !== index && Object.keys(field)[0] === trimmedKey
     );
 
@@ -248,12 +253,12 @@ if (isDuplicateInputField) {
     //Update only this row
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      const updatedFields = [...updatedInputs[each - 1].customFields];
+      const updatedFields = [...updatedInputs[inputIndex].customFields];
 
       updatedFields[index] = { [trimmedKey]: trimmedValue };
 
-      updatedInputs[each - 1] = {
-        ...updatedInputs[each - 1],
+      updatedInputs[inputIndex] = {
+        ...updatedInputs[inputIndex],
         customFields: updatedFields,
       };
 
@@ -273,14 +278,14 @@ if (isDuplicateInputField) {
 
   const deleteCustomField = (delVal) => {
     const updatedCustomFileds = inputsFormat.inputs[
-      each - 1
+      inputIndex
     ].customFields.filter((each, index) => index !== delVal);
     console.log("updatedCustomFileds", updatedCustomFileds);
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      console.log("update", updatedInputs[each - 1]);
-      updatedInputs[each - 1] = {
-        ...updatedInputs[each - 1],
+      console.log("update", updatedInputs[inputIndex]);
+      updatedInputs[inputIndex] = {
+        ...updatedInputs[inputIndex],
         customFields: updatedCustomFileds,
       };
 
@@ -307,7 +312,8 @@ if (isDuplicateInputField) {
   //   setCustomField(true);
   //   setCancelCustomField(false);
   // }
-  const item = inputsFormat.inputs[each - 1];
+  // const item = inputsFormat.inputs[inputIndex];
+
   const committedSourceType = item.sourceType;
   const hasProps = Boolean(inputsFormat.props[committedSourceType]);
 
@@ -316,7 +322,7 @@ if (isDuplicateInputField) {
   const addNewIndex = (value) => {
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      updatedInputs[each - 1] = { ...updatedInputs[each - 1], index: value };
+      updatedInputs[inputIndex] = { ...updatedInputs[inputIndex], index: value };
       return {
         ...prev,
         inputs: updatedInputs,
@@ -341,7 +347,7 @@ if (isDuplicateInputField) {
     console.log("value", value);
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      updatedInputs[each - 1] = { ...updatedInputs[each - 1], [name]: value };
+      updatedInputs[inputIndex] = { ...updatedInputs[inputIndex], [name]: value };
       return {
         ...prev,
         inputs: updatedInputs,
@@ -350,13 +356,13 @@ if (isDuplicateInputField) {
   };
 
   // const addProps = () => {
-  //   let sourceTypeData = inputsFormat.inputs[each - 1].sourceType;
+  //   let sourceTypeData = inputsFormat.inputs[inputIndex].sourceType;
   //   if (sourceTypeData.trim() === "") {
   //     alert("Please fill source file");
   //     return;
   //   }
 
-  //   let sType = inputsFormat.inputs[each - 1].sourceType;
+  //   let sType = inputsFormat.inputs[inputIndex].sourceType;
   //   console.log(sType);
 
   //   setInputsFormat((prev) => {
@@ -392,8 +398,8 @@ if (isDuplicateInputField) {
 //   Object.entries(pProp).filter(([key]) => key !== val)
 // );
       const updatedInputs = [...prev.inputs];
-      updatedInputs[each - 1] = {
-        ...updatedInputs[each - 1],
+      updatedInputs[inputIndex] = {
+        ...updatedInputs[inputIndex],
         sourceType: trimmedSourceType,
       };
       updateProps = {[trimmedSourceType]: pProp};
@@ -417,8 +423,8 @@ if (isDuplicateInputField) {
     // ✅ Commit source type ONLY here
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      updatedInputs[each - 1] = {
-        ...updatedInputs[each - 1],
+      updatedInputs[inputIndex] = {
+        ...updatedInputs[inputIndex],
         sourceType: trimmedSourceType,
       };
 
@@ -442,7 +448,7 @@ if (isDuplicateInputField) {
   };
 
   const addField = () => {
-    let sTypeField = inputsFormat.inputs[each - 1].customFields;
+    let sTypeField = inputsFormat.inputs[inputIndex].customFields;
     console.log("file : ", sTypeField);
 
     setInputsFormat((prev) => {
@@ -771,8 +777,8 @@ if (isDuplicateInputField) {
             </div>
           </div>
 
-          {inputsFormat.inputs[each - 1].customFields.length > 0 ? (
-            inputsFormat.inputs[each - 1].customFields.map((field, index) => {
+          {inputsFormat.inputs[inputIndex].customFields.length > 0 ? (
+            inputsFormat.inputs[inputIndex].customFields.map((field, index) => {
               const originalKey = Object.keys(field)[0];
               const originalValue = field[originalKey];
 
@@ -860,7 +866,7 @@ if (isDuplicateInputField) {
       </h2>
       <hr className="text-blue-500" />
       <div>
-        {inputsFormat.props[inputsFormat.inputs[each - 1].sourceType] && (
+        {inputsFormat.props[inputsFormat.inputs[inputIndex].sourceType] && (
           <PropsConfigPerSource
             key={each}
             each={each}

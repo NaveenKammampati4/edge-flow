@@ -29,7 +29,7 @@ const Main = () => {
     "maximum_lookAhead",
     "truncate",
     "dateTime",
-  ]
+  ];
 
   const [inputsFormat, setInputsFormat] = useState({
     appName: "",
@@ -84,17 +84,14 @@ const Main = () => {
 
   const fetchConfigFiles = async () => {
     try {
-      const response = await axios.get(
-        `http://127.0.0.1:5000/config-files`
-      );
+      const response = await axios.get(`http://127.0.0.1:5000/config-files`);
 
       console.log("Configss:", response.data);
-      setExistingConfig(response.data)
-    }
-    catch (e) {
+      setExistingConfig(response.data);
+    } catch (e) {
       console.error("Fetch config files error:", e);
     }
-  }
+  };
 
   const fetchRepos = async () => {
     try {
@@ -125,17 +122,17 @@ const Main = () => {
         `http://127.0.0.1:5000/repo-branches/${owner}/${repoName}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
 
       console.log(response.data);
       setBranches(response.data);
     } catch (error) {
       console.error(
-        'Error fetching repo contents:',
-        error.response?.data || error.message
+        "Error fetching repo contents:",
+        error.response?.data || error.message,
       );
     }
   };
@@ -143,11 +140,7 @@ const Main = () => {
   useEffect(() => {
     if (!token || !inputsFormat.appName) return;
 
-    fetchRepoBranches(
-      userName,
-      inputsFormat.appName,
-      token
-    );
+    fetchRepoBranches(userName, inputsFormat.appName, token);
   }, [inputsFormat.appName]);
 
   const fetchRepoFiles = async (owner, repoName, token, branch) => {
@@ -156,17 +149,16 @@ const Main = () => {
         `http://127.0.0.1:5000/repo-tree/${owner}/${repoName}/${branch}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
 
       console.log("Files:", response.data);
-
     } catch (error) {
       console.error(
-        'Error fetching repo contents:',
-        error.response?.data || error.message
+        "Error fetching repo contents:",
+        error.response?.data || error.message,
       );
     }
   };
@@ -177,18 +169,17 @@ const Main = () => {
         `http://127.0.0.1:5000/read-splunk-configs/${owner}/${repoName}/${branch}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
 
       console.log("Files:", response.data);
       setConfigFiles(response.data.files);
-
     } catch (error) {
       console.error(
-        'Error fetching repo contents:',
-        error.response?.data || error.message
+        "Error fetching repo contents:",
+        error.response?.data || error.message,
       );
     }
   };
@@ -196,25 +187,15 @@ const Main = () => {
   useEffect(() => {
     if (!token || !inputsFormat.appName || !selectedBranch) return;
 
-    fetchRepoFiles(
-      userName,
-      inputsFormat.appName,
-      token,
-      selectedBranch
-    );
-    fetchRepoConfigFiles(
-      userName,
-      inputsFormat.appName,
-      token,
-      selectedBranch
-    );
+    fetchRepoFiles(userName, inputsFormat.appName, token, selectedBranch);
+    fetchRepoConfigFiles(userName, inputsFormat.appName, token, selectedBranch);
   }, [inputsFormat.appName, selectedBranch]);
 
   const getFormattedValue = (content) => {
     const lines = content
       .split("\n")
-      .map(line => line.trim())
-      .filter(line => line.length > 0); // remove empty lines
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0); // remove empty lines
 
     const parseValue = (val) => {
       if (val === "true") return true;
@@ -223,42 +204,51 @@ const Main = () => {
     };
 
     const formatted = {
-      
       ...Object.fromEntries(
-        lines.slice(1).map(line => {
-          const parts = line.split("=");
-          if (parts.length < 2) return []; // skip invalid lines
+        lines
+          .slice(1)
+          .map((line) => {
+            const parts = line.split("=");
+            if (parts.length < 2) return []; // skip invalid lines
 
-          const key = parts[0].trim();
-          const value = parseValue(parts.slice(1).join("=").trim());
+            const key = parts[0].trim();
+            const value = parseValue(parts.slice(1).join("=").trim());
 
-          return [key, value];
-        }).filter(entry => entry.length) // remove skipped lines
-      )
+            return [key, value];
+          })
+          .filter((entry) => entry.length), // remove skipped lines
+      ),
     };
 
     return formatted;
-  }
+  };
 
   const handleConfigFiles = () => {
     console.log("configFiles:", configFiles);
-    const inputsContent = configFiles.filter(file => file.file_name === "inputs.conf")[0].content;
+    const inputsFile = configFiles.find(
+      (file) => file.file_name === "inputs.conf",
+    );
 
-    const inputsFormatted = getFormattedValue(inputsContent);
+    const propsFile = configFiles.find(
+      (file) => file.file_name === "props.conf",
+    );
 
-    const propsContent = configFiles.filter(file => file.file_name === "props.conf")[0].content;
-
-    const transformsContent = configFiles.filter(file => file.file_name === "transforms.conf")[0].content;
-
-    const transformsFormatted = getFormattedValue(transformsContent);
-
-    const propsFormatted = getFormattedValue(propsContent);
+    const transformsFile = configFiles.find(
+      (file) => file.file_name === "transforms.conf",
+    );
+    // If any required file is missing, stop safely
+    if (!inputsFile || !propsFile || !transformsFile) {
+      console.warn("Required config file missing");
+      return;
+    }
+    const inputsFormatted = getFormattedValue(inputsFile.content);
+    const propsFormatted = getFormattedValue(propsFile.content);
+    const transformsFormatted = getFormattedValue(transformsFile.content);
 
     console.log("Formatted Inputs Config:", inputsFormatted);
-
-    console.log("props content", propsContent);
-
     console.log("Formatted Props Config:", propsFormatted);
+    console.log("Formatted transforms Config:", transformsFormatted);
+
     setInputsFormat((prev) => {
       let updatedInputs = [...prev.inputs];
       updatedInputs[0].sourceType = inputsFormatted.sourceType || "";
@@ -301,18 +291,18 @@ const Main = () => {
       console.log("transformsFormatted", transformsFormatted);
 
       for (const key of Object.keys(propsFormatted)) {
-        if (!propsList.includes(key)){
-           updatedProps[inputsFormatted.sourceType] = {
-        ...updatedProps[inputsFormatted.sourceType],
-            [key]: propsFormatted[key],     
-      };
+        if (!propsList.includes(key)) {
+          updatedProps[inputsFormatted.sourceType] = {
+            ...updatedProps[inputsFormatted.sourceType],
+            [key]: propsFormatted[key],
+          };
 
-      transformObj[key] = { 
-            regex: transformsFormatted.REGEX, 
-            format:transformsFormatted.FORMAT,
-            destKey:transformsFormatted.DEST_KEY,
-            }
-        } 
+          transformObj[key] = {
+            regex: transformsFormatted.REGEX,
+            format: transformsFormatted.FORMAT,
+            destKey: transformsFormatted.DEST_KEY,
+          };
+        }
       }
       return {
         ...prev,
@@ -321,13 +311,11 @@ const Main = () => {
         transform: transformObj,
       };
     });
-  }
-
+  };
 
   useEffect(() => {
     if (configFiles.length === 0) return;
     handleConfigFiles();
-
   }, [configFiles]);
 
   const existingIndexes = ["users_index", "orders_index", "products_index"];
@@ -366,7 +354,7 @@ const Main = () => {
       indexName: "",
     }));
 
-    setHecTokenDetails((prev) => ({ 
+    setHecTokenDetails((prev) => ({
       ...prev,
       indexName: value,
     }));
@@ -532,13 +520,13 @@ const Main = () => {
 
               {(Array.isArray(transform)
                 ? transform.map((t, i) => ({
-                  __name: `Transform ${i + 1}`,
-                  ...t,
-                }))
+                    __name: `Transform ${i + 1}`,
+                    ...t,
+                  }))
                 : Object.entries(transform).map(([name, t]) => ({
-                  __name: name, // REAL transform name
-                  ...t,
-                }))
+                    __name: name, // REAL transform name
+                    ...t,
+                  }))
               ).map((t, i) => {
                 const hasAnyValue = Object.values(t).some(
                   (v) => v !== undefined && v !== null && v !== "",
@@ -736,7 +724,9 @@ const Main = () => {
       // find input being removed
       // const removedInput = prev.inputs.find((i) => i.id === val);
       // alert((count++) + "removed Input: "+removedInput.value);
-      const removedInput = prev.inputs.find((i, index) => index + 1 === val);
+
+      // const removedInput = prev.inputs.find((i, index) => index + 1 === val);
+      const removedInput = prev.inputs.find((i) => i.id === val);
 
       if (!removedInput) return;
 
@@ -744,10 +734,11 @@ const Main = () => {
         console.log(`${key}:`, value);
       });
 
-      // alert(`${count++} Input removed. Check console for details.`);
+      // alert(`${count++} Input removed. Check co  nsole for details.`);
 
       // remove input
-      const updatedInputs = prev.inputs.filter((i, index) => index + 1 !== val);
+      // const updatedInputs = prev.inputs.filter((i, index) => index + 1 !== val);
+      const updatedInputs = prev.inputs.filter((i) => i.id !== val);
 
       // remove related props
       let updatedProps = { ...prev.props };
@@ -956,7 +947,10 @@ flex items-center gap-2
       >
         <div className="grid grid-cols-2 gap-6 mb-6">
           {/* ───────── App Name Card ───────── */}
-          <div className="flex flex-col relative">
+          <div className="flex flex-col relative bg-white shadow rounded-xl p-6">
+            <h2 className="text-lg font-semibold text-black-600 mb-2">
+              App Name
+            </h2>
             <div>
               <div className="flex space-x-6">
                 <label className="flex items-center space-x-2">
@@ -965,8 +959,7 @@ flex items-center gap-2
                     value="existing"
                     checked={appMode === "existing"}
                     onChange={() => {
-                      setAppMode("existing"),
-                        setAppName("");
+                      (setAppMode("existing"), setAppName(""));
                       setInputsFormat((prev) => ({
                         ...prev,
                         appName: "",
@@ -991,12 +984,12 @@ flex items-center gap-2
                       }));
                       setHecTokenDetails((prev) => ({
                         ...prev,
-                        appName: "",    
-                    }));
+                        appName: "",
+                      }));
                       setUfTokenDetails((prev) => ({
                         ...prev,
-                        appName: "",    
-                    }));
+                        appName: "",
+                      }));
                     }}
                     className="accent-blue-600"
                   />
@@ -1026,12 +1019,12 @@ flex items-center gap-2
 
                       setHecTokenDetails((prev) => ({
                         ...prev,
-                        appName: e.target.value,      
-                    }));
+                        appName: e.target.value,
+                      }));
                       setUfTokenDetails((prev) => ({
                         ...prev,
-                        appName: e.target.value,      
-                    }));
+                        appName: e.target.value,
+                      }));
                     }}
                   >
                     <option value="">-- Choose an app name --</option>
@@ -1058,7 +1051,6 @@ flex items-center gap-2
                     ))}
                   </select>
                 </div>
-
               ) : (
                 <div className="flex flex-col relative">
                   <label htmlFor="newAppName" className="font-medium mb-1">
@@ -1078,12 +1070,13 @@ flex items-center gap-2
                       }));
                       setHecTokenDetails((prev) => ({
                         ...prev,
-                        appName: value,         }));          
-                    
+                        appName: value,
+                      }));
+
                       setUfTokenDetails((prev) => ({
                         ...prev,
-                        appName: value,      
-                    }));
+                        appName: value,
+                      }));
                     }}
                     placeholder="Enter App name"
                     className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
@@ -1110,7 +1103,7 @@ flex items-center gap-2
                               }));
                               setHecTokenDetails((prev) => ({
                                 ...prev,
-                                appName: sug, 
+                                appName: sug,
                               }));
                               setUfTokenDetails((prev) => ({
                                 ...prev,
@@ -1153,126 +1146,134 @@ flex items-center gap-2
           {/* ------------------------ */}
 
           <div className="flex flex-col bg-white shadow rounded-lg p-4 space-y-3 gap-0 ">
-            <div className="flex flex-row gap-10">
-              <div>
-              <div className="flex space-x-6">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    value="existing"
-                    checked={mode === "existing"}
-                    onChange={() => {
-                      (setMode("existing"),
-                        setInputsFormat((prev) => ({
-                          ...prev,
-                          indexName: "",
-                        })));
+            <div className="bg-white shadow rounded-lg p-4 mb-6">
+              <h2 className="text-lg font-semibold text-black-600 mb-2">
+                Index Name
+              </h2>
+              <div className="flex flex-row gap-10">
+                <div>
+                  <div className="flex space-x-6">
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        value="existing"
+                        checked={mode === "existing"}
+                        onChange={() => {
+                          (setMode("existing"),
+                            setInputsFormat((prev) => ({
+                              ...prev,
+                              indexName: "",
+                            })));
 
-                        setHecTokenDetails((prev) => ({
-                          ...prev,
-                          indexName: "",
-                    }));
-                        setUfTokenDetails((prev) => ({
-                          ...prev,
-                          indexName: "",
-                    }));
-                    }}
-                    className="accent-blue-600"
-                  />
-                  <span>Existing Index</span>
-                </label>
+                          setHecTokenDetails((prev) => ({
+                            ...prev,
+                            indexName: "",
+                          }));
+                          setUfTokenDetails((prev) => ({
+                            ...prev,
+                            indexName: "",
+                          }));
+                        }}
+                        className="accent-blue-600"
+                      />
+                      <span>Existing Index</span>
+                    </label>
 
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    value="new"
-                    checked={mode === "new"}
-                    onChange={() => {
-                      (setMode("new"),
-                        setInputsFormat((prev) => ({
-                          ...prev,
-                          indexName: "",
-                        })));
-                        setHecTokenDetails((prev) => ({
-                          ...prev,
-                          indexName: "",  
-                    }));
-                        setUfTokenDetails((prev) => ({
-                          ...prev,
-                          indexName: "",  
-                    }));
-                    }}
-                    className="accent-blue-600"
-                  />
-                  <span>New Index</span>
-                </label>
-              </div>
+                    <label className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        value="new"
+                        checked={mode === "new"}
+                        onChange={() => {
+                          (setMode("new"),
+                            setInputsFormat((prev) => ({
+                              ...prev,
+                              indexName: "",
+                            })));
+                          setHecTokenDetails((prev) => ({
+                            ...prev,
+                            indexName: "",
+                          }));
+                          setUfTokenDetails((prev) => ({
+                            ...prev,
+                            indexName: "",
+                          }));
+                        }}
+                        className="accent-blue-600"
+                      />
+                      <span>New Index</span>
+                    </label>
+                  </div>
 
-              {mode === "existing" ? (
-                <div className="flex flex-col">
-                  <label htmlFor="existingIndex" className="font-medium mb-1">
-                    Select Existing Index
-                  </label>
-                  <select
-                    id="existingIndex"
-                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                    onChange={(e) => {
-                      // setInputsFormat((prev) => {
-                      //   return {
-                      //     ...prev,
-                      //     indexName: e.target.value,
-                      //     indexConfig: {
-                      //       ...prev.indexConfig,
-                      //       [e.target.value]: {
-                      //         retentionTime: "",
-                      //         customFields: [],
-                      //       },
-                      //     },
-                      //   };
-                      // });
-                      setInputsFormat((prev) => ({
-                        ...prev,
-                        indexName: e.target.value,
-                        indexConfig: {
-                          [e.target.value]: {
-                            retentionTime: "",
-                            customFields: [],
-                          },
-                        },
-                      }));
-                      setHecTokenDetails((prev) => ({
-                        ...prev,
-                        indexName: e.target.value,  
-                    }));
-                        setUfTokenDetails((prev) => ({
-                          ...prev,
-                          indexName: e.target.value,  
-                    }));}}
-                  >
-                    <option value="">-- Choose an index --</option>
-                    {existingConfig.map((index) => (
-                      <option key={index} value={index}>
-                        {index}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              ) : (
-                <div className="flex flex-col relative">
-                  <label htmlFor="newIndex" className="font-medium mb-1">
-                    Enter New Index
-                  </label>
-                  <input
-                    id="newIndex"
-                    value={indexName}
-                    onFocus={handleIndexFocus}
-                    onChange={handleInputChange}
-                    placeholder="Enter index name"
-                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                  />
+                  {mode === "existing" ? (
+                    <div className="flex flex-col">
+                      <label
+                        htmlFor="existingIndex"
+                        className="font-medium mb-1"
+                      >
+                        Select Existing Index
+                      </label>
+                      <select
+                        id="existingIndex"
+                        className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                        onChange={(e) => {
+                          // setInputsFormat((prev) => {
+                          //   return {
+                          //     ...prev,
+                          //     indexName: e.target.value,
+                          //     indexConfig: {
+                          //       ...prev.indexConfig,
+                          //       [e.target.value]: {
+                          //         retentionTime: "",
+                          //         customFields: [],
+                          //       },
+                          //     },
+                          //   };
+                          // });
+                          setInputsFormat((prev) => ({
+                            ...prev,
+                            indexName: e.target.value,
+                            indexConfig: {
+                              [e.target.value]: {
+                                retentionTime: "",
+                                customFields: [],
+                              },
+                            },
+                          }));
+                          setHecTokenDetails((prev) => ({
+                            ...prev,
+                            indexName: e.target.value,
+                          }));
+                          setUfTokenDetails((prev) => ({
+                            ...prev,
+                            indexName: e.target.value,
+                          }));
+                        }}
+                      >
+                        <option value="">-- Choose an index --</option>
+                        {existingConfig.map((index) => (
+                          <option key={index} value={index}>
+                            {index}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col relative">
+                      <label htmlFor="newIndex" className="font-medium mb-1">
+                        Enter New Index
+                      </label>
+                      <input
+                        id="newIndex"
+                        value={indexName}
+                        onFocus={handleIndexFocus}
+                        onChange={handleInputChange}
+                        placeholder="Enter index name"
+                        className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                      />
 
-                  {/* Suggestions */}
-                  {/* {(suggestions.length > 0 && inputsFormat.indexName !== indexName) && (
+                      {/* Suggestions */}
+                      {/* {(suggestions.length > 0 && inputsFormat.indexName !== indexName) && (
                   <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
                     {suggestions.map((sug) => (
                       <li
@@ -1307,158 +1308,159 @@ flex items-center gap-2
                     ))}
                   </ul>
                 )} */}
-                  {suggestions.length > 0 && inputsFormat.indexName === "" && (
-                    <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
-                      {suggestions.map((sug) => (
-                        <li
-                          key={sug}
-                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            setInputsFormat((prev) => ({
-                              ...prev,
-                              indexName: sug,
-                              indexConfig: {
-                                ...prev.indexConfig,
-                                [sug]: {
-                                  retentionTime: "",
-                                  customFields: [],
-                                },
-                              },
-                            }));
-                            setIndexName(sug);
-                            setSuggestions([]);
-                          }}
-                        >
-                          {sug}
-                        </li>
-                      ))}
-                    </ul>
+                      {suggestions.length > 0 &&
+                        inputsFormat.indexName === "" && (
+                          <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
+                            {suggestions.map((sug) => (
+                              <li
+                                key={sug}
+                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                onClick={() => {
+                                  setInputsFormat((prev) => ({
+                                    ...prev,
+                                    indexName: sug,
+                                    indexConfig: {
+                                      ...prev.indexConfig,
+                                      [sug]: {
+                                        retentionTime: "",
+                                        customFields: [],
+                                      },
+                                    },
+                                  }));
+                                  setIndexName(sug);
+                                  setSuggestions([]);
+                                }}
+                              >
+                                {sug}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                    </div>
                   )}
                 </div>
-              )}
-            </div>
-            {mode === "new" && (
-              <div className="flex flex-col  rounded-lg mt-5">
-                <label htmlFor="appName" className="font-medium mb-1">
-                  Retention Days
-                </label>
-                <input
-                  className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                  name="retentionTime"
-                  type="text"
-                  /*1. CONTROL THE INPUT */
-                  value={
-                    inputsFormat.indexConfig[inputsFormat.indexName]
-                      ?.retentionTime || ""
-                  }
-                  /*2. PRESERVE EXISTING INDEX CONFIG */
-                  onChange={(e) => {
-                    const value = e.target.value;
+                {mode === "new" && (
+                  <div className="flex flex-col  rounded-lg mt-5">
+                    <label htmlFor="appName" className="font-medium mb-1">
+                      Retention Days
+                    </label>
+                    <input
+                      className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                      name="retentionTime"
+                      type="text"
+                      /*1. CONTROL THE INPUT */
+                      value={
+                        inputsFormat.indexConfig[inputsFormat.indexName]
+                          ?.retentionTime || ""
+                      }
+                      /*2. PRESERVE EXISTING INDEX CONFIG */
+                      onChange={(e) => {
+                        const value = e.target.value;
 
-                    // allow empty delete
-                    if (value === "") {
-                      setInputsFormat((prev) => {
-                        if (!prev.indexName) return prev;
-                        return {
-                          ...prev,
-                          indexConfig: {
-                            [prev.indexName]: {
-                              retentionTime: "",
+                        // allow empty delete
+                        if (value === "") {
+                          setInputsFormat((prev) => {
+                            if (!prev.indexName) return prev;
+                            return {
+                              ...prev,
+                              indexConfig: {
+                                [prev.indexName]: {
+                                  retentionTime: "",
+                                },
+                              },
+                            };
+                          });
+                          return;
+                        }
+
+                        // allow only numbers
+                        if (!/^\d+$/.test(value)) return;
+
+                        setInputsFormat((prev) => {
+                          if (!prev.indexName) return prev;
+
+                          return {
+                            ...prev,
+                            // IMPORTANT: overwrite indexConfig completely
+                            indexConfig: {
+                              [prev.indexName]: {
+                                retentionTime: value,
+                              },
                             },
-                          },
-                        };
-                      });
-                      return;
-                    }
-
-                    // allow only numbers
-                    if (!/^\d+$/.test(value)) return;
-
-                    setInputsFormat((prev) => {
-                      if (!prev.indexName) return prev;
-
-                      return {
-                        ...prev,
-                        // IMPORTANT: overwrite indexConfig completely
-                        indexConfig: {
-                          [prev.indexName]: {
-                            retentionTime: value,
-                          },
-                        },
-                      };
-                    });
-                  }}
-                  placeholder="Enter Retention Days"
-                />
+                          };
+                        });
+                      }}
+                      placeholder="Enter Retention Days"
+                    />
+                  </div>
+                )}
               </div>
-            )}
             </div>
             <div className="bg-white shadow rounded-lg p-4 mb-6">
-          {/* Source Type Input */}
-          <div className="flex flex-col mb-4">
-            <label className="font-medium mb-1">Source Type</label>
-            <input
-              type="text"
-              placeholder="Enter source type (e.g. csv, json)"
-              className="border border-gray-300 rounded-lg px-3 py-2"
-              value={inputsFormat.inputs[0]?.sourceType || ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                setInputsFormat((prev) => {
-                  const inputs = [...prev.inputs];
-                  inputs[0] = { ...inputs[0], sourceType: value };
-                  return { ...prev, inputs };
-                });
-              }}
-            />
-          </div>
+              {/* Source Type Input */}
+              <div className="flex flex-col mb-4">
+                <label className="font-medium mb-1">Source Type</label>
+                <input
+                  type="text"
+                  placeholder="Enter source type (e.g. csv, json)"
+                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  value={inputsFormat.inputs[0]?.sourceType || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setInputsFormat((prev) => {
+                      const inputs = [...prev.inputs];
+                      inputs[0] = { ...inputs[0], sourceType: value };
+                      return { ...prev, inputs };
+                    });
+                  }}
+                />
+              </div>
 
-           <label className="font-medium mb-1">Collection Methods</label>
+              <label className="font-medium mb-1">Collection Methods</label>
 
-          {/* Radio Buttons */}
-          <div className="flex gap-8">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="sourceMode"
-                value={SOURCE_MODES.HEC}
-                checked={sourceMode === SOURCE_MODES.HEC}
-                onChange={() => setSourceMode(SOURCE_MODES.HEC)}
-                className="accent-blue-600"
-              />
-              <span>HEC Token</span>
-            </label>
+              {/* Radio Buttons */}
+              <div className="flex gap-8">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="sourceMode"
+                    value={SOURCE_MODES.HEC}
+                    checked={sourceMode === SOURCE_MODES.HEC}
+                    onChange={() => setSourceMode(SOURCE_MODES.HEC)}
+                    className="accent-blue-600"
+                  />
+                  <span>HEC Token</span>
+                </label>
 
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="sourceMode"
-                value={SOURCE_MODES.UF}
-                checked={sourceMode === SOURCE_MODES.UF}
-                onChange={() => setSourceMode(SOURCE_MODES.UF)}
-                className="accent-blue-600"
-              />
-              <span>Universal Forwarder</span>
-            </label>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="sourceMode"
+                    value={SOURCE_MODES.UF}
+                    checked={sourceMode === SOURCE_MODES.UF}
+                    onChange={() => setSourceMode(SOURCE_MODES.UF)}
+                    className="accent-blue-600"
+                  />
+                  <span>Universal Forwarder</span>
+                </label>
 
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="sourceMode"
-                value={SOURCE_MODES.CONF}
-                checked={sourceMode === SOURCE_MODES.CONF}
-                onChange={() => setSourceMode(SOURCE_MODES.CONF)}
-                className="accent-blue-600"
-              />
-              <span>Sys Log</span>
-            </label>
-          </div>
-        </div>
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="sourceMode"
+                    value={SOURCE_MODES.CONF}
+                    checked={sourceMode === SOURCE_MODES.CONF}
+                    onChange={() => setSourceMode(SOURCE_MODES.CONF)}
+                    className="accent-blue-600"
+                  />
+                  <span>Sys Log</span>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* ───────── Source Type + Mode Selection ───────── */}
-        
 
         {/* {sourceMode === SOURCE_MODES.HEC && (
           <div className="border rounded-lg p-6 mb-6 bg-gray-50">
@@ -1473,7 +1475,6 @@ flex items-center gap-2
 
         {sourceMode === SOURCE_MODES.HEC && (
           <div className="border rounded-lg p-6 mb-6 bg-white">
-           
             <HECToken
               hecTokenDetails={hecTokenDetails}
               setHecTokenDetails={setHecTokenDetails}
@@ -1497,11 +1498,11 @@ flex items-center gap-2
         {sourceMode === SOURCE_MODES.UF && (
           <div className="border rounded-lg p-6 mb-6 bg-white">
             <UniversalForwarder
-            ufTokenDetails={ufTokenDetails}
-            setUfTokenDetails={setUfTokenDetails}
+              ufTokenDetails={ufTokenDetails}
+              setUfTokenDetails={setUfTokenDetails}
             />
           </div>
-        ) }
+        )}
 
         {/* {Object.keys(inputsFormat.indexConfig).length > 0 &&
           <IndexConfig key={Object.keys(inputsFormat.indexConfig)[0]} indexName={Object.keys(inputsFormat.indexConfig)[0]} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
@@ -1551,7 +1552,7 @@ flex items-center gap-2
               );
             })} */}
 
-              {inputsFormat.inputs.map((each, index) => (
+              {/* {inputsFormat.inputs.map((each, index) => (
                 <div
                   key={index + 1}
                   className="bg-white border border-gray-300 rounded-xl p-4 shadow"
@@ -1560,6 +1561,22 @@ flex items-center gap-2
                     configFiles={configFiles}
                     cancelConfig={cancelConfig}
                     each={index + 1}
+                    inputsFormat={inputsFormat}
+                    setInputsFormat={setInputsFormat}
+                    handleTransforms={handleTransforms}
+                  />
+                </div>
+              ))} */}
+
+              {inputsFormat.inputs.map((input) => (
+                <div
+                  key={input.id}
+                  className="bg-white border border-gray-300 rounded-xl p-4 shadow"
+                >
+                  <InputConfig
+                    configFiles={configFiles}
+                    cancelConfig={cancelConfig}
+                    each={input.id}
                     inputsFormat={inputsFormat}
                     setInputsFormat={setInputsFormat}
                     handleTransforms={handleTransforms}
