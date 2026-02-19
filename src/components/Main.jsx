@@ -4,13 +4,15 @@ import TransformsConfig from "./TransformsConfig";
 import { IndexConfig } from "./IndexConfig";
 import { useParams } from "react-router-dom";
 import axios from "axios";
+import { HECToken } from "./HECToken";
+import UniversalForwarder from "./UniversalForwarder";
 
 const Main = () => {
   const { userName, token } = useParams();
   const [inputsConfig, setInputsConfig] = useState([1]);
   const [inputsConfigList, setInputsConfigList] = useState([]);
 
-  const [mode, setMode] = useState("new");
+  const [mode, setMode] = useState("existing");
   const [indexName, setIndexName] = useState("");
   const [appName, setAppName] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -58,9 +60,24 @@ const Main = () => {
     transform: [],
   });
 
+  const [hecTokenDetails, setHecTokenDetails] = useState({
+    appName: "",
+    indexName: "",
+    tokenName: "",
+    indexName: "",
+    sourceType: "",
+  });
+
+  const [ufTokenDetails, setUfTokenDetails] = useState({
+    appName: "",
+    indexName: "",
+    indexName: "",
+    sourceType: "",
+  });
+
   const [repos, setRepos] = useState([]);
   const [repoNames, setRepoNames] = useState([]);
-  const [existingConfig, setExistingConfig] = useState(null);
+  const [existingConfig, setExistingConfig] = useState([]);
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState("");
   const [configFiles, setConfigFiles] = useState([]);
@@ -231,6 +248,10 @@ const Main = () => {
 
     const propsContent = configFiles.filter(file => file.file_name === "props.conf")[0].content;
 
+    const transformsContent = configFiles.filter(file => file.file_name === "transforms.conf")[0].content;
+
+    const transformsFormatted = getFormattedValue(transformsContent);
+
     const propsFormatted = getFormattedValue(propsContent);
 
     console.log("Formatted Inputs Config:", inputsFormatted);
@@ -277,6 +298,8 @@ const Main = () => {
 
       console.log("propsList", propsFormatted);
 
+      console.log("transformsFormatted", transformsFormatted);
+
       for (const key of Object.keys(propsFormatted)) {
         if (!propsList.includes(key)){
            updatedProps[inputsFormatted.sourceType] = {
@@ -285,9 +308,9 @@ const Main = () => {
       };
 
       transformObj[key] = { 
-            newKey: "", 
-            format:"",
-            destKey:""
+            regex: transformsFormatted.REGEX, 
+            format:transformsFormatted.FORMAT,
+            destKey:transformsFormatted.DEST_KEY,
             }
         } 
       }
@@ -341,6 +364,16 @@ const Main = () => {
     setInputsFormat((prev) => ({
       ...prev,
       indexName: "",
+    }));
+
+    setHecTokenDetails((prev) => ({ 
+      ...prev,
+      indexName: value,
+    }));
+
+    setUfTokenDetails((prev) => ({
+      ...prev,
+      indexName: value,
     }));
 
     // if (value.trim() !== "") {
@@ -856,6 +889,9 @@ const Main = () => {
 
   console.log("rposs", repos);
 
+  console.log("Hec Token Details:", hecTokenDetails);
+  console.log("Uf Token Details:", ufTokenDetails);
+
   return (
     <div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
       {/* <h2 className="text-blue-600 font-bold text-2xl mb-6">
@@ -953,6 +989,14 @@ flex items-center gap-2
                         ...prev,
                         appName: "",
                       }));
+                      setHecTokenDetails((prev) => ({
+                        ...prev,
+                        appName: "",    
+                    }));
+                      setUfTokenDetails((prev) => ({
+                        ...prev,
+                        appName: "",    
+                    }));
                     }}
                     className="accent-blue-600"
                   />
@@ -979,6 +1023,15 @@ flex items-center gap-2
                         //   },
                         // },
                       }));
+
+                      setHecTokenDetails((prev) => ({
+                        ...prev,
+                        appName: e.target.value,      
+                    }));
+                      setUfTokenDetails((prev) => ({
+                        ...prev,
+                        appName: e.target.value,      
+                    }));
                     }}
                   >
                     <option value="">-- Choose an app name --</option>
@@ -1023,6 +1076,14 @@ flex items-center gap-2
                         ...prev,
                         appName: value,
                       }));
+                      setHecTokenDetails((prev) => ({
+                        ...prev,
+                        appName: value,         }));          
+                    
+                      setUfTokenDetails((prev) => ({
+                        ...prev,
+                        appName: value,      
+                    }));
                     }}
                     placeholder="Enter App name"
                     className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
@@ -1046,6 +1107,14 @@ flex items-center gap-2
                                 //     customFields: [],
                                 //   },
                                 // },
+                              }));
+                              setHecTokenDetails((prev) => ({
+                                ...prev,
+                                appName: sug, 
+                              }));
+                              setUfTokenDetails((prev) => ({
+                                ...prev,
+                                appName: sug,
                               }));
                               setAppName(sug);
                               setAppNameSuggestions([]);
@@ -1083,8 +1152,9 @@ flex items-center gap-2
 
           {/* ------------------------ */}
 
-          <div className="flex flex-row bg-white shadow rounded-lg p-4 space-y-3 gap-20 ">
-            <div>
+          <div className="flex flex-col bg-white shadow rounded-lg p-4 space-y-3 gap-0 ">
+            <div className="flex flex-row gap-10">
+              <div>
               <div className="flex space-x-6">
                 <label className="flex items-center space-x-2">
                   <input
@@ -1097,6 +1167,15 @@ flex items-center gap-2
                           ...prev,
                           indexName: "",
                         })));
+
+                        setHecTokenDetails((prev) => ({
+                          ...prev,
+                          indexName: "",
+                    }));
+                        setUfTokenDetails((prev) => ({
+                          ...prev,
+                          indexName: "",
+                    }));
                     }}
                     className="accent-blue-600"
                   />
@@ -1114,6 +1193,14 @@ flex items-center gap-2
                           ...prev,
                           indexName: "",
                         })));
+                        setHecTokenDetails((prev) => ({
+                          ...prev,
+                          indexName: "",  
+                    }));
+                        setUfTokenDetails((prev) => ({
+                          ...prev,
+                          indexName: "",  
+                    }));
                     }}
                     className="accent-blue-600"
                   />
@@ -1153,7 +1240,14 @@ flex items-center gap-2
                           },
                         },
                       }));
-                    }}
+                      setHecTokenDetails((prev) => ({
+                        ...prev,
+                        indexName: e.target.value,  
+                    }));
+                        setUfTokenDetails((prev) => ({
+                          ...prev,
+                          indexName: e.target.value,  
+                    }));}}
                   >
                     <option value="">-- Choose an index --</option>
                     {existingConfig.map((index) => (
@@ -1298,11 +1392,8 @@ flex items-center gap-2
                 />
               </div>
             )}
-          </div>
-        </div>
-
-        {/* ───────── Source Type + Mode Selection ───────── */}
-        <div className="bg-white shadow rounded-lg p-4 mb-6">
+            </div>
+            <div className="bg-white shadow rounded-lg p-4 mb-6">
           {/* Source Type Input */}
           <div className="flex flex-col mb-4">
             <label className="font-medium mb-1">Source Type</label>
@@ -1321,6 +1412,8 @@ flex items-center gap-2
               }}
             />
           </div>
+
+           <label className="font-medium mb-1">Collection Methods</label>
 
           {/* Radio Buttons */}
           <div className="flex gap-8">
@@ -1361,8 +1454,13 @@ flex items-center gap-2
             </label>
           </div>
         </div>
+          </div>
+        </div>
 
-        {sourceMode === SOURCE_MODES.HEC && (
+        {/* ───────── Source Type + Mode Selection ───────── */}
+        
+
+        {/* {sourceMode === SOURCE_MODES.HEC && (
           <div className="border rounded-lg p-6 mb-6 bg-gray-50">
             <h2 className="text-lg font-semibold mb-2">
               HEC Token Configuration
@@ -1371,9 +1469,21 @@ flex items-center gap-2
               HEC Token inputs go here
             </div>
           </div>
+        )} */}
+
+        {sourceMode === SOURCE_MODES.HEC && (
+          <div className="border rounded-lg p-6 mb-6 bg-white">
+           
+            <HECToken
+              hecTokenDetails={hecTokenDetails}
+              setHecTokenDetails={setHecTokenDetails}
+              inputsFormat={inputsFormat}
+              setInputsFormat={setInputsFormat}
+            />
+          </div>
         )}
 
-        {sourceMode === SOURCE_MODES.UF && (
+        {/* {sourceMode === SOURCE_MODES.UF && (
           <div className="border rounded-lg p-6 mb-6 bg-gray-50">
             <h2 className="text-lg font-semibold mb-2">
               Universal Forwarder Configuration
@@ -1382,7 +1492,16 @@ flex items-center gap-2
               Universal Forwarder config goes here
             </div>
           </div>
-        )}
+        )} */}
+
+        {sourceMode === SOURCE_MODES.UF && (
+          <div className="border rounded-lg p-6 mb-6 bg-white">
+            <UniversalForwarder
+            ufTokenDetails={ufTokenDetails}
+            setUfTokenDetails={setUfTokenDetails}
+            />
+          </div>
+        ) }
 
         {/* {Object.keys(inputsFormat.indexConfig).length > 0 &&
           <IndexConfig key={Object.keys(inputsFormat.indexConfig)[0]} indexName={Object.keys(inputsFormat.indexConfig)[0]} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />

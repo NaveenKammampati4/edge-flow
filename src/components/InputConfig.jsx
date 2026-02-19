@@ -472,7 +472,7 @@ if (isDuplicateInputField) {
         <div className="flex flex-wrap gap-2 ">
           <div className="flex flex-col w-48 min-w-[150px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
-              File Path
+              Input Stanza
             </label>
             <input
               value={item.filePath}
@@ -480,7 +480,7 @@ if (isDuplicateInputField) {
               onChange={(e) => updateIputs(e)}
               type="text"
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter file path"
+              placeholder="protocol://port"
             />
           </div>
           <div className="flex flex-col w-48 min-w-[150px]">
@@ -512,7 +512,7 @@ if (isDuplicateInputField) {
               placeholder="App Name’s index"
             />
           </div>
-          <div className="flex flex-col w-48">
+          {/* <div className="flex flex-col w-48">
             <label
               htmlFor="whitelist"
               className=" text-sm font-medium text-gray-700  mb-1"
@@ -545,7 +545,7 @@ if (isDuplicateInputField) {
               className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
               placeholder="blacklist"
             />
-          </div>
+          </div> */}
           {/* <div className="flex flex-col w-1/4 min-w-[200px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
               Index (Optional)
