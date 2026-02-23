@@ -11,6 +11,8 @@ const Main = () => {
   const { userName, token } = useParams();
   const [inputsConfig, setInputsConfig] = useState([1]);
   const [inputsConfigList, setInputsConfigList] = useState([]);
+  const [parsedSourceTypes, setParsedSourceTypes] = useState([]);
+  const [isCustomSourceType, setIsCustomSourceType] = useState(false);
 
   const [mode, setMode] = useState("existing");
   const [indexName, setIndexName] = useState("");
@@ -22,6 +24,8 @@ const Main = () => {
   const [sourceMode, setSourceMode] = useState(null); // default
   const [indexMode, setIndexMode] = useState("new");
   const [appMode, setAppMode] = useState("new");
+  const [syslogFile, setSyslogFile] = useState(null);
+  const [syslogError, setSyslogError] = useState("");
   let propsList = [
     "timePrefix",
     "timeFormat",
@@ -64,14 +68,14 @@ const Main = () => {
     appName: "",
     indexName: "",
     tokenName: "",
-    indexName: "",
+    // indexName: "",
     sourceType: "",
   });
 
   const [ufTokenDetails, setUfTokenDetails] = useState({
     appName: "",
     indexName: "",
-    indexName: "",
+    // indexName: "",
     sourceType: "",
   });
 
@@ -163,8 +167,33 @@ const Main = () => {
     }
   };
 
+  // const fetchRepoConfigFiles = async (owner, repoName, token, branch) => {
+  //   try {
+  //     const response = await axios.get(
+  //       `http://127.0.0.1:5000/read-splunk-configs/${owner}/${repoName}/${branch}`,
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       },
+  //     );
+
+  //     console.log("Files:", response.data);
+  //     setConfigFiles(response.data.files);
+  //   } catch (error) {
+  //     console.error(
+  //       "Error fetching repo contents:",
+  //       error.response?.data || error.message,
+  //     );
+  //   }
+  // };
   const fetchRepoConfigFiles = async (owner, repoName, token, branch) => {
     try {
+      console.log("==== API CALL START ====");
+      console.log("Owner:", owner);
+      console.log("Repo:", repoName);
+      console.log("Branch:", branch);
+
       const response = await axios.get(
         `http://127.0.0.1:5000/read-splunk-configs/${owner}/${repoName}/${branch}`,
         {
@@ -174,13 +203,35 @@ const Main = () => {
         },
       );
 
-      console.log("Files:", response.data);
+      console.log("==== FULL RESPONSE ====");
+      console.log(response);
+
+      console.log("==== RESPONSE DATA ====");
+      console.log(response.data);
+
+      if (!response.data || !response.data.files) {
+        console.warn("No files key found in response");
+        return;
+      }
+
+      console.log("==== FILE COUNT ====");
+      console.log(response.data.files.length);
+
+      response.data.files.forEach((file, index) => {
+        console.log(`---- FILE ${index + 1} ----`);
+        console.log("File Name:", file.file_name);
+        console.log("Content Type:", typeof file.content);
+        console.log("Content Length:", file.content?.length);
+        console.log("Full Content:");
+        console.log(file.content);
+      });
+
       setConfigFiles(response.data.files);
+
+      console.log("==== STATE UPDATED ====");
     } catch (error) {
-      console.error(
-        "Error fetching repo contents:",
-        error.response?.data || error.message,
-      );
+      console.error("==== API ERROR ====");
+      console.error(error.response?.data || error.message);
     }
   };
 
@@ -223,8 +274,113 @@ const Main = () => {
     return formatted;
   };
 
+  const handleSyslogFileUpload = (e) => {
+    const file = e.target.files[0];
+
+    if (!file) return;
+
+    const allowedTypes = [".log", ".txt", ".csv"];
+    const isValidType = allowedTypes.some((ext) =>
+      file.name.toLowerCase().endsWith(ext),
+    );
+
+    if (!isValidType) {
+      setSyslogError("Only .log, .txt, .csv files allowed");
+      setSyslogFile(null);
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setSyslogError("File size must be less than 10MB");
+      setSyslogFile(null);
+      return;
+    }
+
+    setSyslogError("");
+    setSyslogFile(file);
+  };
+
+  const parseInputsConfig = (content) => {
+    const lines = content
+      .split(/\r?\n|\\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    console.log("lines: ", lines);
+
+    const parseValue = (val) => {
+      if (val === "true") return true;
+      if (val === "false") return false;
+      return val;
+    };
+
+    const stanzas = [];
+    let current = null;
+
+    lines.forEach((line) => {
+      if (/^\[.*\]$/.test(line)) {
+        current = {
+          name: line.substring(1, line.length - 1),
+          config: {},
+        };
+        stanzas.push(current);
+        return;
+      }
+
+      if (current && line.includes("=")) {
+        const parts = line.split("=");
+        if (parts.length < 2) return;
+
+        const key = parts[0].trim();
+        const value = parseValue(parts.slice(1).join("=").trim());
+
+        current.config[key] = value;
+      }
+    });
+
+    console.log("STANZA COUNT:", stanzas.length);
+    const sourceTypes = stanzas.map((s) => s.config.sourceType).filter(Boolean);
+
+    return {
+      inputsArray: stanzas,
+      sourceTypesArray: sourceTypes,
+    };
+  };
+
+  const parseConfFile = (content) => {
+    const lines = content
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l && !l.startsWith("#"));
+
+    const stanzas = {};
+    let current = null;
+
+    const parseValue = (val) => {
+      if (val === "true") return true;
+      if (val === "false") return false;
+      return val;
+    };
+
+    lines.forEach((line) => {
+      if (/^\[.*\]$/.test(line)) {
+        current = line.slice(1, -1);
+        stanzas[current] = {};
+        return;
+      }
+
+      if (current && line.includes("=")) {
+        const [key, ...rest] = line.split("=");
+        stanzas[current][key.trim()] = parseValue(rest.join("=").trim());
+      }
+    });
+
+    return stanzas;
+  };
+
   const handleConfigFiles = () => {
-    console.log("configFiles:", configFiles);
+    console.log("========== HANDLE CONFIG FILES START ==========");
+
     const inputsFile = configFiles.find(
       (file) => file.file_name === "inputs.conf",
     );
@@ -236,74 +392,100 @@ const Main = () => {
     const transformsFile = configFiles.find(
       (file) => file.file_name === "transforms.conf",
     );
-    // If any required file is missing, stop safely
+
     if (!inputsFile || !propsFile || !transformsFile) {
       console.warn("Required config file missing");
       return;
     }
-    const inputsFormatted = getFormattedValue(inputsFile.content);
-    const propsFormatted = getFormattedValue(propsFile.content);
-    const transformsFormatted = getFormattedValue(transformsFile.content);
 
-    console.log("Formatted Inputs Config:", inputsFormatted);
-    console.log("Formatted Props Config:", propsFormatted);
-    console.log("Formatted transforms Config:", transformsFormatted);
+    const parsedInputs = parseInputsConfig(inputsFile.content);
+    const parsedProps = parseConfFile(propsFile.content);
+    const parsedTransforms = parseConfFile(transformsFile.content);
+
+    setParsedSourceTypes(parsedInputs.sourceTypesArray || []);
 
     setInputsFormat((prev) => {
       let updatedInputs = [...prev.inputs];
-      updatedInputs[0].sourceType = inputsFormatted.sourceType || "";
-      updatedInputs[0].index = inputsFormatted.appName || "";
+      let updatedProps = {};
+      let transformObj = {};
 
-      let updatedProps = { ...prev.props };
+      if (!parsedInputs.inputsArray.length) {
+        return prev;
+      }
 
-      //     sourceType : {
-      //   timeFormat: "",
-      //   dateTime: "",
-      //   lineBreaker: "",
-      //   shouldLine: "",
-      //   truncate: "",
-      //   newKey : "",
-      //   newValue : "",
-      // }
+      const firstInput = parsedInputs.inputsArray[0];
+      const rawSourceType = firstInput.config.sourceType;
 
-      updatedProps[inputsFormatted.sourceType] = {
-        timePrefix: propsFormatted.timePrefix || "",
-        timeFormat: propsFormatted.timeFormat || "",
-        lineBreaker: propsFormatted.lineBreaker || "",
-        maximum_lookAhead: propsFormatted.maximum_lookAhead || "",
-        truncate: propsFormatted.truncate || "",
-        dateTime: propsFormatted.dateTime || "",
+      // ---------- INPUTS (do NOT auto set sourceType) ----------
+      updatedInputs[0] = {
+        ...updatedInputs[0],
+        filePath: firstInput.config.filePath || "",
+        index: firstInput.config.index || "",
+        whiteList: firstInput.config.whiteList || "",
+        blackList: firstInput.config.blackList || "",
       };
 
-      //  transform: {
-      //     ...prev.transform,
-      //     [newKey]: {
-      //       regex: "",
-      //       format: "",
-      //       destKey: "",
-      //     },
-      //   },
+      if (!rawSourceType) {
+        return {
+          ...prev,
+          inputs: updatedInputs,
+        };
+      }
 
-      let transformObj = { ...prev.transform };
+      // ---------- Case-insensitive sourceType match ----------
+      const matchedSourceType = Object.keys(parsedProps).find(
+        (k) => k.trim().toLowerCase() === rawSourceType.trim().toLowerCase(),
+      );
 
-      console.log("propsList", propsFormatted);
+      if (!matchedSourceType) {
+        console.warn("No matching props stanza for:", rawSourceType);
+        return {
+          ...prev,
+          inputs: updatedInputs,
+        };
+      }
 
-      console.log("transformsFormatted", transformsFormatted);
+      const propsConfig = parsedProps[matchedSourceType];
+      updatedProps[matchedSourceType] = {};
 
-      for (const key of Object.keys(propsFormatted)) {
-        if (!propsList.includes(key)) {
-          updatedProps[inputsFormatted.sourceType] = {
-            ...updatedProps[inputsFormatted.sourceType],
-            [key]: propsFormatted[key],
-          };
+      // ---------- PROPS + TRANSFORMS ----------
+      for (const [key, value] of Object.entries(propsConfig)) {
+        updatedProps[matchedSourceType][key] = value;
 
-          transformObj[key] = {
-            regex: transformsFormatted.REGEX,
-            format: transformsFormatted.FORMAT,
-            destKey: transformsFormatted.DEST_KEY,
-          };
+        // Only process TRANSFORMS-* (case-insensitive)
+        if (key.toLowerCase().startsWith("transforms-")) {
+          const transformNames = value
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean);
+
+          transformNames.forEach((transformName) => {
+            const matchedTransformKey = Object.keys(parsedTransforms).find(
+              (k) =>
+                k.trim().toLowerCase() === transformName.trim().toLowerCase(),
+            );
+
+            if (!matchedTransformKey) {
+              console.warn("Transform stanza not found:", transformName);
+              return;
+            }
+
+            transformObj = {
+              ...transformObj,
+              [matchedTransformKey]: {
+                regex: parsedTransforms[matchedTransformKey]?.REGEX || "",
+                format: parsedTransforms[matchedTransformKey]?.FORMAT || "",
+                destKey: parsedTransforms[matchedTransformKey]?.DEST_KEY || "",
+              },
+            };
+          });
         }
       }
+      console.log("FINAL INPUTS FORMAT:");
+      console.log("inputs:", updatedInputs);
+      console.log("props:", updatedProps);
+      console.log("transform:", transformObj);
+
       return {
         ...prev,
         inputs: updatedInputs,
@@ -311,8 +493,9 @@ const Main = () => {
         transform: transformObj,
       };
     });
-  };
 
+    console.log("========== HANDLE CONFIG FILES END ==========");
+  };
   useEffect(() => {
     if (configFiles.length === 0) return;
     handleConfigFiles();
@@ -1400,61 +1583,176 @@ flex items-center gap-2
               {/* Source Type Input */}
               <div className="flex flex-col mb-4">
                 <label className="font-medium mb-1">Source Type</label>
-                <input
-                  type="text"
-                  placeholder="Enter source type (e.g. csv, json)"
-                  className="border border-gray-300 rounded-lg px-3 py-2"
-                  value={inputsFormat.inputs[0]?.sourceType || ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setInputsFormat((prev) => {
-                      const inputs = [...prev.inputs];
-                      inputs[0] = { ...inputs[0], sourceType: value };
-                      return { ...prev, inputs };
-                    });
-                  }}
-                />
+
+                {/* Dropdown always visible */}
+                {inputsFormat.inputs[0]?.sourceTypeMode !== "custom" && (
+                  <select
+                    className="border border-gray-300 rounded-lg px-3 py-2"
+                    value={inputsFormat.inputs[0]?.sourceType || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+
+                      setInputsFormat((prev) => {
+                        const updatedInputs = [...prev.inputs];
+
+                        if (value === "__custom__") {
+                          updatedInputs[0] = {
+                            ...updatedInputs[0],
+                            sourceType: "", // DO NOT store "__custom__"
+                            sourceTypeMode: "custom",
+                          };
+                        } else {
+                          updatedInputs[0] = {
+                            ...updatedInputs[0],
+                            sourceType: value,
+                            sourceTypeMode: "dropdown",
+                          };
+                        }
+
+                        return {
+                          ...prev,
+                          inputs: updatedInputs,
+                        };
+                      });
+                    }}
+                  >
+                    <option value="">-- Select Source Type --</option>
+
+                    {parsedSourceTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {type}
+                      </option>
+                    ))}
+
+                    <option value="__custom__">Custom</option>
+                  </select>
+                )}
+
+                {/* Custom input shown separately */}
+                {inputsFormat.inputs[0]?.sourceTypeMode === "custom" && (
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter custom source type"
+                      className="border border-gray-300 rounded-lg px-3 py-2 flex-1"
+                      value={inputsFormat.inputs[0]?.sourceType || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+
+                        setInputsFormat((prev) => {
+                          const updatedInputs = [...prev.inputs];
+
+                          updatedInputs[0] = {
+                            ...updatedInputs[0],
+                            sourceType: value,
+                          };
+
+                          return {
+                            ...prev,
+                            inputs: updatedInputs,
+                          };
+                        });
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      className="px-3 py-2 bg-gray-200 rounded-lg"
+                      onClick={() => {
+                        setInputsFormat((prev) => {
+                          const updatedInputs = [...prev.inputs];
+
+                          updatedInputs[0] = {
+                            ...updatedInputs[0],
+                            sourceType: "",
+                            sourceTypeMode: "dropdown",
+                          };
+
+                          return {
+                            ...prev,
+                            inputs: updatedInputs,
+                          };
+                        });
+                      }}
+                    >
+                      Back
+                    </button>
+                  </div>
+                )}
               </div>
 
-              <label className="font-medium mb-1">Collection Methods</label>
+              <label className="font-medium mb-2">Collection Methods</label>
 
               {/* Radio Buttons */}
-              <div className="flex gap-8">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="sourceMode"
-                    value={SOURCE_MODES.HEC}
-                    checked={sourceMode === SOURCE_MODES.HEC}
-                    onChange={() => setSourceMode(SOURCE_MODES.HEC)}
-                    className="accent-blue-600"
-                  />
-                  <span>HEC Token</span>
-                </label>
+              <div className="flex flex-col gap-4">
+                {/* Radio Buttons Row */}
+                <div className="flex gap-8">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="sourceMode"
+                      value={SOURCE_MODES.HEC}
+                      checked={sourceMode === SOURCE_MODES.HEC}
+                      onChange={() => setSourceMode(SOURCE_MODES.HEC)}
+                      className="accent-blue-600"
+                    />
+                    <span>HEC Token</span>
+                  </label>
 
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="sourceMode"
-                    value={SOURCE_MODES.UF}
-                    checked={sourceMode === SOURCE_MODES.UF}
-                    onChange={() => setSourceMode(SOURCE_MODES.UF)}
-                    className="accent-blue-600"
-                  />
-                  <span>Universal Forwarder</span>
-                </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="sourceMode"
+                      value={SOURCE_MODES.UF}
+                      checked={sourceMode === SOURCE_MODES.UF}
+                      onChange={() => setSourceMode(SOURCE_MODES.UF)}
+                      className="accent-blue-600"
+                    />
+                    <span>Universal Forwarder</span>
+                  </label>
 
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    name="sourceMode"
-                    value={SOURCE_MODES.CONF}
-                    checked={sourceMode === SOURCE_MODES.CONF}
-                    onChange={() => setSourceMode(SOURCE_MODES.CONF)}
-                    className="accent-blue-600"
-                  />
-                  <span>Sys Log</span>
-                </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="sourceMode"
+                      value={SOURCE_MODES.CONF}
+                      checked={sourceMode === SOURCE_MODES.CONF}
+                      onChange={() => setSourceMode(SOURCE_MODES.CONF)}
+                      className="accent-blue-600"
+                    />
+                    <span>Sys Log</span>
+                  </label>
+                </div>
+
+                {/* Syslog Upload Section BELOW radios */}
+                {sourceMode === SOURCE_MODES.CONF && (
+                  <div className="mt-3 max-w-sm">
+                    <h4 className="text-sm font-medium mb-1 text-gray-700">
+                      Upload Sys Log File
+                    </h4>
+
+                    <input
+                      type="file"
+                      accept=".log,.txt,.csv"
+                      onChange={handleSyslogFileUpload}
+                      className="block w-full text-sm border border-gray-300 rounded-md px-2 py-1"
+                    />
+
+                    {/* {syslogFile && (
+                      <p className="text-xs text-green-600 mt-1">
+                        {syslogFile.name}
+                      </p>
+                    )} */}
+
+                    {syslogError && (
+                      <p className="text-xs text-red-600 mt-1">{syslogError}</p>
+                    )}
+
+                    <p className="text-[11px] text-gray-500 mt-1">
+                      .log, .txt, .csv | Max 10MB
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -1576,6 +1874,7 @@ flex items-center gap-2
                   <InputConfig
                     configFiles={configFiles}
                     cancelConfig={cancelConfig}
+                    syslogFile={syslogFile}
                     each={input.id}
                     inputsFormat={inputsFormat}
                     setInputsFormat={setInputsFormat}

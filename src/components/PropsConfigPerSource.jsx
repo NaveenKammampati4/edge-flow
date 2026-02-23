@@ -11,6 +11,7 @@ const PropsConfigPerSource = ({
   setInputsFormat,
   each,
   handleTransforms,
+  syslogFile,
 }) => {
   console.log("PropsConfigPerSource props:", {
     sourceType,
@@ -56,6 +57,12 @@ const PropsConfigPerSource = ({
   const isCsvFile = fileName.toLowerCase().endsWith(".csv");
   const isTxtFile = !isJsonFile && !isCsvFile;
 
+  useEffect(() => {
+    if (syslogFile) {
+      setFile(syslogFile);
+    }
+  }, [syslogFile]);
+
   // Debug (optional)
   console.log("fileName:", fileName);
   console.log("isJsonFile:", isJsonFile);
@@ -63,10 +70,14 @@ const PropsConfigPerSource = ({
 
   console.log("each", each);
   console.log("inputss : ", inputsFormat);
-  const sourceTypes = inputsFormat.inputs[each - 1].sourceType;
+  const sourceTypes = inputsFormat?.inputs?.[each - 1]?.sourceType;
   console.log("sourceType", sourceTypes);
-  let itemList = [];
-  itemList = inputsFormat.props[sourceTypes];
+  // let itemList = [];
+  // itemList = inputsFormat.props[sourceTypes];
+  let itemList = {};
+  if (sourceTypes && inputsFormat?.props?.[sourceTypes]) {
+    itemList = inputsFormat.props[sourceTypes];
+  }
   // const filteredEntries = Object.entries(item).filter(([key]) => key !== 'newKey' && key !== 'newValue');
   // console.log("filteredEntries", filteredEntries)
 
@@ -224,7 +235,7 @@ const PropsConfigPerSource = ({
     console.log("source type in props: ", JSON.stringify(sourceProps, null, 2));
     console.table(
       "source type in props: ",
-      JSON.stringify(sourceProps, null, 2)
+      JSON.stringify(sourceProps, null, 2),
     );
     const truncateLen = Number(sourceProps.truncate);
     console.log("truncate length: " + truncateLen);
@@ -256,7 +267,7 @@ const PropsConfigPerSource = ({
       case "date":
         lines =
           fileText.match(
-            /^\[\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\][\s\S]*?(?=^\[\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\]|$)/gm
+            /^\[\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\][\s\S]*?(?=^\[\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}\]|$)/gm,
           ) || [];
         break;
 
@@ -300,7 +311,7 @@ const PropsConfigPerSource = ({
           try {
             const cleanPattern = sourceProps.lineBreakerRegex.replace(
               /^\/|\/$/g,
-              ""
+              "",
             );
             const regexObj = new RegExp(cleanPattern);
             const match = line.match(regexObj);
@@ -333,7 +344,7 @@ const PropsConfigPerSource = ({
         //   /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*)$/
         // );
         const match1 = line.match(
-          /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*?)(?:\s*\(.*\))?$/
+          /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*?)(?:\s*\(.*\))?$/,
         );
         console.log("match1 Data: " + match1);
 
@@ -350,7 +361,7 @@ const PropsConfigPerSource = ({
         //   /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=.*/
         // );
         const match2 = line.match(
-          /^\[(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\]\s+([A-Z]+):\s+(.*)$/
+          /^\[(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\]\s+([A-Z]+):\s+(.*)$/,
         );
         console.log("match2 Data: " + match2);
 
@@ -637,7 +648,7 @@ const PropsConfigPerSource = ({
       // Dynamic prefix log pattern
       // -----------------------------------------
       const prefixRegex = new RegExp(
-        inputsFormat.props[sourceType].lineBreaker
+        inputsFormat.props[sourceType].lineBreaker,
       );
 
       const processedLines = textData
@@ -663,7 +674,7 @@ const PropsConfigPerSource = ({
           // 2. FORMAT 1
           // -----------------------------------------
           const match1 = line.match(
-            /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*)$/
+            /^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\s+([A-Z]+)\s+(.*)$/,
           );
           // const match1 = line.match(
           //   /(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([A-Z]+) (.*?) \(user=(.*?)\)/
@@ -687,7 +698,7 @@ const PropsConfigPerSource = ({
           //   /\[(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\] ([A-Z]+): (.*?) \| user=(.*)/
           // );
           const match2 = line.match(
-            /^\[(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\]\s+([A-Z]+):\s+(.*)$/
+            /^\[(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\]\s+([A-Z]+):\s+(.*)$/,
           );
 
           if (match2) {
@@ -721,7 +732,7 @@ const PropsConfigPerSource = ({
       let pProp = updateProps[sType];
       console.log("pProp", pProp);
       const updated = Object.fromEntries(
-        Object.entries(pProp).filter(([key]) => key !== val)
+        Object.entries(pProp).filter(([key]) => key !== val),
       );
       updateProps = { ...updateProps, [sType]: updated };
       return {
@@ -738,12 +749,30 @@ const PropsConfigPerSource = ({
     console.log("new value : ", newValue);
     setNewValue(newValue);
 
-    if (newKey.toLowerCase().includes("transform-".toLowerCase())) {
+    //     if (newKey.toLowerCase().includes("transform-".toLowerCase())) {
+    //   setInputsFormat((prev) => ({
+    //     ...prev,
+    //     transform: {
+    //       ...prev.transform,
+    //       [newKey]: {
+    //         regex: "",
+    //         format: "",
+    //         destKey: "",
+    //       },
+    //     },
+    //   }));
+    // }
+
+    if (newKey.toLowerCase().startsWith("transforms-")) {
+      const stanzaName = newValue.trim();
+
+      if (!stanzaName) return;
+
       setInputsFormat((prev) => ({
         ...prev,
         transform: {
           ...prev.transform,
-          [newKey]: {
+          [stanzaName]: {
             regex: "",
             format: "",
             destKey: "",
@@ -856,7 +885,7 @@ const PropsConfigPerSource = ({
 
   console.log(
     "itemOutput : ",
-    inputsFormat.props[inputsFormat.inputs[each - 1].sourceType].timeFormat
+    inputsFormat.props[inputsFormat.inputs[each - 1].sourceType].timeFormat,
   );
 
   console.log("file linessss : ", fileLines);
@@ -1237,7 +1266,7 @@ const PropsConfigPerSource = ({
       console.log("dateFormat", dateTimeFormat);
       console.log(
         "After formatting",
-        dayjs(originalDate).format(dateTimeFormat)
+        dayjs(originalDate).format(dateTimeFormat),
       );
       return dayjs(originalDate).format(dateTimeFormat);
     } else {
@@ -1267,8 +1296,8 @@ const PropsConfigPerSource = ({
     //   return Object.keys(fileLines[0]);
     // }
     if ((isJsonFile || isCsvFile) && fileLines.length > 0) {
-    return Object.keys(fileLines[0]);
-  }
+      return Object.keys(fileLines[0]);
+    }
     //No selection OR empty/space value
     if (!lineBreaker || !lineBreaker.trim()) {
       return [];
@@ -1305,12 +1334,16 @@ const PropsConfigPerSource = ({
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
+            <strong>{file && (
+                <h2 className="text-sm text-gray-600">{file.name}</h2>
+              )}</strong>
           </div>
           <div className="space-y-4 mt-3.5">
             {Object.entries(itemList)
               .filter(
                 ([key]) =>
-                  key !== "lineBreakerRegex" && key !== "lineBreakerTableFormat"
+                  key !== "lineBreakerRegex" &&
+                  key !== "lineBreakerTableFormat",
               )
               .map(([key, value]) => fileFormats(key, value))}
           </div>
@@ -1399,7 +1432,7 @@ const PropsConfigPerSource = ({
                               <td className="px-4 py-2 border border-gray-300">
                                 {dateFormat(
                                   row.timestamp?.split(" ")[0],
-                                  row.timestamp?.split(" ")[1]
+                                  row.timestamp?.split(" ")[1],
                                 )}
                               </td>
                               {tableHeaders.map((key) => (
@@ -1422,8 +1455,8 @@ const PropsConfigPerSource = ({
                                 {isCustomLineBreaker
                                   ? truncateByLookHead(row?.[header])
                                   : colIndex === 0
-                                  ? dateFormat(row.date, row.time)
-                                  : truncateByLookHead(row?.info)}
+                                    ? dateFormat(row.date, row.time)
+                                    : truncateByLookHead(row?.info)}
                               </td>
                             ))}
                         </tr>
@@ -1459,7 +1492,7 @@ const PropsConfigPerSource = ({
           </div>
         </div>
       </div>
-      {Object.keys(inputsFormat.transform).map((key, index) => {
+      {/* {Object.keys(inputsFormat.transform).map((key, index) => {
         const value = inputsFormat.transform[key];
         if (itemListTransform.includes(key)) {
           return (
@@ -1488,6 +1521,28 @@ const PropsConfigPerSource = ({
             />
           );
         }
+      })} */}
+
+      {Object.keys(inputsFormat.transform).map((key) => {
+        const propsValues = Object.values(itemList);
+
+        if (propsValues.includes(key)) {
+          return (
+            <TransformsConfig
+              key={key}
+              file={file}
+              each={each}
+              newKey={key}
+              inputsFormat={inputsFormat}
+              setInputsFormat={setInputsFormat}
+              updateTransform={updateTransform}
+              updateIputs={updateIputs}
+              deleteTransformEverywhere={deleteTransformEverywhere}
+            />
+          );
+        }
+
+        return null;
       })}
     </div>
   );

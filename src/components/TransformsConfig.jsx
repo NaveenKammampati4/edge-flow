@@ -28,6 +28,19 @@ const TransformsConfig = ({
   const [logs, setLogs] = useState([]);
   const [transformedLogs, setTransformedLogs] = useState({});
   // const [filterView, setFilterView] = useState("All");
+
+  console.log("=== TRANSFORM DEBUG START ===");
+console.log("newKey:", newKey);
+console.log("typeof transform:", typeof inputsFormat.transform);
+console.log("isArray:", Array.isArray(inputsFormat.transform));
+console.log("transform full object:", inputsFormat.transform);
+
+if (inputsFormat.transform) {
+  console.log("transform keys:", Object.keys(inputsFormat.transform));
+}
+
+console.log("lookup result:", inputsFormat.transform?.[newKey]);
+console.log("=== TRANSFORM DEBUG END ===");
   const d = inputsFormat.transform?.[newKey];
   console.log("d", d);
   if (!d) return null;
@@ -145,6 +158,7 @@ const TransformsConfig = ({
   console.log("updateTransform : ", updateTransform);
 
   console.log("...... : ", inputsFormat.transform?.[newKey]?.regex);
+
 
   return (
     <div className="flex flex-col mt-3">

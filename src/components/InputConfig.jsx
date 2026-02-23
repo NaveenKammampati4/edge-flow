@@ -6,13 +6,14 @@ import { IndexConfig } from "./IndexConfig";
 
 const InputConfig = ({
   configFiles,
+  syslogFile,
   cancelConfig,
   each,
   inputsFormat,
   setInputsFormat,
   handleTransforms,
 }) => {
-   console.log("InputConfig props:", {
+  console.log("InputConfig props:", {
     cancelConfig,
     each,
     inputsFormat,
@@ -20,22 +21,18 @@ const InputConfig = ({
     handleTransforms,
   });
 
-   const inputIndex = inputsFormat.inputs.findIndex(i => i.id === each);
+  const inputIndex = inputsFormat.inputs.findIndex((i) => i.id === each);
   if (inputIndex === -1) return null;
   const item = inputsFormat.inputs[inputIndex];
   const [inputsConfigData, setInputsConfigData] = useState({
     filePath: "",
     sourceType: "",
     index: "",
-    whiteList:"",
-    blackList:"",
+    whiteList: "",
+    blackList: "",
   });
-  //  const [customConfig, setCustomConfig] = useState(1);
-
-  // const[customField, setCustomField]=useState(false);
-  // const[cancelCustomField, setCancelCustomField]=useState(false);
-   const [inputCustomFields, setInputCustomFields] = useState(
-    item?.customFields || []
+  const [inputCustomFields, setInputCustomFields] = useState(
+    item?.customFields || [],
   );
   const [newkey, setNewKey] = useState("");
   const [value, setValue] = useState("");
@@ -45,13 +42,19 @@ const InputConfig = ({
   const [customFieldError, setCustomFieldError] = useState("");
   const [editCustomField, setEditCustomField] = useState({});
   const [customFieldRowErrors, setCustomFieldRowErrors] = useState({});
-  const [tempSourceType, setTempSourceType] = useState(
-    item?.sourceType || ""
-  );
+  const [protocolValue, setProtocolValue] = useState(null);
+  const [tempSourceType, setTempSourceType] = useState(item?.sourceType || "");
+  const [selectedKeyOption, setSelectedKeyOption] = useState("");
 
-  const existingIndexes = ["users_index", "orders_index", "products_index","userData_meterics"];
+  const existingIndexes = [
+    "users_index",
+    "orders_index",
+    "products_index",
+    "userData_meterics",
+  ];
   const possibleSuffixes = ["_logs", "_data"];
-  
+  const protocolOptions = ["tcp", "udp", "http", "https", "monitor"];
+  const customFieldKeyOptions = ["host", "source", "index", "queue", "Custom"];
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -67,11 +70,16 @@ const InputConfig = ({
     }
   };
 
-  console.log("aaaaab",inputsFormat.inputs[inputIndex])
+  const updateFilePath = (protocol, port) => {
+    if (!protocol || !port) return "";
+    return `${protocol}://${port}`;
+  };
 
-  useEffect(()=>{
-    setTempSourceType(inputsFormat.inputs[inputIndex].sourceType || "")
-  },[inputsFormat.inputs[inputIndex].sourceType])
+  console.log("aaaaab", inputsFormat.inputs[inputIndex]);
+
+  useEffect(() => {
+    setTempSourceType(inputsFormat.inputs[inputIndex].sourceType || "");
+  }, [inputsFormat.inputs[inputIndex].sourceType]);
 
   useEffect(() => {
     setInputsFormat((prev) => {
@@ -158,36 +166,33 @@ const InputConfig = ({
     // }
 
     // 🔹 Normalize key
-const keyToCheck = trimmedKey.toLowerCase();
+    const keyToCheck = trimmedKey.toLowerCase();
 
-//Check customFields
-const customFields =
-  inputsFormat.inputs?.[inputIndex]?.customFields || [];
+    //Check customFields
+    const customFields = inputsFormat.inputs?.[inputIndex]?.customFields || [];
 
-const isDuplicateCustomField = customFields.some((field) => {
-  const [key] = Object.keys(field);
-  return key?.toLowerCase() === keyToCheck;
-});
+    const isDuplicateCustomField = customFields.some((field) => {
+      const [key] = Object.keys(field);
+      return key?.toLowerCase() === keyToCheck;
+    });
 
-if (isDuplicateCustomField) {
-  setCustomFieldError("Duplicate key already exists in custom fields");
-  return;
-}
+    if (isDuplicateCustomField) {
+      setCustomFieldError("Duplicate key already exists in custom fields");
+      return;
+    }
 
-//Check input-level fields
-const inputFields =
-  inputsFormat.inputs?.[inputIndex] || {};
+    //Check input-level fields
+    const inputFields = inputsFormat.inputs?.[inputIndex] || {};
 
-const isDuplicateInputField = Object.keys(inputFields).some(
-  (key) => key.toLowerCase() === keyToCheck
-);
+    const isDuplicateInputField = Object.keys(inputFields).some(
+      (key) => key.toLowerCase() === keyToCheck,
+    );
 
-if (isDuplicateInputField) {
-  setCustomFieldError("Key conflicts with existing input field");
-  return;
-}
+    if (isDuplicateInputField) {
+      setCustomFieldError("Key conflicts with existing input field");
+      return;
+    }
 
-    
     setCustomFieldError("");
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
@@ -205,6 +210,7 @@ if (isDuplicateInputField) {
     });
     setNewKey("");
     setValue("");
+    setSelectedKeyOption("");
   };
 
   const handleUpdateCustomField = (index) => {
@@ -232,7 +238,7 @@ if (isDuplicateInputField) {
 
     //Duplicate validation
     const isDuplicate = inputsFormat.inputs[inputIndex].customFields.some(
-      (field, i) => i !== index && Object.keys(field)[0] === trimmedKey
+      (field, i) => i !== index && Object.keys(field)[0] === trimmedKey,
     );
 
     if (isDuplicate) {
@@ -322,7 +328,10 @@ if (isDuplicateInputField) {
   const addNewIndex = (value) => {
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      updatedInputs[inputIndex] = { ...updatedInputs[inputIndex], index: value };
+      updatedInputs[inputIndex] = {
+        ...updatedInputs[inputIndex],
+        index: value,
+      };
       return {
         ...prev,
         inputs: updatedInputs,
@@ -347,7 +356,10 @@ if (isDuplicateInputField) {
     console.log("value", value);
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
-      updatedInputs[inputIndex] = { ...updatedInputs[inputIndex], [name]: value };
+      updatedInputs[inputIndex] = {
+        ...updatedInputs[inputIndex],
+        [name]: value,
+      };
       return {
         ...prev,
         inputs: updatedInputs,
@@ -387,30 +399,30 @@ if (isDuplicateInputField) {
   //   });
   // };
 
-  const updateProps=()=>{
+  const updateProps = () => {
     const trimmedSourceType = tempSourceType.trim();
     setInputsFormat((prev) => {
       let updateProps = { ...prev.props };
-      let sType=Object.keys(updateProps)[0];
+      let sType = Object.keys(updateProps)[0];
       let pProp = updateProps[sType];
       console.log("pProp", pProp);
-//       const updated = Object.fromEntries(
-//   Object.entries(pProp).filter(([key]) => key !== val)
-// );
+      //       const updated = Object.fromEntries(
+      //   Object.entries(pProp).filter(([key]) => key !== val)
+      // );
       const updatedInputs = [...prev.inputs];
       updatedInputs[inputIndex] = {
         ...updatedInputs[inputIndex],
         sourceType: trimmedSourceType,
       };
-      updateProps = {[trimmedSourceType]: pProp};
+      updateProps = { [trimmedSourceType]: pProp };
       return {
         ...prev,
-         inputs: updatedInputs,
+        inputs: updatedInputs,
         props: updateProps,
         // props: updatedProps,
       };
-    })
-  }
+    });
+  };
 
   const addProps = () => {
     const trimmedSourceType = tempSourceType.trim();
@@ -420,7 +432,7 @@ if (isDuplicateInputField) {
       return;
     }
 
-    // ✅ Commit source type ONLY here
+    //Commit source type ONLY here
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
       updatedInputs[inputIndex] = {
@@ -474,19 +486,71 @@ if (isDuplicateInputField) {
 
   return (
     <div>
-      <div className="  ">
+      <div>
         <div className="flex flex-wrap gap-2 ">
           <div className="flex flex-col w-48 min-w-[150px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
-              Input Stanza
+              Protocol
+            </label>
+            <select
+              value={item.protocol || ""}
+              onChange={(e) => {
+                const protocol = e.target.value;
+                const port = item.port || "";
+
+                setInputsFormat((prev) => {
+                  const updatedInputs = [...prev.inputs];
+
+                  updatedInputs[inputIndex] = {
+                    ...updatedInputs[inputIndex],
+                    protocol,
+                    filePath: updateFilePath(protocol, port),
+                  };
+
+                  return {
+                    ...prev,
+                    inputs: updatedInputs,
+                  };
+                });
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">select protocol</option>
+              {protocolOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex flex-col w-48 min-w-[150px]">
+            <label className="text-sm font-medium text-gray-700 mb-1">
+              Port
             </label>
             <input
-              value={item.filePath}
-              name="filePath"
-              onChange={(e) => updateIputs(e)}
+              value={item.port || ""}
+              onChange={(e) => {
+                const port = e.target.value;
+                const protocol = item.protocol || "";
+
+                setInputsFormat((prev) => {
+                  const updatedInputs = [...prev.inputs];
+
+                  updatedInputs[inputIndex] = {
+                    ...updatedInputs[inputIndex],
+                    port,
+                    filePath: updateFilePath(protocol, port),
+                  };
+
+                  return {
+                    ...prev,
+                    inputs: updatedInputs,
+                  };
+                });
+              }}
               type="text"
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="protocol://port"
+              placeholder="port number"
             />
           </div>
           <div className="flex flex-col w-48 min-w-[150px]">
@@ -695,86 +759,59 @@ if (isDuplicateInputField) {
               </div>
             )}
           </div> */}
-
-          <div className="flex flex-col">
-            <div className="flex flex-row gap-2 mt-6">
-              {/* {inputsFormat.inputs[each-1].sourceType} */}
-              {/* <button
-                onClick={addProps}
-                className=" bg-blue-500 text-white px-3 py-2 rounded-lg shadow hover:bg-blue-600 cursor-pointer"
-              >
-                Add Props
-              </button> */}
-
-              {!hasProps ? (
-                /*ADD MODE */
-                <button
-                  onClick={addProps}
-                  disabled={!tempSourceType.trim()}
-                  className={`px-3 py-2 rounded-lg shadow text-white
-              ${
-                tempSourceType.trim()
-                  ? "bg-blue-500 hover:bg-blue-600 cursor-pointer"
-                  : "bg-gray-300 cursor-not-allowed"
-              }`}
-                >
-                  Add Props
-                </button>
-              ) : (
-                /* UPDATE MODE */
-                <button
-                  onClick={updateProps}
-                  className="px-3 py-2 rounded-lg shadow bg-green-500 text-white hover:bg-green-600"
-                >
-                  Update Props
-                </button>
-              )}
-
-              <button
-                onClick={() => {cancelConfig(each)}}
-                className=" px-3 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
         </div>
         <div className=" border-gray-200 pt-4">
           <h3 className="text-lg font-semibold text-gray-800 mb-1.9">
             Custom Fields
           </h3>
 
-          <div className="flex flex-row gap-2">
-            <div>
-              <input
-                onChange={(e) => setNewKey(e.target.value)}
-                value={newkey}
-                type="text"
-                className="px-3 py-2 mr-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
-                placeholder="Key"
-              />
-              <input
-                onChange={(e) => setValue(e.target.value)}
-                value={value}
-                type="text"
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
-                placeholder="Value"
-              />
-              {customFieldError && (
-                <p className="text-sm text-red-500 mt-1 ml-1">
-                  {customFieldError}
-                </p>
-              )}
-            </div>
+          <div className="flex flex-row gap-2 items-center">
+            <select
+              value={selectedKeyOption}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedKeyOption(val);
 
-            <div>
-              <button
-                onClick={handleAddCustomField}
-                className="p-2 ml-2 max-w-20 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition cursor-pointer"
-              >
-                Add
-              </button>
-            </div>
+                if (val !== "Custom") {
+                  setNewKey(val);
+                } else {
+                  setNewKey("");
+                }
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-lg w-48"
+            >
+              <option value="">Select Key</option>
+              {customFieldKeyOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+
+            {selectedKeyOption === "Custom" && (
+              <input
+                type="text"
+                value={newkey}
+                placeholder="Enter custom key"
+                onChange={(e) => setNewKey(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg w-48"
+              />
+            )}
+
+            <input
+              onChange={(e) => setValue(e.target.value)}
+              value={value}
+              type="text"
+              className="px-3 py-2 border border-gray-300 rounded-lg w-48"
+              placeholder="Value"
+            />
+
+            <button
+              onClick={handleAddCustomField}
+              className="px-3 py-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600"
+            >
+              Add
+            </button>
           </div>
 
           {inputsFormat.inputs[inputIndex].customFields.length > 0 ? (
@@ -822,7 +859,7 @@ if (isDuplicateInputField) {
                       placeholder="Value"
                     />
 
-                    {/* ✅ Update button only when row is changed */}
+                    {/*Update button only when row is changed */}
                     {(currentEdit.key !== originalKey ||
                       currentEdit.value !== originalValue) && (
                       <button
@@ -854,6 +891,50 @@ if (isDuplicateInputField) {
             <p className="text-sm mt-2 ml-1">No Custom fields added yet.</p>
           )}
         </div>
+        <div className="flex flex-col">
+          <div className="flex flex-row gap-2 mt-6">
+            {/* {inputsFormat.inputs[each-1].sourceType} */}
+            {/* <button
+                onClick={addProps}
+                className=" bg-blue-500 text-white px-3 py-2 rounded-lg shadow hover:bg-blue-600 cursor-pointer"
+              >
+                Add Props
+              </button> */}
+
+            {!hasProps ? (
+              /*ADD MODE */
+              <button
+                onClick={addProps}
+                disabled={!tempSourceType.trim()}
+                className={`px-3 py-2 rounded-lg shadow text-white
+              ${
+                tempSourceType.trim()
+                  ? "bg-blue-500 hover:bg-blue-600 cursor-pointer"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
+              >
+                Add Props
+              </button>
+            ) : (
+              /* UPDATE MODE */
+              <button
+                onClick={updateProps}
+                className="px-3 py-2 rounded-lg shadow bg-green-500 text-white hover:bg-green-600"
+              >
+                Update Props
+              </button>
+            )}
+
+            <button
+              onClick={() => {
+                cancelConfig(each);
+              }}
+              className=" px-3 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* {inputsFormat.inputs[each-1].index &&
@@ -871,10 +952,11 @@ if (isDuplicateInputField) {
             key={each}
             each={each}
             sourceType={item.sourceType}
+            syslogFile={syslogFile}
             inputsFormat={inputsFormat}
             setInputsFormat={setInputsFormat}
             handleTransforms={handleTransforms}
-          />      
+          />
         )}
       </div>
       {/* <TransformsConfig/> */}
