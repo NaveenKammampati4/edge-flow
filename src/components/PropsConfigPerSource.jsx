@@ -57,6 +57,12 @@ const PropsConfigPerSource = ({
   const isCsvFile = fileName.toLowerCase().endsWith(".csv");
   const isTxtFile = !isJsonFile && !isCsvFile;
 
+  // dynamic key options (ip/host extendable later)
+  const KEY_OPTIONS = ["ip", "host", "custom", "transforms"];
+
+  const [selectedKeyType, setSelectedKeyType] = useState("");
+  const [transformSuffix, setTransformSuffix] = useState("");
+
   useEffect(() => {
     if (syslogFile) {
       setFile(syslogFile);
@@ -797,6 +803,8 @@ const PropsConfigPerSource = ({
 
     setNewKey("");
     setNewValue("");
+    setSelectedKeyType("");   // reset dropdown
+    setTransformSuffix("");   // reset transform suffix input
   };
 
   const addProps = () => {
@@ -1335,8 +1343,8 @@ const PropsConfigPerSource = ({
               />
             </div>
             <strong>{file && (
-                <h2 className="text-sm text-gray-600">{file.name}</h2>
-              )}</strong>
+              <h2 className="text-sm text-gray-600">{file.name}</h2>
+            )}</strong>
           </div>
           <div className="space-y-4 mt-3.5">
             {Object.entries(itemList)
@@ -1349,14 +1357,57 @@ const PropsConfigPerSource = ({
           </div>
 
           <div className="flex items-center gap-4 mt-3.5">
-            <input
-              name="newKey"
-              value={newKey}
-              onChange={(e) => setNewKey(e.target.value)}
-              type="text"
-              placeholder="New key"
+            {/* KEY TYPE DROPDOWN */}
+            <select
+              value={selectedKeyType}
+              onChange={(e) => {
+                const val = e.target.value;
+                setSelectedKeyType(val);
+
+                // reset fields
+                setNewKey("");
+                setTransformSuffix("");
+
+                // auto-set key for non custom/non transform
+                if (val !== "custom" && val !== "transforms") {
+                  setNewKey(val);
+                }
+              }}
               className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
+            >
+              <option value="">Select Key</option>
+              {KEY_OPTIONS.map((k) => (
+                <option key={k} value={k}>
+                  {k}
+                </option>
+              ))}
+            </select>
+
+            {/* CUSTOM KEY INPUT */}
+            {selectedKeyType === "custom" && (
+              <input
+                value={newKey}
+                onChange={(e) => setNewKey(e.target.value)}
+                type="text"
+                placeholder="Enter custom key"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            )}
+
+            {/* TRANSFORMS KEY INPUT (PREFIX LOCKED) */}
+            {selectedKeyType === "transforms" && (
+              <input
+                value={transformSuffix}
+                onChange={(e) => {
+                  const suffix = e.target.value;
+                  setTransformSuffix(suffix);
+                  setNewKey(`transforms-${suffix}`); // prefix locked
+                }}
+                type="text"
+                placeholder="Enter transform suffix"
+                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            )}
             <input
               name="newValue"
               value={newValue}
