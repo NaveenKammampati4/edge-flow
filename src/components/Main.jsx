@@ -26,6 +26,7 @@ const Main = () => {
   const [appMode, setAppMode] = useState("new");
   const [syslogFile, setSyslogFile] = useState(null);
   const [syslogError, setSyslogError] = useState("");
+  const [collectionError, setCollectionError] = useState("");
   let propsList = [
     "timePrefix",
     "timeFormat",
@@ -85,6 +86,24 @@ const Main = () => {
   const [branches, setBranches] = useState([]);
   const [selectedBranch, setSelectedBranch] = useState("");
   const [configFiles, setConfigFiles] = useState([]);
+
+
+  const validateCollectionSelection = () => {
+    if (!inputsFormat.appName) {
+      setCollectionError("App Name is required");
+      return false;
+    }
+    if (!inputsFormat.indexName) {
+      setCollectionError("Index Name is required");
+      return false;
+    }
+    if (!inputsFormat.inputs[0]?.sourceType) {
+      setCollectionError("Source Type is required");
+      return false;
+    }
+    setCollectionError("");
+    return true;
+  };
 
   const fetchConfigFiles = async () => {
     try {
@@ -234,6 +253,11 @@ const Main = () => {
       console.error(error.response?.data || error.message);
     }
   };
+
+  const RequiredStar = () => (
+    <span className="text-red-500 ml-1">*</span>
+  )
+
 
   useEffect(() => {
     if (!token || !inputsFormat.appName || !selectedBranch) return;
@@ -703,13 +727,13 @@ const Main = () => {
 
               {(Array.isArray(transform)
                 ? transform.map((t, i) => ({
-                    __name: `Transform ${i + 1}`,
-                    ...t,
-                  }))
+                  __name: `Transform ${i + 1}`,
+                  ...t,
+                }))
                 : Object.entries(transform).map(([name, t]) => ({
-                    __name: name, // REAL transform name
-                    ...t,
-                  }))
+                  __name: name, // REAL transform name
+                  ...t,
+                }))
               ).map((t, i) => {
                 const hasAnyValue = Object.values(t).some(
                   (v) => v !== undefined && v !== null && v !== "",
@@ -1132,7 +1156,7 @@ flex items-center gap-2
           {/* ───────── App Name Card ───────── */}
           <div className="flex flex-col relative bg-white shadow rounded-xl p-6">
             <h2 className="text-lg font-semibold text-black-600 mb-2">
-              App Name
+              App Name <RequiredStar />
             </h2>
             <div>
               <div className="flex space-x-6">
@@ -1331,7 +1355,7 @@ flex items-center gap-2
           <div className="flex flex-col bg-white shadow rounded-lg p-4 space-y-3 gap-0 ">
             <div className="bg-white shadow rounded-lg p-4 mb-6">
               <h2 className="text-lg font-semibold text-black-600 mb-2">
-                Index Name
+                Index Name <RequiredStar />
               </h2>
               <div className="flex flex-row gap-10">
                 <div>
@@ -1582,7 +1606,7 @@ flex items-center gap-2
             <div className="bg-white shadow rounded-lg p-4 mb-6">
               {/* Source Type Input */}
               <div className="flex flex-col mb-4">
-                <label className="font-medium mb-1">Source Type</label>
+                <label className="font-medium mb-1">Source Type <RequiredStar /></label>
 
                 {/* Dropdown always visible */}
                 {inputsFormat.inputs[0]?.sourceTypeMode !== "custom" && (
@@ -1614,6 +1638,13 @@ flex items-center gap-2
                           inputs: updatedInputs,
                         };
                       });
+                      // only update when NOT custom
+                      if (value !== "__custom__") {
+                        setUfTokenDetails((prev) => ({
+                          ...prev,
+                          sourceType: value,
+                        }));
+                      }
                     }}
                   >
                     <option value="">-- Select Source Type --</option>
@@ -1652,6 +1683,10 @@ flex items-center gap-2
                             inputs: updatedInputs,
                           };
                         });
+                        setUfTokenDetails((prev) => ({
+                          ...prev,
+                          sourceType: value,
+                        }));
                       }}
                     />
 
@@ -1681,7 +1716,10 @@ flex items-center gap-2
                 )}
               </div>
 
-              <label className="font-medium mb-2">Collection Methods</label>
+              <label className="font-medium mb-2">Collection Methods <RequiredStar /></label>
+              {collectionError && (
+                <p className="text-red-500 text-sm mb-2">{collectionError}</p>
+              )}
 
               {/* Radio Buttons */}
               <div className="flex flex-col gap-4">
@@ -1693,7 +1731,10 @@ flex items-center gap-2
                       name="sourceMode"
                       value={SOURCE_MODES.HEC}
                       checked={sourceMode === SOURCE_MODES.HEC}
-                      onChange={() => setSourceMode(SOURCE_MODES.HEC)}
+                      onChange={() => {
+                        if (!validateCollectionSelection()) return;
+                        setSourceMode(SOURCE_MODES.HEC);
+                      }}
                       className="accent-blue-600"
                     />
                     <span>HEC Token</span>
@@ -1705,7 +1746,11 @@ flex items-center gap-2
                       name="sourceMode"
                       value={SOURCE_MODES.UF}
                       checked={sourceMode === SOURCE_MODES.UF}
-                      onChange={() => setSourceMode(SOURCE_MODES.UF)}
+                      onChange={() => {
+                        if (!validateCollectionSelection()) return;
+                        setSourceMode(SOURCE_MODES.UF);
+
+                      }}
                       className="accent-blue-600"
                     />
                     <span>Universal Forwarder</span>
@@ -1717,7 +1762,10 @@ flex items-center gap-2
                       name="sourceMode"
                       value={SOURCE_MODES.CONF}
                       checked={sourceMode === SOURCE_MODES.CONF}
-                      onChange={() => setSourceMode(SOURCE_MODES.CONF)}
+                      onChange={() => {
+                        if (!validateCollectionSelection()) return;
+                        setSourceMode(SOURCE_MODES.CONF);
+                      }}
                       className="accent-blue-600"
                     />
                     <span>Sys Log</span>
@@ -1798,6 +1846,10 @@ flex items-center gap-2
             <UniversalForwarder
               ufTokenDetails={ufTokenDetails}
               setUfTokenDetails={setUfTokenDetails}
+              inputsFormat={inputsFormat}
+              setInputsFormat={setInputsFormat}
+              syslogFile={syslogFile}
+              handleTransforms={handleTransforms}
             />
           </div>
         )}

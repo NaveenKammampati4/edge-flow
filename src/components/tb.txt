@@ -1,154 +1,28 @@
-2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
-2025-10-29 09:42:41 ERROR API request received (user=admin)
-2025-10-29 10:30:54 DEBUG Starting background job (user=system)
-2025-10-29 10:04:57 INFO API request received (user=admin)
-2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
-2025-10-29 09:42:41 ERROR API request received (user=admin)
-2025-10-29 10:30:54 DEBUG Starting background job (user=system)
-2025-10-29 10:04:57 INFO API request received (user=admin)
-2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
-2025-10-29 09:42:41 ERROR API request received (user=admin)
-2025-10-29 10:30:54 DEBUG Starting background job (user=system)
-2025-10-29 10:04:57 INFO API request received (user=admin)
+[tcpout]
+defaultGroup = splunk_indexers
+
+[tcpout:splunk_indexers]
+server = 192.168.1.100:9997
 
 
 
 
-date                 Level     log  
-2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
-2025-10-29 09:42:41 ERROR API request received (user=admin)
-2025-10-29 10:30:54 DEBUG Starting background job (user=system)
-2025-10-29 10:04:57 INFO API request received (user=admin)
-2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
-2025-10-29 09:42:41 ERROR API request received (user=admin)
-2025-10-29 10:30:54 DEBUG Starting background job (user=system)
-2025-10-29 10:04:57 INFO API request received (user=admin)
-2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
-2025-10-29 09:42:41 ERROR API request received (user=admin)
-2025-10-29 10:30:54 DEBUG Starting background job (user=system)
-2025-10-29 10:04:57 INFO API request received (user=admin)
 
+# Monitor first file
+[monitor:///var/log/app1.log]
+index = main
+sourcetype = app1_log
+disabled = false
 
-dte                 level     log      user   
+# Monitor second file
+[monitor:///var/log/app2.log]
+index = main
+sourcetype = app2_log
+disabled = false
 
-2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
-2025-10-29 09:42:41 ERROR API request received (user=admin)
-2025-10-29 10:30:54 DEBUG Starting background job (user=system)
-2025-10-29 10:04:57 INFO API request received (user=admin)
-2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
-2025-10-29 09:42:41 ERROR API request received (user=admin)
-2025-10-29 10:30:54 DEBUG Starting background job (user=system)
-2025-10-29 10:04:57 INFO API request received (user=admin)
-2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
-2025-10-29 09:42:41 ERROR API request received (user=admin)
-2025-10-29 10:30:54 DEBUG Starting background job (user=system)
-2025-10-29 10:04:57 INFO API request received (user=admin)
+# Monitor third file
+[monitor:///opt/myapp/logs/app3.log]
+index = main
+sourcetype = app3_log
+disabled = false
 
-
-
-
-{
-    "appName": "splunk_sample_config",
-    "indexName": "my_realtime_index",
-    "indexConfig": {
-        "my_realtime_index": {
-            "retentionTime": "",
-            "customFields": []
-        }
-    },
-    "inputs": [
-        {
-            "id": 1,
-            "filePath": "q",
-            "sourceType": "q",
-            "index": "my_realtime_index",
-            "whiteList": "",
-            "blackList": "",
-            "customFields": [
-                {
-                    "guuuuuu": "gj"
-                },
-                {
-                    "hh": "hhh"
-                }
-            ]
-
-  "id": 2,
-            "filePath": "q",
-            "sourceType": "q",
-            "index": "my_realtime_index",
-            "whiteList": "",
-            "blackList": "",
-            "customFields": [
-                {
-                    "guuuuuu": "gj"
-                },
-                {
-                    "hh": "hhh"
-                }
-            ]
-          "id": 3,
-            "filePath": "q",
-            "sourceType": "q",
-            "index": "my_realtime_index",
-            "whiteList": "",
-            "blackList": "",
-            "customFields": [
-                {
-                    "guuuuuu": "gj"
-                },
-                {
-                    "hh": "hhh"
-                }
-            ]
-        }
-    ],
-    "props": {
-        "q": {
-            "timePrefix": "",
-            "timeFormat": "",
-            "lineBreaker": "",
-            "maximum_lookAhead": "",
-            "truncate": "",
-            "dateTime": "",
-            "SHOULD_LINEMERGE": false,
-            "TIME_PREFIX": "^",
-            "TIME_FORMAT": "%b %d %H:%M:%S",
-            "MAX_TIMESTAMP_LOOKAHEAD": "15",
-            "TRUNCATE": "10000",
-            "TRANSFORMS-set_host": "demarc-host-transform"
-        }
-    },
-    "transform": {
-        "SHOULD_LINEMERGE": {
-            "regex": "^\\w+\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+(\\S+)",
-            "format": "host::$1",
-            "destKey": "MetaData:Host"
-        },
-        "TIME_PREFIX": {
-            "regex": "^\\w+\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+(\\S+)",
-            "format": "host::$1",
-            "destKey": "MetaData:Host"
-        },
-        "TIME_FORMAT": {
-            "regex": "^\\w+\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+(\\S+)",
-            "format": "host::$1",
-            "destKey": "MetaData:Host"
-        },
-        "MAX_TIMESTAMP_LOOKAHEAD": {
-            "regex": "^\\w+\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+(\\S+)",
-            "format": "host::$1",
-            "destKey": "MetaData:Host"
-        },
-        "TRUNCATE": {
-            "regex": "^\\w+\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+(\\S+)",
-            "format": "host::$1",
-            "destKey": "MetaData:Host"
-        },
-        "TRANSFORMS-set_host": {
-            "regex": "^\\w+\\s+\\d+\\s+\\d+:\\d+:\\d+\\s+(\\S+)",
-            "format": "host::$1",
-            "destKey": "MetaData:Host"
-        }
-    }
-}
