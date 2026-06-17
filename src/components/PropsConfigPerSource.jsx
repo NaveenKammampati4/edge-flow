@@ -11,6 +11,7 @@ const PropsConfigPerSource = ({
   setInputsFormat,
   each,
   handleTransforms,
+  files
 }) => {
   console.log("PropsConfigPerSource props:", {
     sourceType,
@@ -18,6 +19,7 @@ const PropsConfigPerSource = ({
     setInputsFormat,
     each,
     handleTransforms,
+    files
   });
   const [file, setFile] = useState(null);
   const [fileText, setFileText] = useState("");
@@ -128,6 +130,10 @@ const PropsConfigPerSource = ({
       };
     });
   };
+
+  useEffect(()=>{
+    setFile(files)
+  },[files])
 
   const updateIputs = (e) => {
     const { name, value } = e.target;
@@ -866,6 +872,7 @@ const PropsConfigPerSource = ({
     if (item === "timePrefix") {
       return (
         <div className="flex flex-col items-start">
+          
           <div className="w-full flex items-center gap-4">
             <label className="w-40 text-sm font-medium text-gray-700">
               TIME PREFIX
@@ -1294,17 +1301,18 @@ const PropsConfigPerSource = ({
       <div className="grid grid-cols-2 justify-between md:flex-row gap-6 mt-2.5">
         <div className="flex-1 p-6 shadow-md rounded-2xl">
           <div className="flex flex-col space-y-4">
-            <h2 className="text-xl font-semibold text-gray-800">
-              Upload Props.conf for{" "}
-              <span className="text-indigo-600">{sourceType}</span>
-            </h2>
-            <div className="flex items-center gap-4">
+            <h2 className="items-center font-semibold text-xl  mb-1">
+                  Props Config Per Source Type
+                </h2>
+                <hr className="text-blue-500" />
+            
+            {/* <div className="flex items-center gap-4">
               <input
                 onChange={(e) => setFile(e.target.files[0])}
                 type="file"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
-            </div>
+            </div> */}
           </div>
           <div className="space-y-4 mt-3.5">
             {Object.entries(itemList)

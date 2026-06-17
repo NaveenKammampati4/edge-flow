@@ -20,6 +20,7 @@ const InputConfig = ({
     handleTransforms,
   });
   const [inputsConfigData, setInputsConfigData] = useState({
+    protocol:"",
     filePath: "",
     sourceType: "",
     index: "",
@@ -47,6 +48,7 @@ const InputConfig = ({
 
   const existingIndexes = ["users_index", "orders_index", "products_index","userData_meterics"];
   const possibleSuffixes = ["_logs", "_data"];
+  const [files, setFiles] = useState(null);
   
 
   const handleInputChange = (e) => {
@@ -441,6 +443,10 @@ if (isDuplicateInputField) {
     });
   };
 
+  useEffect(()=>{
+    addProps();
+  },[tempSourceType])
+
   const addField = () => {
     let sTypeField = inputsFormat.inputs[each - 1].customFields;
     console.log("file : ", sTypeField);
@@ -471,7 +477,21 @@ if (isDuplicateInputField) {
       <div className="  ">
         <div className="flex flex-wrap gap-2 ">
           <div className="flex flex-col w-48 min-w-[150px]">
-            <label className="text-sm font-medium text-gray-700 mb-1">
+            <div className="flex flex-col">
+              <label htmlFor="existingAppName" className="font-medium mb-1">
+                    Select Protocol
+                  </label>
+                  <select
+                  name="protocol"
+                  value={item.protocol}
+                  onChange={(e)=>updateIputs(e)}
+                    id="existingAppName"
+                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2">
+                      <option>TCP</option>
+                      <option>UDP</option>
+                    </select>
+            </div>
+            {/* <label className="text-sm font-medium text-gray-700 mb-1">
               Input Stanza
             </label>
             <input
@@ -481,22 +501,37 @@ if (isDuplicateInputField) {
               type="text"
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="protocol://port"
-            />
+            /> */}
           </div>
           <div className="flex flex-col w-48 min-w-[150px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
-              Source Type
+              Port
             </label>
 
             <input
               type="text"
-              value={tempSourceType}
-              onChange={(e) => setTempSourceType(e.target.value)}
+               value={item.filePath}
+              name="filePath"
+              onChange={(e) => updateIputs(e)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter source type"
             />
           </div>
-          <div className="flex flex-col w-48">
+          <div className="flex flex-col w-48 min-w-[150px]">
+            <label className="text-sm font-medium text-gray-700 mb-1">
+              Component Name
+            </label>
+
+            <input
+              type="text"
+               name="componentName"
+              value={item.componentName}
+              onChange={(e) => updateIputs(e)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter source type"
+            />
+          </div>
+          {/* <div className="flex flex-col w-48">
             <label
               htmlFor="appIndex"
               className=" text-sm font-medium text-gray-700  mb-1"
@@ -511,7 +546,7 @@ if (isDuplicateInputField) {
               className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
               placeholder="App Name’s index"
             />
-          </div>
+          </div> */}
           {/* <div className="flex flex-col w-48">
             <label
               htmlFor="whitelist"
@@ -716,12 +751,13 @@ if (isDuplicateInputField) {
                 </button>
               ) : (
                 /* UPDATE MODE */
-                <button
-                  onClick={updateProps}
-                  className="px-3 py-2 rounded-lg shadow bg-green-500 text-white hover:bg-green-600"
-                >
-                  Update Props
-                </button>
+                // <button
+                //   onClick={updateProps}
+                //   className="px-3 py-2 rounded-lg shadow bg-green-500 text-white hover:bg-green-600"
+                // >
+                //   Update Props
+                // </button>
+                <div></div>
               )}
 
               <button
@@ -733,6 +769,24 @@ if (isDuplicateInputField) {
             </div>
           </div>
         </div>
+        <h2 className="text-xl font-semibold text-gray-800">
+             Upload sample log file
+            </h2>
+            {/* <div className="flex items-center gap-4">
+              <input
+                onChange={(e) => setFiles(e.target.files[0])}
+                type="file"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div> */}
+            <div className="flex items-center gap-4">
+              <input
+                onChange={(e) => setFiles(e.target.files[0])}
+                type="file"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+      
         <div className=" border-gray-200 pt-4">
           <h3 className="text-lg font-semibold text-gray-800 mb-1.9">
             Custom Fields
@@ -855,10 +909,15 @@ if (isDuplicateInputField) {
                   <IndexConfig key={inputsFormat.inputs[each-1].index} indexName={inputsFormat.inputs[each-1].index} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
                 
               } */}
-      <h2 className="items-center font-semibold text-xl  mb-1 mt-5">
-        Props Config Per Source Type
-      </h2>
-      <hr className="text-blue-500" />
+
+      {/* <div className="flex items-center gap-4">
+              <input
+                onChange={(e) => setFiles(e.target.files[0])}
+                type="file"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+       */}
       <div>
         {inputsFormat.props[inputsFormat.inputs[each - 1].sourceType] && (
           <PropsConfigPerSource
@@ -868,10 +927,13 @@ if (isDuplicateInputField) {
             inputsFormat={inputsFormat}
             setInputsFormat={setInputsFormat}
             handleTransforms={handleTransforms}
+            files={files}
           />      
         )}
       </div>
       {/* <TransformsConfig/> */}
+
+      
     </div>
   );
 };

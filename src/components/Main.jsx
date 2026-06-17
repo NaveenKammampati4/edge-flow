@@ -6,12 +6,14 @@ import { useParams } from "react-router-dom";
 import axios from "axios";
 import { HECToken } from "./HECToken";
 import UniversalForwarder from "./UniversalForwarder";
+import CreateApp from "./CreateApp";
 
 const Main = () => {
   const { userName, token } = useParams();
+  const [isCreateApp, setIsCreateApp]=useState(false);
   const [inputsConfig, setInputsConfig] = useState([1]);
   const [inputsConfigList, setInputsConfigList] = useState([]);
-
+  const [viewIndexConfig, setViewIndexConfig]=useState(false);
   const [mode, setMode] = useState("existing");
   const [indexName, setIndexName] = useState("");
   const [appName, setAppName] = useState("");
@@ -22,6 +24,8 @@ const Main = () => {
   const [sourceMode, setSourceMode] = useState(null); // default
   const [indexMode, setIndexMode] = useState("new");
   const [appMode, setAppMode] = useState("new");
+  const [existingIndexesList, setExistingIndexesList]=useState([]);
+
   let propsList = [
     "timePrefix",
     "timeFormat",
@@ -32,15 +36,21 @@ const Main = () => {
   ]
 
   const [inputsFormat, setInputsFormat] = useState({
+    businessName: "",
+    applicationName:"",
+    environmentType:"",
     appName: "",
     indexName: "",
+    retentionDays:null,
     indexConfig: {},
     inputs: [
       {
         id: 1,
+        protocol:"",
         filePath: "",
         sourceType: "",
         index: "",
+        componentName:"",
         whiteList: "",
         blackList: "",
         customFields: [],
@@ -82,6 +92,21 @@ const Main = () => {
   const [selectedBranch, setSelectedBranch] = useState("");
   const [configFiles, setConfigFiles] = useState([]);
 
+
+  const fetchIndexes=async()=>{
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:5000/api/indexes/${token}/${userName}`
+      );
+
+      console.log("Configssa:", response.data);
+      setExistingIndexesList(response.data.indexes);
+      
+    }
+    catch (e) {
+      console.error("Fetch indexes error:", e);
+    }
+  }
   const fetchConfigFiles = async () => {
     try {
       const response = await axios.get(
@@ -117,6 +142,7 @@ const Main = () => {
     console.log("token", token);
     fetchRepos();
     fetchConfigFiles();
+    fetchIndexes();
   }, [userName]);
 
   const fetchRepoBranches = async (owner, repoName, token) => {
@@ -223,7 +249,7 @@ const Main = () => {
     };
 
     const formatted = {
-      
+
       ...Object.fromEntries(
         lines.slice(1).map(line => {
           const parts = line.split("=");
@@ -301,18 +327,18 @@ const Main = () => {
       console.log("transformsFormatted", transformsFormatted);
 
       for (const key of Object.keys(propsFormatted)) {
-        if (!propsList.includes(key)){
-           updatedProps[inputsFormatted.sourceType] = {
-        ...updatedProps[inputsFormatted.sourceType],
-            [key]: propsFormatted[key],     
-      };
+        if (!propsList.includes(key)) {
+          updatedProps[inputsFormatted.sourceType] = {
+            ...updatedProps[inputsFormatted.sourceType],
+            [key]: propsFormatted[key],
+          };
 
-      transformObj[key] = { 
-            regex: transformsFormatted.REGEX, 
-            format:transformsFormatted.FORMAT,
-            destKey:transformsFormatted.DEST_KEY,
-            }
-        } 
+          transformObj[key] = {
+            regex: transformsFormatted.REGEX,
+            format: transformsFormatted.FORMAT,
+            destKey: transformsFormatted.DEST_KEY,
+          }
+        }
       }
       return {
         ...prev,
@@ -366,7 +392,7 @@ const Main = () => {
       indexName: "",
     }));
 
-    setHecTokenDetails((prev) => ({ 
+    setHecTokenDetails((prev) => ({
       ...prev,
       indexName: value,
     }));
@@ -776,7 +802,8 @@ const Main = () => {
   };
 
   const handleCreateApp = () => {
-    console.log("inputs format : ", inputsFormat);
+    console.log("Hello")
+    setIsCreateApp(true);
   };
 
   const handleInputConfigs = () => {
@@ -893,7 +920,9 @@ const Main = () => {
   console.log("Uf Token Details:", ufTokenDetails);
 
   return (
-    <div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
+    <div>
+      {
+        isCreateApp? <CreateApp setIsCreateApp={setIsCreateApp} inputsFormat={inputsFormat}/> :<div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
       {/* <h2 className="text-blue-600 font-bold text-2xl mb-6">
         Dynamic Splunk App Builder
       </h2>
@@ -904,7 +933,7 @@ const Main = () => {
 
       <div className="w-full flex items-center justify-between mb-8">
         <h1 className="text-2xl font-semibold text-blue-600">
-          Dynamic Splunk App Builder
+          Splunk Config Builder
         </h1>
 
         {/* GitHub Button */}
@@ -950,14 +979,71 @@ flex items-center gap-2
           onBack={() => setIsPreview(false)}
         />
       </div>
+      
       <div
         className="w-full  bg-white shadow-md rounded-xl p-6"
         style={{ display: isPreview ? "none" : "block" }}
       >
+        <div className="shadow rounded-lg p-4 space-y-3 gap-0 mb-2">
+          <h2 className="font-bold text-1xl">Business and Environment Details</h2>
+          <div className="flex flex-row gap-4 ">
+           <div className="flex flex-col gap-1">
+            <label className="font-medium mb-1">Business Name</label>
+              <input
+                type="text"
+                placeholder="Enter Bussiness name"
+                className="border border-gray-300 rounded-lg px-3 py-2"
+                value={inputsFormat.bussinessName}
+                onChange={(e) =>
+                  setInputsFormat((prev) => ({
+                    ...prev,
+                    businessName: e.target.value
+                  }))
+                }
+              />
+           </div>
+           <div className="flex flex-col gap-1">
+            <label className="font-medium mb-1">Application Name</label>
+              <input
+                type="text"
+                placeholder="Enter Application name"
+                className="border border-gray-300 rounded-lg px-3 py-2"
+                value={inputsFormat.applicationName}
+                onChange={(e) =>
+                  setInputsFormat((prev) => ({
+                    ...prev,
+                    applicationName: e.target.value
+                  }))
+                }
+              />
+           </div>
+           <div className="flex flex-col gap-1">
+            <label className="font-medium mb-1">Environment Type</label>
+              <select
+                type="text"
+                placeholder="Enter Type"
+                className="border border-gray-300 rounded-lg px-3 py-2"
+                value={inputsFormat.environmentType}
+                onChange={(e) =>
+                  setInputsFormat((prev) => ({
+                    ...prev,
+                    environmentType: e.target.value
+                  }))
+                }
+              >
+                <option value="production">Production</option>
+                <option value="pre-production">Pre Production</option>
+                <option value="dev">Dev</option>
+                <option value="test">Test</option>
+                </select>
+           </div>
+        </div>
+        </div>
         <div className="grid grid-cols-2 gap-6 mb-6">
-          {/* ───────── App Name Card ───────── */}
+        
           <div className="flex flex-col relative">
-            <div>
+            <div className="flex flex-col">
+             
               <div className="flex space-x-6">
                 <label className="flex items-center space-x-2">
                   <input
@@ -974,7 +1060,7 @@ flex items-center gap-2
                     }}
                     className="accent-blue-600"
                   />
-                  <span>Existing App</span>
+                  <span>Existing Splunk App</span>
                 </label>
 
                 <label className="flex items-center space-x-2">
@@ -991,23 +1077,23 @@ flex items-center gap-2
                       }));
                       setHecTokenDetails((prev) => ({
                         ...prev,
-                        appName: "",    
-                    }));
+                        appName: "",
+                      }));
                       setUfTokenDetails((prev) => ({
                         ...prev,
-                        appName: "",    
-                    }));
+                        appName: "",
+                      }));
                     }}
                     className="accent-blue-600"
                   />
-                  <span>New App</span>
+                  <span>New Splunk App</span>
                 </label>
               </div>
 
               {appMode === "existing" ? (
                 <div className="flex flex-col">
                   <label htmlFor="existingAppName" className="font-medium mb-1">
-                    Select Existing App name
+                    Select Existing Splunk App name
                   </label>
                   <select
                     id="existingAppName"
@@ -1026,12 +1112,12 @@ flex items-center gap-2
 
                       setHecTokenDetails((prev) => ({
                         ...prev,
-                        appName: e.target.value,      
-                    }));
+                        appName: e.target.value,
+                      }));
                       setUfTokenDetails((prev) => ({
                         ...prev,
-                        appName: e.target.value,      
-                    }));
+                        appName: e.target.value,
+                      }));
                     }}
                   >
                     <option value="">-- Choose an app name --</option>
@@ -1062,7 +1148,7 @@ flex items-center gap-2
               ) : (
                 <div className="flex flex-col relative">
                   <label htmlFor="newAppName" className="font-medium mb-1">
-                    Enter New App Name
+                    Enter New Splunk App Name
                   </label>
 
                   <input
@@ -1078,16 +1164,21 @@ flex items-center gap-2
                       }));
                       setHecTokenDetails((prev) => ({
                         ...prev,
-                        appName: value,         }));          
-                    
+                        appName: value,
+                      }));
+
                       setUfTokenDetails((prev) => ({
                         ...prev,
-                        appName: value,      
-                    }));
+                        appName: value,
+                      }));
                     }}
                     placeholder="Enter App name"
                     className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
                   />
+                  {(inputsFormat.appName==="" && inputsFormat.businessName!=="" && inputsFormat.applicationName!=="") && <p onClick={()=>{setInputsFormat((prev)=>({
+                    ...prev,
+                    appName:inputsFormat.businessName+"_"+inputsFormat.applicationName+"_app"
+                  }))}} className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10 cursor-pointer">{inputsFormat.businessName}_{inputsFormat.applicationName}_app</p>}
 
                   {appNameSuggestions.length > 0 &&
                     inputsFormat.appName === "" && (
@@ -1110,7 +1201,7 @@ flex items-center gap-2
                               }));
                               setHecTokenDetails((prev) => ({
                                 ...prev,
-                                appName: sug, 
+                                appName: sug,
                               }));
                               setUfTokenDetails((prev) => ({
                                 ...prev,
@@ -1155,124 +1246,125 @@ flex items-center gap-2
           <div className="flex flex-col bg-white shadow rounded-lg p-4 space-y-3 gap-0 ">
             <div className="flex flex-row gap-10">
               <div>
-              <div className="flex space-x-6">
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    value="existing"
-                    checked={mode === "existing"}
-                    onChange={() => {
-                      (setMode("existing"),
-                        setInputsFormat((prev) => ({
-                          ...prev,
-                          indexName: "",
-                        })));
+                <div className="flex space-x-6">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      value="existing"
+                      checked={mode === "existing"}
+                      onChange={() => {
+                        (setMode("existing"),
+                          setInputsFormat((prev) => ({
+                            ...prev,
+                            indexName: "",
+                          })));
 
                         setHecTokenDetails((prev) => ({
                           ...prev,
                           indexName: "",
-                    }));
+                        }));
                         setUfTokenDetails((prev) => ({
                           ...prev,
                           indexName: "",
-                    }));
-                    }}
-                    className="accent-blue-600"
-                  />
-                  <span>Existing Index</span>
-                </label>
-
-                <label className="flex items-center space-x-2">
-                  <input
-                    type="radio"
-                    value="new"
-                    checked={mode === "new"}
-                    onChange={() => {
-                      (setMode("new"),
-                        setInputsFormat((prev) => ({
-                          ...prev,
-                          indexName: "",
-                        })));
-                        setHecTokenDetails((prev) => ({
-                          ...prev,
-                          indexName: "",  
-                    }));
-                        setUfTokenDetails((prev) => ({
-                          ...prev,
-                          indexName: "",  
-                    }));
-                    }}
-                    className="accent-blue-600"
-                  />
-                  <span>New Index</span>
-                </label>
-              </div>
-
-              {mode === "existing" ? (
-                <div className="flex flex-col">
-                  <label htmlFor="existingIndex" className="font-medium mb-1">
-                    Select Existing Index
+                        }));
+                      }}
+                      className="accent-blue-600"
+                    />
+                    <span>Existing Index</span>
                   </label>
-                  <select
-                    id="existingIndex"
-                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                    onChange={(e) => {
-                      // setInputsFormat((prev) => {
-                      //   return {
-                      //     ...prev,
-                      //     indexName: e.target.value,
-                      //     indexConfig: {
-                      //       ...prev.indexConfig,
-                      //       [e.target.value]: {
-                      //         retentionTime: "",
-                      //         customFields: [],
-                      //       },
-                      //     },
-                      //   };
-                      // });
-                      setInputsFormat((prev) => ({
-                        ...prev,
-                        indexName: e.target.value,
-                        indexConfig: {
-                          [e.target.value]: {
-                            retentionTime: "",
-                            customFields: [],
-                          },
-                        },
-                      }));
-                      setHecTokenDetails((prev) => ({
-                        ...prev,
-                        indexName: e.target.value,  
-                    }));
+
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      value="new"
+                      checked={mode === "new"}
+                      onChange={() => {
+                        (setMode("new"),
+                          setInputsFormat((prev) => ({
+                            ...prev,
+                            indexName: "",
+                          })));
+                        setHecTokenDetails((prev) => ({
+                          ...prev,
+                          indexName: "",
+                        }));
                         setUfTokenDetails((prev) => ({
                           ...prev,
-                          indexName: e.target.value,  
-                    }));}}
-                  >
-                    <option value="">-- Choose an index --</option>
-                    {existingConfig.map((index) => (
-                      <option key={index} value={index}>
-                        {index}
-                      </option>
-                    ))}
-                  </select>
+                          indexName: "",
+                        }));
+                      }}
+                      className="accent-blue-600"
+                    />
+                    <span>New Index</span>
+                  </label>
                 </div>
-              ) : (
-                <div className="flex flex-col relative">
-                  <label htmlFor="newIndex" className="font-medium mb-1">
-                    Enter New Index
-                  </label>
-                  <input
-                    id="newIndex"
-                    value={indexName}
-                    onFocus={handleIndexFocus}
-                    onChange={handleInputChange}
-                    placeholder="Enter index name"
-                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                  />
 
-                  {/* Suggestions */}
-                  {/* {(suggestions.length > 0 && inputsFormat.indexName !== indexName) && (
+                {mode === "existing" ? (
+                  <div className="flex flex-col">
+                    <label htmlFor="existingIndex" className="font-medium mb-1">
+                      Select Existing Index
+                    </label>
+                    <select
+                      id="existingIndex"
+                      className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                      onChange={(e) => {
+                        // setInputsFormat((prev) => {
+                        //   return {
+                        //     ...prev,
+                        //     indexName: e.target.value,
+                        //     indexConfig: {
+                        //       ...prev.indexConfig,
+                        //       [e.target.value]: {
+                        //         retentionTime: "",
+                        //         customFields: [],
+                        //       },
+                        //     },
+                        //   };
+                        // });
+                        setInputsFormat((prev) => ({
+                          ...prev,
+                          indexName: e.target.value,
+                          indexConfig: {
+                            [e.target.value]: {
+                              retentionTime: "",
+                              customFields: [],
+                            },
+                          },
+                        }));
+                        setHecTokenDetails((prev) => ({
+                          ...prev,
+                          indexName: e.target.value,
+                        }));
+                        setUfTokenDetails((prev) => ({
+                          ...prev,
+                          indexName: e.target.value,
+                        }));
+                      }}
+                    >
+                      <option value="">-- Choose an index --</option>
+                      {existingIndexesList.map((index) => (
+                        <option key={index} value={index}>
+                          {index}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="flex flex-col relative">
+                    <label htmlFor="newIndex" className="font-medium mb-1">
+                      Enter New Index
+                    </label>
+                    <input
+                      id="newIndex"
+                      value={indexName}
+                      onFocus={handleIndexFocus}
+                      onChange={handleInputChange}
+                      placeholder="Enter index name"
+                      className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                    />
+
+                    {/* Suggestions */}
+                    {/* {(suggestions.length > 0 && inputsFormat.indexName !== indexName) && (
                   <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
                     {suggestions.map((sug) => (
                       <li
@@ -1307,158 +1399,177 @@ flex items-center gap-2
                     ))}
                   </ul>
                 )} */}
-                  {suggestions.length > 0 && inputsFormat.indexName === "" && (
-                    <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
-                      {suggestions.map((sug) => (
-                        <li
-                          key={sug}
-                          className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                          onClick={() => {
-                            setInputsFormat((prev) => ({
-                              ...prev,
-                              indexName: sug,
-                              indexConfig: {
-                                ...prev.indexConfig,
-                                [sug]: {
-                                  retentionTime: "",
-                                  customFields: [],
+                    {suggestions.length > 0 && inputsFormat.indexName === "" && (
+                      <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
+                        {suggestions.map((sug) => (
+                          <li
+                            key={sug}
+                            className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                            onClick={() => {
+                              setInputsFormat((prev) => ({
+                                ...prev,
+                                indexName: sug,
+                                indexConfig: {
+                                  ...prev.indexConfig,
+                                  [sug]: {
+                                    retentionTime: "",
+                                    customFields: [],
+                                  },
                                 },
-                              },
-                            }));
-                            setIndexName(sug);
-                            setSuggestions([]);
-                          }}
-                        >
-                          {sug}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                              }));
+                              setIndexName(sug);
+                              setSuggestions([]);
+                            }}
+                          >
+                            {sug}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+              {mode === "new" && (
+                <div className="flex flex-col  rounded-lg mt-5">
+                  <label htmlFor="appName" className="font-medium mb-1">
+                    Retention in Days
+                  </label>
+                  <input
+                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+                    name="retentionTime"
+                    type="text"
+                    value={inputsFormat.retentionDays}
+                    onChange={(e)=>setInputsFormat((prev)=>({
+                      ...prev,
+                      retentionDays:e.target.value
+                    }))}
+                    /*1. CONTROL THE INPUT */
+                    // value={
+                    //   inputsFormat.indexConfig[inputsFormat.indexName]
+                    //     ?.retentionTime || ""
+                    // }
+                    /*2. PRESERVE EXISTING INDEX CONFIG */
+                    // onChange={(e) => {
+                    //   const value = e.target.value;
+
+
+                    //   if (value === "") {
+                    //     setInputsFormat((prev) => {
+                    //       if (!prev.indexName) return prev;
+                    //       return {
+                    //         ...prev,
+                    //         indexConfig: {
+                    //           [prev.indexName]: {
+                    //             retentionTime: "",
+                    //           },
+                    //         },
+                    //       };
+                    //     });
+                    //     return;
+                    //   }
+
+                      
+                    //   if (!/^\d+$/.test(value)) return;
+
+                    //   setInputsFormat((prev) => {
+                    //     if (!prev.indexName) return prev;
+
+                    //     return {
+                    //       ...prev,
+                          
+                    //       indexConfig: {
+                    //         [prev.indexName]: {
+                    //           retentionTime: value,
+                    //         },
+                    //       },
+                    //     };
+                    //   });
+                    // }}
+                    placeholder="Enter Retention Days"
+                  />
                 </div>
               )}
             </div>
-            {mode === "new" && (
-              <div className="flex flex-col  rounded-lg mt-5">
-                <label htmlFor="appName" className="font-medium mb-1">
-                  Retention Days
-                </label>
+            <div className="bg-white shadow rounded-lg p-4 mb-6">
+              {/* Source Type Input */}
+              <div className="flex flex-col mb-4">
+                <label className="font-medium mb-1">Source Type</label>
                 <input
-                  className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
-                  name="retentionTime"
                   type="text"
-                  /*1. CONTROL THE INPUT */
-                  value={
-                    inputsFormat.indexConfig[inputsFormat.indexName]
-                      ?.retentionTime || ""
-                  }
-                  /*2. PRESERVE EXISTING INDEX CONFIG */
+                  placeholder="Enter source type (e.g. csv, json)"
+                  className="border border-gray-300 rounded-lg px-3 py-2"
+                  value={inputsFormat.inputs[0]?.sourceType || ""}
                   onChange={(e) => {
                     const value = e.target.value;
-
-                    // allow empty delete
-                    if (value === "") {
-                      setInputsFormat((prev) => {
-                        if (!prev.indexName) return prev;
-                        return {
-                          ...prev,
-                          indexConfig: {
-                            [prev.indexName]: {
-                              retentionTime: "",
-                            },
-                          },
-                        };
-                      });
-                      return;
-                    }
-
-                    // allow only numbers
-                    if (!/^\d+$/.test(value)) return;
-
                     setInputsFormat((prev) => {
-                      if (!prev.indexName) return prev;
-
-                      return {
-                        ...prev,
-                        // IMPORTANT: overwrite indexConfig completely
-                        indexConfig: {
-                          [prev.indexName]: {
-                            retentionTime: value,
-                          },
-                        },
-                      };
+                      const inputs = [...prev.inputs];
+                      inputs[0] = { ...inputs[0], sourceType: value };
+                      return { ...prev, inputs };
                     });
                   }}
-                  placeholder="Enter Retention Days"
                 />
               </div>
-            )}
+
+              {inputsFormat.indexName!=="" && inputsFormat.retentionDays!=="" &&<div>
+                <p onClick={()=>setViewIndexConfig(!viewIndexConfig)} className="text-blue-800 underline cursor-pointer">{viewIndexConfig?"Hide":"View"} config</p>
+
+              {viewIndexConfig && <div className="p-5 bg-gray-100 border-0 rounded-2xl">
+                  <h1>[{inputsFormat.indexName}]</h1>
+                  <p>homePath=$SPLUNK_DB/{inputsFormat.indexName}</p>
+                  <p>coldPath=$SPLUNK_DB/{inputsFormat.indexName}</p>
+                  <p>thawedPath=$SPLUNK_DB/{inputsFormat.indexName}</p>
+                  <p>maxTotalDataSizeMB=500000</p>
+                  <p>frozenTimePeriodInSecs={inputsFormat.retentionDays*24*60*60 }</p>
+                  <p>RetentionDays:{inputsFormat.retentionDays}</p>
+              </div>}
+              </div>}
+
+              <label className="font-medium mb-1">Collection Methods</label>
+
+              {/* Radio Buttons */}
+              <div className="flex gap-8">
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="sourceMode"
+                    value={SOURCE_MODES.HEC}
+                    checked={sourceMode === SOURCE_MODES.HEC}
+                    onChange={() => setSourceMode(SOURCE_MODES.HEC)}
+                    className="accent-blue-600"
+                  />
+                  <span>HEC Token</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="sourceMode"
+                    value={SOURCE_MODES.UF}
+                    checked={sourceMode === SOURCE_MODES.UF}
+                    onChange={() => setSourceMode(SOURCE_MODES.UF)}
+                    className="accent-blue-600"
+                  />
+                  <span>Universal Forwarder</span>
+                </label>
+
+                <label className="flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="sourceMode"
+                    value={SOURCE_MODES.CONF}
+                    checked={sourceMode === SOURCE_MODES.CONF}
+                    onChange={() => setSourceMode(SOURCE_MODES.CONF)}
+                    className="accent-blue-600"
+                  />
+                  <span>Sys Log</span>
+                </label>
+              </div>
             </div>
-            <div className="bg-white shadow rounded-lg p-4 mb-6">
-          {/* Source Type Input */}
-          <div className="flex flex-col mb-4">
-            <label className="font-medium mb-1">Source Type</label>
-            <input
-              type="text"
-              placeholder="Enter source type (e.g. csv, json)"
-              className="border border-gray-300 rounded-lg px-3 py-2"
-              value={inputsFormat.inputs[0]?.sourceType || ""}
-              onChange={(e) => {
-                const value = e.target.value;
-                setInputsFormat((prev) => {
-                  const inputs = [...prev.inputs];
-                  inputs[0] = { ...inputs[0], sourceType: value };
-                  return { ...prev, inputs };
-                });
-              }}
-            />
-          </div>
-
-           <label className="font-medium mb-1">Collection Methods</label>
-
-          {/* Radio Buttons */}
-          <div className="flex gap-8">
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="sourceMode"
-                value={SOURCE_MODES.HEC}
-                checked={sourceMode === SOURCE_MODES.HEC}
-                onChange={() => setSourceMode(SOURCE_MODES.HEC)}
-                className="accent-blue-600"
-              />
-              <span>HEC Token</span>
-            </label>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="sourceMode"
-                value={SOURCE_MODES.UF}
-                checked={sourceMode === SOURCE_MODES.UF}
-                onChange={() => setSourceMode(SOURCE_MODES.UF)}
-                className="accent-blue-600"
-              />
-              <span>Universal Forwarder</span>
-            </label>
-
-            <label className="flex items-center gap-2">
-              <input
-                type="radio"
-                name="sourceMode"
-                value={SOURCE_MODES.CONF}
-                checked={sourceMode === SOURCE_MODES.CONF}
-                onChange={() => setSourceMode(SOURCE_MODES.CONF)}
-                className="accent-blue-600"
-              />
-              <span>Sys Log</span>
-            </label>
-          </div>
-        </div>
           </div>
         </div>
 
         {/* ───────── Source Type + Mode Selection ───────── */}
-        
+
 
         {/* {sourceMode === SOURCE_MODES.HEC && (
           <div className="border rounded-lg p-6 mb-6 bg-gray-50">
@@ -1473,7 +1584,7 @@ flex items-center gap-2
 
         {sourceMode === SOURCE_MODES.HEC && (
           <div className="border rounded-lg p-6 mb-6 bg-white">
-           
+
             <HECToken
               hecTokenDetails={hecTokenDetails}
               setHecTokenDetails={setHecTokenDetails}
@@ -1497,11 +1608,11 @@ flex items-center gap-2
         {sourceMode === SOURCE_MODES.UF && (
           <div className="border rounded-lg p-6 mb-6 bg-white">
             <UniversalForwarder
-            ufTokenDetails={ufTokenDetails}
-            setUfTokenDetails={setUfTokenDetails}
+              ufTokenDetails={ufTokenDetails}
+              setUfTokenDetails={setUfTokenDetails}
             />
           </div>
-        ) }
+        )}
 
         {/* {Object.keys(inputsFormat.indexConfig).length > 0 &&
           <IndexConfig key={Object.keys(inputsFormat.indexConfig)[0]} indexName={Object.keys(inputsFormat.indexConfig)[0]} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
@@ -1510,7 +1621,7 @@ flex items-center gap-2
         {sourceMode === SOURCE_MODES.CONF && (
           <>
             <div>
-              <h2 className="text-xl font-semibold mb-2">Inputs Config</h2>
+              <h2 className="text-xl font-semibold mb-2">Generate Configs</h2>
               <hr className="mb-4 text-blue-500" />
             </div>
 
@@ -1593,6 +1704,8 @@ flex items-center gap-2
         </div>
       </div>
       {/* )} */}
+    </div>
+      }
     </div>
   );
 };
