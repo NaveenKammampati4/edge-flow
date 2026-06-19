@@ -769,6 +769,18 @@ if (isDuplicateInputField) {
             </div>
           </div>
         </div>
+        {item.protocol!=="" && item.port!=="" &&<div>
+                
+
+             <div className="p-5 bg-gray-100 border-0 rounded-2xl">
+                  <h1>[{item.sourceType}]</h1>
+                  <p>Protocol: {item.protocol}</p>
+                  <p>Port: {item.filePath}</p>
+                  <p>Component Name{item.componentName}</p>
+              </div>
+              </div>}
+
+
         <h2 className="text-xl font-semibold text-gray-800">
              Upload sample log file
             </h2>

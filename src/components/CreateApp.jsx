@@ -1,15 +1,20 @@
 import { Folder, File } from "lucide-react";
-import { useState, useEffect } from "react"
+import { useState, useEffect } from "react";
+import axios from "axios";
+import Modal from "./Modal";
+import CreateRepo from "./CreateRepo";
 
-const CreateApp = ({ setIsCreateApp, inputsFormat }) => {
+const CreateApp = ({token, setIsCreateApp, inputsFormat }) => {
     const [isFilesVIew, setIsFilesView] = useState(false);
     const [selectedFile, setSelectedFile] = useState("");
     const [inputText, setInputText] = useState("");
     const [indexesText, setIndexesText] = useState("");
     const [propsText, setPropsText] = useState("");
-     const [inputTextView, setInputTextView] = useState("");
+    const [inputTextView, setInputTextView] = useState("");
     const [indexesTextView, setIndexesTextView] = useState("");
     const [propsTextView, setPropsTextView] = useState("");
+    const [appId, setAppId]=useState("");
+    const [isGithub, setIsGithub]=useState(false);
 
     const handleSelect = () => {
 
@@ -74,9 +79,9 @@ const CreateApp = ({ setIsCreateApp, inputsFormat }) => {
         }
     }
 
-    const handleChangeText=(e)=>{
+    const handleChangeText = (e) => {
         if (selectedFile === "indexes.conf") {
-           setIndexesText(e.target.value)
+            setIndexesText(e.target.value)
         }
         else if (selectedFile === "inputs.conf") {
             setInputText(e.target.value)
@@ -85,11 +90,36 @@ const CreateApp = ({ setIsCreateApp, inputsFormat }) => {
             setPropsText(e.target.value)
         }
     }
+
+    const handleSubmit = () => {
+        axios.post('http://127.0.0.1:5000/create_appr', {
+            "appName": "TestApp",
+            "inputs": inputText,
+            "indexConfig": indexesText,
+            "props": propsText,
+            "transform": {
+                "set_index": {
+                    "REGEX": ".",
+                    "DEST_KEY": "_MetaData:Index",
+                    "FORMAT": "test_index"
+                }
+            }
+        })
+            .then(response => {
+                console.log(response.data);
+                alert("saved successfully");
+                setAppId(response.data.app_id)
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    }
     return (
         <div>
+            {isGithub && <Modal><CreateRepo token={token} appId={appId}/></Modal>}
             <button onClick={() => setIsCreateApp(false)}>Back</button>
 
-            <div className="w-[100%] bg-gray-100 min-h-screen p-[20px] grid grid-cols-[15%_40%_40%] gap-[20px]">
+            <div className="relative w-[100%] bg-gray-100 min-h-screen p-[20px] grid grid-cols-[15%_40%_40%] gap-[20px]">
                 <div className="h-screen bg-white rounded-2xl p-2">
                     <div className="flex flex-row gap-1">
                         <Folder />
@@ -114,6 +144,8 @@ const CreateApp = ({ setIsCreateApp, inputsFormat }) => {
                             <p>props.conf</p>
                         </div>
                     </div>}
+
+                    <button onClick={()=>setIsGithub(true)}>Upload to github</button>
                 </div>
                 <div className="h-screen bg-white rounded-2xl">
                     <div className="text-2xl p-2.5">
@@ -126,18 +158,21 @@ const CreateApp = ({ setIsCreateApp, inputsFormat }) => {
 
                     </div>
                 </div>
-                 <div className="h-screen bg-white rounded-2xl">
+                <div className="h-screen bg-white rounded-2xl">
                     <div className="text-2xl p-2.5">
                         <h2>Edit: {selectedFile} </h2>
 
                     </div>
                     <hr className="" />
                     <div className=" w-[100%] p-2.5">
-                        <textarea value={getSelectedValue()} className="bg-gray-500 w-[100%] h-[500px] text-white" onChange={(e)=>handleChangeText(e)} />
+                        <textarea value={getSelectedValue()} className="bg-gray-500 w-[100%] h-[500px] text-white" onChange={(e) => handleChangeText(e)} />
 
                     </div>
                 </div>
+                <button onClick={() => handleSubmit()} className="bg-blue-500 py-2 px-4 border-amber-50 rounded-2xl fixed bottom-2 right-10 border-2">Save</button>
             </div>
+
+
         </div>
     )
 }

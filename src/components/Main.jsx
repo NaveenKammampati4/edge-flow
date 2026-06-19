@@ -922,7 +922,7 @@ const Main = () => {
   return (
     <div>
       {
-        isCreateApp? <CreateApp setIsCreateApp={setIsCreateApp} inputsFormat={inputsFormat}/> :<div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
+        isCreateApp? <CreateApp token={token} setIsCreateApp={setIsCreateApp} inputsFormat={inputsFormat}/> :<div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
       {/* <h2 className="text-blue-600 font-bold text-2xl mb-6">
         Dynamic Splunk App Builder
       </h2>
@@ -1018,7 +1018,7 @@ flex items-center gap-2
               />
            </div>
            <div className="flex flex-col gap-1">
-            <label className="font-medium mb-1">Environment Type</label>
+            <label className="font-medium mb-1">Environment Name</label>
               <select
                 type="text"
                 placeholder="Enter Type"
@@ -1352,7 +1352,7 @@ flex items-center gap-2
                 ) : (
                   <div className="flex flex-col relative">
                     <label htmlFor="newIndex" className="font-medium mb-1">
-                      Enter New Index
+                      Enter New Index Name
                     </label>
                     <input
                       id="newIndex"
@@ -1493,7 +1493,7 @@ flex items-center gap-2
             <div className="bg-white shadow rounded-lg p-4 mb-6">
               {/* Source Type Input */}
               <div className="flex flex-col mb-4">
-                <label className="font-medium mb-1">Source Type</label>
+                <label className="font-medium mb-1">Source Type Name</label>
                 <input
                   type="text"
                   placeholder="Enter source type (e.g. csv, json)"
@@ -1511,17 +1511,17 @@ flex items-center gap-2
               </div>
 
               {inputsFormat.indexName!=="" && inputsFormat.retentionDays!=="" &&<div>
-                <p onClick={()=>setViewIndexConfig(!viewIndexConfig)} className="text-blue-800 underline cursor-pointer">{viewIndexConfig?"Hide":"View"} config</p>
+                
 
-              {viewIndexConfig && <div className="p-5 bg-gray-100 border-0 rounded-2xl">
+             <div className="p-5 bg-gray-100 border-0 rounded-2xl">
                   <h1>[{inputsFormat.indexName}]</h1>
                   <p>homePath=$SPLUNK_DB/{inputsFormat.indexName}</p>
                   <p>coldPath=$SPLUNK_DB/{inputsFormat.indexName}</p>
                   <p>thawedPath=$SPLUNK_DB/{inputsFormat.indexName}</p>
                   <p>maxTotalDataSizeMB=500000</p>
                   <p>frozenTimePeriodInSecs={inputsFormat.retentionDays*24*60*60 }</p>
-                  <p>RetentionDays:{inputsFormat.retentionDays}</p>
-              </div>}
+                  
+              </div>
               </div>}
 
               <label className="font-medium mb-1">Collection Methods</label>
