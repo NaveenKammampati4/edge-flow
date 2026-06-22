@@ -180,7 +180,7 @@ ${f.blacklist ? `blacklist = ${f.blacklist}` : ""}
     <div className="w-full max-w-4xl mx-auto p-6 bg-white rounded-2xl shadow flex flex-col gap-5">
 
       <h2 className="text-xl font-bold text-center">
-        Splunk UF Builder (AI Smart Pro Mode)
+        Splunk UF Builder
       </h2>
 
       {/* HELP TEXT */}
