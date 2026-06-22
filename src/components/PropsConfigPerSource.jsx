@@ -1456,7 +1456,7 @@ const PropsConfigPerSource = ({
                     return (
                       itemList[each] !== "" && (
                         <li>
-                          {each.toUpperCase()} : {itemList[each]}
+                          {each.toUpperCase()} = {itemList[each]}
                         </li>
                       )
                     );

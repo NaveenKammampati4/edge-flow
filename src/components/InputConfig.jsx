@@ -12,7 +12,7 @@ const InputConfig = ({
   setInputsFormat,
   handleTransforms,
 }) => {
-   console.log("InputConfig props:", {
+  console.log("InputConfig props:", {
     cancelConfig,
     each,
     inputsFormat,
@@ -20,12 +20,12 @@ const InputConfig = ({
     handleTransforms,
   });
   const [inputsConfigData, setInputsConfigData] = useState({
-    protocol:"",
+    protocol: "",
     filePath: "",
     sourceType: "",
     index: "",
-    whiteList:"",
-    blackList:"",
+    whiteList: "",
+    blackList: "",
   });
   //  const [customConfig, setCustomConfig] = useState(1);
 
@@ -46,10 +46,10 @@ const InputConfig = ({
     inputsFormat.inputs[each - 1].sourceType || ""
   );
 
-  const existingIndexes = ["users_index", "orders_index", "products_index","userData_meterics"];
+  const existingIndexes = ["users_index", "orders_index", "products_index", "userData_meterics"];
   const possibleSuffixes = ["_logs", "_data"];
   const [files, setFiles] = useState(null);
-  
+
 
   const handleInputChange = (e) => {
     const value = e.target.value;
@@ -65,11 +65,11 @@ const InputConfig = ({
     }
   };
 
-  console.log("aaaaab",inputsFormat.inputs[each - 1])
+  console.log("aaaaab", inputsFormat.inputs[each - 1])
 
-  useEffect(()=>{
+  useEffect(() => {
     setTempSourceType(inputsFormat.inputs[each - 1].sourceType || "")
-  },[inputsFormat.inputs[each - 1].sourceType])
+  }, [inputsFormat.inputs[each - 1].sourceType])
 
   useEffect(() => {
     setInputsFormat((prev) => {
@@ -156,35 +156,35 @@ const InputConfig = ({
     // }
 
     // 🔹 Normalize key
-const keyToCheck = trimmedKey.toLowerCase();
+    const keyToCheck = trimmedKey.toLowerCase();
 
-//Check customFields
-const customFields =
-  inputsFormat.inputs?.[each - 1]?.customFields || [];
+    //Check customFields
+    const customFields =
+      inputsFormat.inputs?.[each - 1]?.customFields || [];
 
-const isDuplicateCustomField = customFields.some((field) => {
-  const [key] = Object.keys(field);
-  return key?.toLowerCase() === keyToCheck;
-});
+    const isDuplicateCustomField = customFields.some((field) => {
+      const [key] = Object.keys(field);
+      return key?.toLowerCase() === keyToCheck;
+    });
 
-if (isDuplicateCustomField) {
-  setCustomFieldError("Duplicate key already exists in custom fields");
-  return;
-}
+    if (isDuplicateCustomField) {
+      setCustomFieldError("Duplicate key already exists in custom fields");
+      return;
+    }
 
-//Check input-level fields
-const inputFields = inputsFormat.inputs?.[each - 1] || {};
+    //Check input-level fields
+    const inputFields = inputsFormat.inputs?.[each - 1] || {};
 
-const isDuplicateInputField = Object.keys(inputFields).some(
-  (key) => key.toLowerCase() === keyToCheck
-);
+    const isDuplicateInputField = Object.keys(inputFields).some(
+      (key) => key.toLowerCase() === keyToCheck
+    );
 
-if (isDuplicateInputField) {
-  setCustomFieldError("Key conflicts with existing input field");
-  return;
-}
+    if (isDuplicateInputField) {
+      setCustomFieldError("Key conflicts with existing input field");
+      return;
+    }
 
-    
+
     setCustomFieldError("");
     setInputsFormat((prev) => {
       const updatedInputs = [...prev.inputs];
@@ -383,25 +383,25 @@ if (isDuplicateInputField) {
   //   });
   // };
 
-  const updateProps=()=>{
+  const updateProps = () => {
     const trimmedSourceType = tempSourceType.trim();
     setInputsFormat((prev) => {
       let updateProps = { ...prev.props };
-      let sType=Object.keys(updateProps)[0];
+      let sType = Object.keys(updateProps)[0];
       let pProp = updateProps[sType];
       console.log("pProp", pProp);
-//       const updated = Object.fromEntries(
-//   Object.entries(pProp).filter(([key]) => key !== val)
-// );
+      //       const updated = Object.fromEntries(
+      //   Object.entries(pProp).filter(([key]) => key !== val)
+      // );
       const updatedInputs = [...prev.inputs];
       updatedInputs[each - 1] = {
         ...updatedInputs[each - 1],
         sourceType: trimmedSourceType,
       };
-      updateProps = {[trimmedSourceType]: pProp};
+      updateProps = { [trimmedSourceType]: pProp };
       return {
         ...prev,
-         inputs: updatedInputs,
+        inputs: updatedInputs,
         props: updateProps,
         // props: updatedProps,
       };
@@ -443,9 +443,9 @@ if (isDuplicateInputField) {
     });
   };
 
-  useEffect(()=>{
+  useEffect(() => {
     addProps();
-  },[tempSourceType])
+  }, [tempSourceType])
 
   const addField = () => {
     let sTypeField = inputsFormat.inputs[each - 1].customFields;
@@ -479,17 +479,17 @@ if (isDuplicateInputField) {
           <div className="flex flex-col w-48 min-w-[150px]">
             <div className="flex flex-col">
               <label htmlFor="existingAppName" className="font-medium mb-1">
-                    Select Protocol
-                  </label>
-                  <select
-                  name="protocol"
-                  value={item.protocol}
-                  onChange={(e)=>updateIputs(e)}
-                    id="existingAppName"
-                    className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2">
-                      <option>TCP</option>
-                      <option>UDP</option>
-                    </select>
+                Select Protocol
+              </label>
+              <select
+                name="protocol"
+                value={item.protocol}
+                onChange={(e) => updateIputs(e)}
+                id="existingAppName"
+                className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2">
+                <option>TCP</option>
+                <option>UDP</option>
+              </select>
             </div>
             {/* <label className="text-sm font-medium text-gray-700 mb-1">
               Input Stanza
@@ -510,7 +510,7 @@ if (isDuplicateInputField) {
 
             <input
               type="text"
-               value={item.filePath}
+              value={item.filePath}
               name="filePath"
               onChange={(e) => updateIputs(e)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -524,7 +524,7 @@ if (isDuplicateInputField) {
 
             <input
               type="text"
-               name="componentName"
+              name="componentName"
               value={item.componentName}
               onChange={(e) => updateIputs(e)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -741,11 +741,10 @@ if (isDuplicateInputField) {
                   onClick={addProps}
                   disabled={!tempSourceType.trim()}
                   className={`px-3 py-2 rounded-lg shadow text-white
-              ${
-                tempSourceType.trim()
-                  ? "bg-blue-500 hover:bg-blue-600 cursor-pointer"
-                  : "bg-gray-300 cursor-not-allowed"
-              }`}
+              ${tempSourceType.trim()
+                      ? "bg-blue-500 hover:bg-blue-600 cursor-pointer"
+                      : "bg-gray-300 cursor-not-allowed"
+                    }`}
                 >
                   Add Props
                 </button>
@@ -761,7 +760,7 @@ if (isDuplicateInputField) {
               )}
 
               <button
-                onClick={() => {cancelConfig(each)}}
+                onClick={() => { cancelConfig(each) }}
                 className=" px-3 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
               >
                 Cancel
@@ -769,36 +768,11 @@ if (isDuplicateInputField) {
             </div>
           </div>
         </div>
-        {item.protocol!=="" && item.port!=="" &&<div>
-                
-
-             <div className="p-5 bg-gray-100 border-0 rounded-2xl">
-                  <h1>[{item.sourceType}]</h1>
-                  <p>Protocol: {item.protocol}</p>
-                  <p>Port: {item.filePath}</p>
-                  <p>Component Name{item.componentName}</p>
-              </div>
-              </div>}
+        
 
 
-        <h2 className="text-xl font-semibold text-gray-800">
-             Upload sample log file
-            </h2>
-            {/* <div className="flex items-center gap-4">
-              <input
-                onChange={(e) => setFiles(e.target.files[0])}
-                type="file"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div> */}
-            <div className="flex items-center gap-4">
-              <input
-                onChange={(e) => setFiles(e.target.files[0])}
-                type="file"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
-      
+        
+
         <div className=" border-gray-200 pt-4">
           <h3 className="text-lg font-semibold text-gray-800 mb-1.9">
             Custom Fields
@@ -836,6 +810,7 @@ if (isDuplicateInputField) {
               </button>
             </div>
           </div>
+          
 
           {inputsFormat.inputs[each - 1].customFields.length > 0 ? (
             inputsFormat.inputs[each - 1].customFields.map((field, index) => {
@@ -885,13 +860,13 @@ if (isDuplicateInputField) {
                     {/* ✅ Update button only when row is changed */}
                     {(currentEdit.key !== originalKey ||
                       currentEdit.value !== originalValue) && (
-                      <button
-                        onClick={() => handleUpdateCustomField(index)}
-                        className="px-3 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600"
-                      >
-                        Update
-                      </button>
-                    )}
+                        <button
+                          onClick={() => handleUpdateCustomField(index)}
+                          className="px-3 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600"
+                        >
+                          Update
+                        </button>
+                      )}
 
                     <button
                       onClick={() => deleteCustomField(index)}
@@ -911,10 +886,35 @@ if (isDuplicateInputField) {
               );
             })
           ) : (
-            <p className="text-sm mt-2 ml-1">No Custom fields added yet.</p>
+            <p className="text-sm mt-2 ml-1"></p>
           )}
         </div>
       </div>
+
+      <h2 className="text font-semibold text-gray-800">
+          Upload sample log file
+        </h2>
+        {/* <div className="flex items-center gap-4">
+              <input
+                onChange={(e) => setFiles(e.target.files[0])}
+                type="file"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div> */}
+        <div className="flex items-center gap-4">
+          <input
+            onChange={(e) => setFiles(e.target.files[0])}
+            type="file"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+          <h2 className="text-xl font-bold">Inputs.conf:</h2>
+        {item.protocol !== "" && item.port !== "" && <pre className="p-1 bg-gray-100 rounded-2xl border overflow-auto">
+          {`
+[${item.protocol}://${item.filePath}]
+Component Name= ${item.componentName}
+`}
+        </pre>}
 
       {/* {inputsFormat.inputs[each-1].index &&
                 
@@ -940,12 +940,12 @@ if (isDuplicateInputField) {
             setInputsFormat={setInputsFormat}
             handleTransforms={handleTransforms}
             files={files}
-          />      
+          />
         )}
       </div>
       {/* <TransformsConfig/> */}
 
-      
+
     </div>
   );
 };

@@ -22,19 +22,21 @@ const CreateApp = ({token, setIsCreateApp, inputsFormat }) => {
         console.log("texts ", texts);
         const propsKeys = Object.keys(inputsFormat.props[texts[0]]);
         const propss = inputsFormat.props[texts[0]];
-        let propsText = "";
+        let propsText = "{\n";
         for (let key of Object.keys(propss)) {
-            propsText = propsText + key + ":" + propss[key] + "\n";
+            propsText = propsText + key + "=" + propss[key] + "\n";
         }
+        propsText=propsText+"}"
         setPropsText(propsText);
         setPropsTextView(propsText);
         let inputs = inputsFormat.inputs[0];
-        let inputsText = "";
+        let inputsText = "{\n";
 
         console.log("inpts ", inputs);
         for (let key of Object.keys(inputs)) {
-            inputsText = inputsText + key + ":" + inputs[key] + "\n";
+            inputsText = inputsText + key + "=" + inputs[key] + "\n";
         }
+        inputsText=inputsText+"}"
 
         setInputText(inputsText)
         setInputTextView(inputsText)
@@ -44,7 +46,7 @@ const CreateApp = ({token, setIsCreateApp, inputsFormat }) => {
 
         let indexKeys = Object.keys(indexes)[0];
 
-        let indexesConfigText = "indexName:" + indexKeys + "\n" + "retentionTime:" + indexes[indexKeys]["retentionTime"];
+        let indexesConfigText ="{\n"+ "indexName=" + indexKeys + "\n" + "retentionTime=" + indexes[indexKeys]["retentionTime"]+"\n}";
 
         console.log("indexesConfigText", indexesConfigText);
         setIndexesText(indexesConfigText);
