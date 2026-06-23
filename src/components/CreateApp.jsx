@@ -1,10 +1,11 @@
-import { Folder, File } from "lucide-react";
+import { Folder, File, ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import Modal from "./Modal";
 import CreateRepo from "./CreateRepo";
+import UniversalForwarder from "./UniversalForwarder";
 
-const CreateApp = ({token, setIsCreateApp, inputsFormat }) => {
+const CreateApp = ({token, setIsCreateApp, inputsFormat, hecTokenDetails, ufTokenDetails, sourceMode, indexContent,uftTokenContext }) => {
     const [isFilesVIew, setIsFilesView] = useState(false);
     const [selectedFile, setSelectedFile] = useState("");
     const [inputText, setInputText] = useState("");
@@ -13,44 +14,105 @@ const CreateApp = ({token, setIsCreateApp, inputsFormat }) => {
     const [inputTextView, setInputTextView] = useState("");
     const [indexesTextView, setIndexesTextView] = useState("");
     const [propsTextView, setPropsTextView] = useState("");
+    const [transformText, setTransfromText]=useState("");
+    const [transformTextView, setTransfromTextView]=useState("");
     const [appId, setAppId]=useState("");
     const [isGithub, setIsGithub]=useState(false);
+    const [indexContentText, setIndexContentText]=useState("");
+    const[indexContentTextEdit, setIndexContentTextEdit]=useState("");
+
+
+    console.log("inputs format ",inputsFormat);
+
+    console.log("universal forwarder "+ufTokenDetails.generatedConfig)
 
     const handleSelect = () => {
 
+        if(sourceMode=="CONF"){
         const texts = Object.keys(inputsFormat.props);
-        console.log("texts ", texts);
         const propsKeys = Object.keys(inputsFormat.props[texts[0]]);
         const propss = inputsFormat.props[texts[0]];
-        let propsText = "{\n";
+        let propsText = `[${inputsFormat.inputs[0].sourceType}]\n`;
         for (let key of Object.keys(propss)) {
-            propsText = propsText + key + "=" + propss[key] + "\n";
+            if(key!=="timePrefix"){
+                 propsText = propsText + key + " = " + propss[key] + "\n";
+            }
+           
         }
-        propsText=propsText+"}"
+        propsText=propsText+""
         setPropsText(propsText);
         setPropsTextView(propsText);
         let inputs = inputsFormat.inputs[0];
-        let inputsText = "{\n";
+        let inputsText = `[monitor://${inputs.filePaths}]\n`
+
+        let transformKeys=Object.keys(inputsFormat.transform);
+
+        console.log("transform value", propss);
+        console.log("transform value", transformKeys);
+        let transformValue= propss[transformKeys[0]];
+        let transformText=`[${transformValue}]\n`
+        let transfromJson=inputsFormat.transform[transformKeys[0]]
+        for(let val of Object.keys(transfromJson)){
+            transformText=transformText+val+" = "+transfromJson[val]+"\n";
+        }
+
+        setTransfromText(transformText);
+        setTransfromTextView(transformText);
 
         console.log("inpts ", inputs);
-        for (let key of Object.keys(inputs)) {
-            inputsText = inputsText + key + "=" + inputs[key] + "\n";
+        for (let key of Object.keys(inputs)) {{}
+            if(key!=="id" && key!=="customFields" && key!=="protocol" && key!=="filePath" && key!=="filePaths" && key!=="sourceType"){
+         inputsText = inputsText + key + " = " + inputs[key] + "\n";
+            }
+            else if(key==="sourceType"){
+                inputsText=inputsText+"sourcetype = "+inputs[key]+"\n"
+            }
+   
         }
-        inputsText=inputsText+"}"
+        inputsText = inputsText
+    + "followTail = 0\n"
+    + "ignoreOlderThan = 7d\n"
+    + "alwaysOpenFile = 0\n"
+    + "initCrcLength = 256";
+
 
         setInputText(inputsText)
         setInputTextView(inputsText)
+        }
+        else if(sourceMode=="HEC"){
+            let inputsText="[monitor:///var/log/syslog]\n"+"Token Name="+hecTokenDetails.tokenName+"\n"+"indexName="+hecTokenDetails.indexName+"\n"+"sourceType="+hecTokenDetails.sourceType+"\n"+"disabled=false"+"\n";
+            setInputText(inputsText)
+            setInputTextView(inputsText)
+        }
+        else if(sourceMode=="UF"){
+            // let inputsText="";
+            // for(let val of ufTokenDetails){
+            //     let textVal="[monitor:"+val+"]\n"+"index="+ufTokenDetails.indexName+"\n"+"sourceType="+ufTokenDetails.sourceType+"\n"+"disabled=false\n";
+            //     inputsText=inputsText+textVal+"\n\n"
+            // }
+            setInputText(uftTokenContext);
+             setInputTextView(uftTokenContext)
+        }
 
         const indexes = inputsFormat.indexConfig
         console.log("indexes config ", indexes);
 
         let indexKeys = Object.keys(indexes)[0];
 
-        let indexesConfigText ="{\n"+ "indexName=" + indexKeys + "\n" + "retentionTime=" + indexes[indexKeys]["retentionTime"]+"\n}";
+        console.log("indexKeys "+indexKeys);
 
+        let indexesConfigText ="\n"+ "indexName=" + indexKeys + "\n" + "retentionTime=" + inputsFormat.retentionDays+"\n";
+        let indexName=inputsFormat.indexName
         console.log("indexesConfigText", indexesConfigText);
         setIndexesText(indexesConfigText);
         setIndexesTextView(indexesConfigText);
+
+        let indexContents=indexContent+"\n\n"+"["+indexName+"]\n"+"homePath=volume:_splunk_home\\"+indexName+"\db\n"+
+        "coldPath = volume:_splunk_home\\"+indexName+"\colddb\n"+
+        "thawedPath = volume:_splunk_home\\"+indexName+"\\thaweddb\n"
+        +"frozenTimePeriodInSecs = "+inputsFormat.retentionDays * 24 * 60 * 60;
+        setIndexContentText(indexContents);
+        setIndexContentTextEdit(indexContents);
 
     }
 
@@ -59,37 +121,46 @@ const CreateApp = ({token, setIsCreateApp, inputsFormat }) => {
     }, [inputsFormat])
 
     const getSelectedValue = () => {
-        if (selectedFile === "indexes.conf") {
-            return indexesText;
+        if (selectedFile === "indexes stanza") {
+            return indexContentText;
         }
-        else if (selectedFile === "inputs.conf") {
+        else if (selectedFile === "inputs stanza") {
             return inputText;
         }
-        else if (selectedFile === "props.conf") {
+        else if (selectedFile === "props stanza") {
             return propsText;
+        }
+        else if (selectedFile === "transform stanza") {
+            return transformText;
         }
     }
     const getSelectedValueView = () => {
-        if (selectedFile === "indexes.conf") {
-            return indexesTextView;
+        if (selectedFile === "indexes stanza") {
+            return indexContentTextEdit;
         }
-        else if (selectedFile === "inputs.conf") {
+        else if (selectedFile === "inputs stanza") {
             return inputTextView;
         }
-        else if (selectedFile === "props.conf") {
+        else if (selectedFile === "props stanza") {
             return propsTextView;
+        }
+        else if(selectedFile==="transform stanza"){
+            return transformTextView;
         }
     }
 
     const handleChangeText = (e) => {
         if (selectedFile === "indexes.conf") {
-            setIndexesText(e.target.value)
+            setIndexContentTextEdit(e.target.value)
         }
         else if (selectedFile === "inputs.conf") {
             setInputText(e.target.value)
         }
         else if (selectedFile === "props.conf") {
             setPropsText(e.target.value)
+        }
+        else if(selectedFile==="transform.conf"){
+            setTransfromText(e.target.value);
         }
     }
 
@@ -99,13 +170,7 @@ const CreateApp = ({token, setIsCreateApp, inputsFormat }) => {
             "inputs": inputText,
             "indexConfig": indexesText,
             "props": propsText,
-            "transform": {
-                "set_index": {
-                    "REGEX": ".",
-                    "DEST_KEY": "_MetaData:Index",
-                    "FORMAT": "test_index"
-                }
-            }
+            "transform": transformText
         })
             .then(response => {
                 console.log(response.data);
@@ -117,9 +182,10 @@ const CreateApp = ({token, setIsCreateApp, inputsFormat }) => {
             });
     }
     return (
-        <div>
+        <div className="bg-gray-100 min-h-screen">
             {isGithub && <Modal><CreateRepo token={token} appId={appId}/></Modal>}
-            <button onClick={() => setIsCreateApp(false)}>Back</button>
+            <ArrowLeft onClick={() => setIsCreateApp(false)}/>
+            
 
             <div className="relative w-[100%] bg-gray-100 min-h-screen p-[20px] grid grid-cols-[15%_40%_40%] gap-[20px]">
                 <div className="h-screen bg-white rounded-2xl p-2">
@@ -133,21 +199,25 @@ const CreateApp = ({token, setIsCreateApp, inputsFormat }) => {
                     </div>
 
                     {isFilesVIew && <div className=" flex flex-col pl-2 gap-2">
-                        <div onClick={() => setSelectedFile("indexes.conf")} className="cursor-pointer flex flex-row gap-1">
+                        <div onClick={() => setSelectedFile("indexes stanza")} className="cursor-pointer flex flex-row gap-1">
                             <File />
                             <p>indexes.conf</p>
                         </div>
-                        <div onClick={() => setSelectedFile("inputs.conf")} className="cursor-pointer flex flex-row gap-1">
+                        <div onClick={() => setSelectedFile("inputs stanza")} className="cursor-pointer flex flex-row gap-1">
                             <File />
                             <p>inputs.conf</p>
                         </div>
-                        <div onClick={() => setSelectedFile("props.conf")} className="cursor-pointer flex flex-row gap-1">
+                        {sourceMode=="CONF" && <div onClick={() => setSelectedFile("props stanza")} className="cursor-pointer flex flex-row gap-1">
                             <File />
                             <p>props.conf</p>
-                        </div>
+                        </div>}
+                         {sourceMode=="CONF" && <div onClick={() => setSelectedFile("transform stanza")} className="cursor-pointer flex flex-row gap-1">
+                            <File />
+                            <p>Transform.conf</p>
+                        </div>}
                     </div>}
 
-                    <button onClick={()=>setIsGithub(true)}>Upload to github</button>
+                    <button className="bg-blue-600 text-white border-0 p-2 rounded-2xl mt-3" onClick={()=>setIsGithub(true)}>Upload to github</button>
                 </div>
                 <div className="h-screen bg-white rounded-2xl">
                     <div className="text-2xl p-2.5">

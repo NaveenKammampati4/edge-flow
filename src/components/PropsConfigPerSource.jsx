@@ -744,19 +744,19 @@ const PropsConfigPerSource = ({
     console.log("new value : ", newValue);
     setNewValue(newValue);
 
-    if (newKey.toLowerCase().includes("transform-".toLowerCase())) {
+    
       setInputsFormat((prev) => ({
         ...prev,
         transform: {
           ...prev.transform,
           [newKey]: {
-            regex: "",
-            format: "",
-            destKey: "",
+           REGEX: "",
+            FORMAT: "",
+            DEST_KEY: "",
           },
         },
       }));
-    }
+    
 
     let sType = inputsFormat.inputs[each - 1].sourceType;
     console.log(sType);
@@ -803,10 +803,11 @@ const PropsConfigPerSource = ({
   };
 
   const updateTransform = (key, field, value) => {
+    console.log("transform logs ,", key, field, value);
     setInputsFormat((prev) => ({
       ...prev,
       transform: {
-        ...prev.transform,
+        ...prev.transform,  
         [key]: {
           ...prev.transform[key],
           [field]: value,
@@ -1443,7 +1444,7 @@ const PropsConfigPerSource = ({
           </div>
           <div className="flex flex-col space-y-2">
             <h3 className="text-lg font-semibold text-gray-800">
-              Generated Props.conf
+              Props Stanza
             </h3>
             {isCopyConfig && (
               // <pre className=" h-44  overflow-auto w-96 resize-none border border-gray-300 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">

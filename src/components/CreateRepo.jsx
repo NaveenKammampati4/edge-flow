@@ -78,7 +78,7 @@ export default function CreateRepo({token,appId}) {
         <button
   className="w-15 p-2 bg-blue-700 rounded-2xl"
   onClick={() => {
-    window.location.href = "http://127.0.0.1:5000/projects";
+    window.location.href = "http://52.140.70.19:5000/projects";
   }}
 >
   Yes
@@ -156,7 +156,7 @@ export default function CreateRepo({token,appId}) {
         </div>
 
       
-        <div>
+        {/* <div>
           <label className="block mb-2 font-medium">
             Visibility
           </label>
@@ -184,7 +184,7 @@ export default function CreateRepo({token,appId}) {
               Private
             </label>
           </div>
-        </div>
+        </div> */}
 
        
         {/* Submit Button */}

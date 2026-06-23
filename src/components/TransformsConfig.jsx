@@ -96,19 +96,19 @@ const TransformsConfig = ({
 
       transformArray.forEach((t) => {
         try {
-          const regex = new RegExp(t.regex, "g");
+          const regex = new RegExp(t.REGEX, "g");
 
-          if (t.destKey === "_raw") {
-            modifiedLine = t.format
-              ? modifiedLine.replace(regex, t.format)
+          if (t.DEST_KEY === "_raw") {
+            modifiedLine = t.FORMAT
+              ? modifiedLine.replace(regex, t.FORMAT)
               : modifiedLine.replace(regex, "");
-          } else if (t.destKey === "nullQueue") {
+          } else if (t.DEST_KEY === "nullQueue") {
             if (regex.test(modifiedLine)) {
               drop = true;
             }
           } else {
             if (regex.test(modifiedLine)) {
-              routeKey = t.destKey;
+              routeKey = t.DEST_KEY;
             }
           }
         } catch (err) {
@@ -171,13 +171,13 @@ const TransformsConfig = ({
               <div className="flex flex-col mt-2">
                 <label className="text-blue-700">REGEX</label>
                 <textarea
-                  name="regex"
-                  value={t.regex || ""}
+                  name="REGEX"
+                  value={t.REGEX || ""}
                   // onChange={(e) =>
                   //   handleChange( "regex", e.target.value)
                   // }
                   onChange={(e) =>
-                    updateTransform(name, "regex", e.target.value)
+                    updateTransform(name, "REGEX", e.target.value)
                   }
                   className="bg-white border border-gray-300 rounded-xl h-20"
                 />
@@ -185,13 +185,13 @@ const TransformsConfig = ({
               <div className="flex flex-col mt-2">
                 <label className="text-blue-700">FORMAT</label>
                 <input
-                  name="format"
-                  value={t.format || ""}
+                  name="FORMAT"
+                  value={t.FORMAT || ""}
                   // onChange={(e) =>
                   //   handleChange( "format", e.target.value)
                   // }
                   onChange={(e) =>
-                    updateTransform(name, "format", e.target.value)
+                    updateTransform(name, "FORMAT", e.target.value)
                   }
                   className="bg-white border border-gray-300 rounded-xl h-10"
                 />
@@ -199,13 +199,13 @@ const TransformsConfig = ({
               <div className="flex flex-col mt-2">
                 <label className="text-blue-700">DEST_KEY</label>
                 <input
-                  name="destKey"
-                  value={t.destKey || ""}
+                  name="DEST_KEY"
+                  value={t.DEST_KEY || ""}
                   // onChange={(e) =>
                   //   handleChange("destKey", e.target.value)
                   // }
                   onChange={(e) =>
-                    updateTransform(name, "destKey", e.target.value)
+                    updateTransform(name, "DEST_KEY", e.target.value)
                   }
                   className="bg-white border border-gray-300 rounded-xl h-10"
                 />

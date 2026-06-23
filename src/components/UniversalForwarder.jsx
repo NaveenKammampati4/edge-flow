@@ -54,10 +54,54 @@ const SuggestBox = ({ items, onSelect }) => {
   );
 };
 
-const UniversalForwarder = ({ setUfTokenDetails, ufTokenDetails }) => {
+const UniversalForwarder = ({ setUfTokenDetails, ufTokenDetails, uftTokenContext, setUftTokenContext }) => {
   const [ufToken, setUfToken] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeField, setActiveField] = useState(null);
+  const [generatedJson, setGeneratedJson] = useState(null);
+
+  const generateJson = () => {
+  const jsonData = {
+    indexName: ufTokenDetails.indexName,
+    sourceType: ufTokenDetails.sourceType,
+    host: ufTokenDetails.host,
+
+    files: files.map((file) => ({
+      path: file.path,
+      index: file.index,
+      sourcetype: file.sourcetype,
+      source: file.source || file.path,
+      host: file.host,
+
+      recursive: file.recursive,
+      followSymlink: file.followSymlink,
+      alwaysOpenFile: file.alwaysOpenFile,
+
+      whitelist: file.whitelist,
+      blacklist: file.blacklist,
+
+      crcSalt: file.crcSalt,
+      ignoreOlderThan: file.ignoreOlderThan,
+
+      disabled: file.disabled
+    }))
+  };
+
+
+  setGeneratedJson(jsonData);
+
+  // optional if you want parent state also
+  setUfTokenDetails((prev) => ({
+    ...prev,
+    generatedConfig: jsonData
+  }));
+
+  setUftTokenContext(buildConf())
+
+  setUfToken(true);
+};
+
+console.log("build conf", uftTokenContext);
 
   // 🧠 UPDATE FILE
   const updateFile = (index, field, value) => {
@@ -317,7 +361,7 @@ ${f.blacklist ? `blacklist = ${f.blacklist}` : ""}
 
       {/* OUTPUT */}
       <div className="flex gap-2">
-        <button onClick={() => setUfToken(true)} className="bg-green-600 text-white flex-1 py-2 rounded">
+        <button onClick={() => {setUfToken(true), generateJson()}} className="bg-green-600 text-white flex-1 py-2 rounded">
           Generate
         </button>
 

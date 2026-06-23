@@ -25,6 +25,7 @@ const Main = () => {
   const [indexMode, setIndexMode] = useState("new");
   const [appMode, setAppMode] = useState("new");
   const [existingIndexesList, setExistingIndexesList] = useState([]);
+  const [indexContent, setIndexContent]=useState("");
 
   let propsList = [
     "timePrefix",
@@ -53,6 +54,9 @@ const Main = () => {
         componentName: "",
         whiteList: "",
         blackList: "",
+        whiteList:"",
+        blackList:"",
+        disabled:false,
         customFields: [],
       },
     ],
@@ -86,6 +90,8 @@ const Main = () => {
     files:[]
   });
 
+  const [uftTokenContext, setUftTokenContext]=useState("");
+
   const [repos, setRepos] = useState([]);
   const [repoNames, setRepoNames] = useState([]);
   const [existingConfig, setExistingConfig] = useState([]);
@@ -108,10 +114,24 @@ const Main = () => {
       console.error("Fetch indexes error:", e);
     }
   }
+   const fetchIndexesContent = async () => {
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:5000/api/indexes/content/${token}/${userName}`
+      );
+
+      console.log("Configssa content:", response.data);
+      setIndexContent(response.data.content);
+
+    }
+    catch (e) {
+      console.error("Fetch indexes error:", e);
+    }
+  }
   const fetchConfigFiles = async () => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:5000/config-files`
+        `http://52.140.70.19:5000/config-files`
       );
 
       console.log("Configss:", response.data);
@@ -127,7 +147,7 @@ const Main = () => {
       if (!userName || !token) return;
 
       const response = await axios.get(
-        `http://127.0.0.1:5000/get-repos/${userName}/${token}`,
+        `http://52.140.70.19:5000/get-repos/${userName}/${token}`,
       );
 
       console.log("Repos:", response.data);
@@ -144,12 +164,13 @@ const Main = () => {
     fetchRepos();
     fetchConfigFiles();
     fetchIndexes();
+    fetchIndexesContent();
   }, [userName]);
 
   const fetchRepoBranches = async (owner, repoName, token) => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:5000/repo-branches/${owner}/${repoName}`,
+        `http://52.140.70.19:5000/repo-branches/${owner}/${repoName}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -180,7 +201,7 @@ const Main = () => {
   const fetchRepoFiles = async (owner, repoName, token, branch) => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:5000/repo-tree/${owner}/${repoName}/${branch}`,
+        `http://52.140.70.19:5000/repo-tree/${owner}/${repoName}/${branch}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -201,7 +222,7 @@ const Main = () => {
   const fetchRepoConfigFiles = async (owner, repoName, token, branch) => {
     try {
       const response = await axios.get(
-        `http://127.0.0.1:5000/read-splunk-configs/${owner}/${repoName}/${branch}`,
+        `http://52.140.70.19:5000/read-splunk-configs/${owner}/${repoName}/${branch}`,
         {
           headers: {
             Authorization: `Bearer ${token}`
@@ -813,8 +834,11 @@ const Main = () => {
     const customInputData = {
       id: newId,
       filePath: "",
+      filePaths:"",
       sourceType: "",
       index: "",
+      whiteList:"",
+      blackList:"",
       customFields: [],
     };
     // const propsConfig={
@@ -912,7 +936,7 @@ const Main = () => {
   }, [indexName, mode, inputsFormat.appName]);
 
   const loginWithGitHub = () => {
-    window.location.href = "http://127.0.0.1:5000/login/github";
+    window.location.href = "http://52.140.70.19:5000/login/github";
   };
 
   console.log("rposs", repos);
@@ -923,7 +947,7 @@ const Main = () => {
   return (
     <div>
       {
-        isCreateApp ? <CreateApp token={token} setIsCreateApp={setIsCreateApp} inputsFormat={inputsFormat} /> : <div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
+        isCreateApp ? <CreateApp token={token} setIsCreateApp={setIsCreateApp} inputsFormat={inputsFormat} hecTokenDetails={hecTokenDetails} ufTokenDetails={ufTokenDetails} sourceMode={sourceMode} indexContent={indexContent} uftTokenContext={uftTokenContext}/> : <div className="flex flex-col justify-start items-center p-6 bg-gray-100 min-h-screen">
           {/* <h2 className="text-blue-600 font-bold text-2xl mb-6">
         Dynamic Splunk App Builder
       </h2>
@@ -1536,19 +1560,19 @@ flex items-center gap-2
                       }
                     />
                   </div>
-                  <h2 className="text-2xl font-bold">Indexes.conf:</h2>
+                  
 
                   {inputsFormat.indexName !== "" && inputsFormat.retentionDays !== "" && <div>
 
-
-                    <div className="p-5 bg-gray-100 border-0 rounded-2xl">
+                    <h2 className="text-2xl font-bold">Indexes stanza:</h2>
+                    <div className="p-1 bg-gray-100 border-0 rounded-2xl">
                       <pre>
                         {`
 [${inputsFormat.indexName}]
 homePath=$SPLUNK_DB/${inputsFormat.indexName}
 coldPath=$SPLUNK_DB/${inputsFormat.indexName}
 thawedPath=$SPLUNK_DB/${inputsFormat.indexName}
-maxTotalDataSizeMB=500000
+maxTotalDataSizeMB=auto
 frozenTimePeriodInSecs=${inputsFormat.retentionDays * 24 * 60 * 60}
 `}
                       </pre>
@@ -1641,6 +1665,8 @@ frozenTimePeriodInSecs=${inputsFormat.retentionDays * 24 * 60 * 60}
                 <UniversalForwarder
                   ufTokenDetails={ufTokenDetails}
                   setUfTokenDetails={setUfTokenDetails}
+                  uftTokenContext={uftTokenContext}
+                  setUftTokenContext={setUftTokenContext}
                 />
               </div>
             )}

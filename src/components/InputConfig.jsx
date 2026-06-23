@@ -519,6 +519,20 @@ const InputConfig = ({
           </div>
           <div className="flex flex-col w-48 min-w-[150px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
+              File Path
+            </label>
+
+            <input
+              type="text"
+              value={item.filePaths}
+              name="filePaths"
+              onChange={(e) => updateIputs(e)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter source type"
+            />
+          </div>
+          <div className="flex flex-col w-48 min-w-[150px]">
+            <label className="text-sm font-medium text-gray-700 mb-1">
               Component Name
             </label>
 
@@ -526,6 +540,34 @@ const InputConfig = ({
               type="text"
               name="componentName"
               value={item.componentName}
+              onChange={(e) => updateIputs(e)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter source type"
+            />
+          </div>
+          <div className="flex flex-col w-48 min-w-[150px]">
+            <label className="text-sm font-medium text-gray-700 mb-1">
+              White List
+            </label>
+
+            <input
+              type="text"
+              name="whiteList"
+              value={item.whiteList}
+              onChange={(e) => updateIputs(e)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter source type"
+            />
+          </div>
+          <div className="flex flex-col w-48 min-w-[150px]">
+            <label className="text-sm font-medium text-gray-700 mb-1">
+              Black List
+            </label>
+
+            <input
+              type="text"
+              name="blackList"
+              value={item.blackList}
               onChange={(e) => updateIputs(e)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter source type"
@@ -759,19 +801,19 @@ const InputConfig = ({
                 <div></div>
               )}
 
-              <button
+              {/* <button
                 onClick={() => { cancelConfig(each) }}
                 className=" px-3 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
               >
                 Cancel
-              </button>
+              </button> */}
             </div>
           </div>
         </div>
-        
 
 
-        
+
+
 
         <div className=" border-gray-200 pt-4">
           <h3 className="text-lg font-semibold text-gray-800 mb-1.9">
@@ -810,7 +852,7 @@ const InputConfig = ({
               </button>
             </div>
           </div>
-          
+
 
           {inputsFormat.inputs[each - 1].customFields.length > 0 ? (
             inputsFormat.inputs[each - 1].customFields.map((field, index) => {
@@ -892,29 +934,42 @@ const InputConfig = ({
       </div>
 
       <h2 className="text font-semibold text-gray-800">
-          Upload sample log file
-        </h2>
-        {/* <div className="flex items-center gap-4">
+        Upload sample log file
+      </h2>
+      {/* <div className="flex items-center gap-4">
               <input
                 onChange={(e) => setFiles(e.target.files[0])}
                 type="file"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div> */}
-        <div className="flex items-center gap-4">
-          <input
-            onChange={(e) => setFiles(e.target.files[0])}
-            type="file"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-          <h2 className="text-xl font-bold">Inputs.conf:</h2>
-        {item.protocol !== "" && item.port !== "" && <pre className="p-1 bg-gray-100 rounded-2xl border overflow-auto">
+      <div className="flex items-center gap-4">
+        <input
+          onChange={(e) => setFiles(e.target.files[0])}
+          type="file"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+
+      {item.protocol !== "" && item.port !== "" && <div>
+        <h2 className="text-xl font-bold">Inputs stanza:</h2>
+        <pre className="p-1 bg-gray-100 rounded-2xl border overflow-auto">
           {`
-[${item.protocol}://${item.filePath}]
+[[monitor://${item.filePaths}]
+indexName=${inputsFormat.indexName}
+sourceType=${item.sourceType}
+disabled=0
 Component Name= ${item.componentName}
+followTail = 0
+ignoreOlderThan = 7d
+alwaysOpenFile = 0
+crcSalt =
+initCrcLength = 256
+whiteList=${item.whiteList}
+blackList=${item.blackList}
 `}
-        </pre>}
+        </pre>
+      </div>}
 
       {/* {inputsFormat.inputs[each-1].index &&
                 
