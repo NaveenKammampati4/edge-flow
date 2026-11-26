@@ -1,0 +1,45 @@
+2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
+2025-10-29 09:42:41 ERROR API request received (user=admin)
+2025-10-29 10:30:54 DEBUG Starting background job (user=system)
+2025-10-29 10:04:57 INFO API request received (user=admin)
+2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
+2025-10-29 09:42:41 ERROR API request received (user=admin)
+2025-10-29 10:30:54 DEBUG Starting background job (user=system)
+2025-10-29 10:04:57 INFO API request received (user=admin)
+2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
+2025-10-29 09:42:41 ERROR API request received (user=admin)
+2025-10-29 10:30:54 DEBUG Starting background job (user=system)
+2025-10-29 10:04:57 INFO API request received (user=admin)
+
+
+
+
+date                 Level     log  
+2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
+2025-10-29 09:42:41 ERROR API request received (user=admin)
+2025-10-29 10:30:54 DEBUG Starting background job (user=system)
+2025-10-29 10:04:57 INFO API request received (user=admin)
+2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
+2025-10-29 09:42:41 ERROR API request received (user=admin)
+2025-10-29 10:30:54 DEBUG Starting background job (user=system)
+2025-10-29 10:04:57 INFO API request received (user=admin)
+2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
+2025-10-29 09:42:41 ERROR API request received (user=admin)
+2025-10-29 10:30:54 DEBUG Starting background job (user=system)
+2025-10-29 10:04:57 INFO API request received (user=admin)
+
+
+dte                 level     log      user   
+
+2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
+2025-10-29 09:42:41 ERROR API request received (user=admin)
+2025-10-29 10:30:54 DEBUG Starting background job (user=system)
+2025-10-29 10:04:57 INFO API request received (user=admin)
+2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
+2025-10-29 09:42:41 ERROR API request received (user=admin)
+2025-10-29 10:30:54 DEBUG Starting background job (user=system)
+2025-10-29 10:04:57 INFO API request received (user=admin)
+2025-10-29 09:59:22 ERROR Cache cleared (user=admin)
+2025-10-29 09:42:41 ERROR API request received (user=admin)
+2025-10-29 10:30:54 DEBUG Starting background job (user=system)
+2025-10-29 10:04:57 INFO API request received (user=admin)

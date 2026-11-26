@@ -1,22 +1,296 @@
 import React from "react";
 import PropsConfigPerSource from "./PropsConfigPerSource";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import TransformsConfig from "./TransformsConfig";
+import { IndexConfig } from "./IndexConfig";
 
-const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handleTransforms }) => {
+const InputConfig = ({
+  configFiles,
+  cancelConfig,
+  each,
+  inputsFormat,
+  setInputsFormat,
+  handleTransforms,
+}) => {
+  console.log("InputConfig props:", {
+    cancelConfig,
+    each,
+    inputsFormat,
+    setInputsFormat,
+    handleTransforms,
+  });
   const [inputsConfigData, setInputsConfigData] = useState({
+    protocol: "",
     filePath: "",
     sourceType: "",
     index: "",
+    whiteList: "",
+    blackList: "",
   });
   //  const [customConfig, setCustomConfig] = useState(1);
 
   // const[customField, setCustomField]=useState(false);
   // const[cancelCustomField, setCancelCustomField]=useState(false);
-  const [inputCustomFields, setInputCustomFields] = useState([]);
+  const [inputCustomFields, setInputCustomFields] = useState(
+    inputsFormat.inputs[each - 1].customFields
+  );
+  const [newkey, setNewKey] = useState("");
+  const [value, setValue] = useState("");
+  const [mode, setMode] = useState("appName");
+  const [indexName, setIndexName] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [customFieldError, setCustomFieldError] = useState("");
+  const [editCustomField, setEditCustomField] = useState({});
+  const [customFieldRowErrors, setCustomFieldRowErrors] = useState({});
+  const [tempSourceType, setTempSourceType] = useState(
+    inputsFormat.inputs[each - 1].sourceType || ""
+  );
+
+  const existingIndexes = ["users_index", "orders_index", "products_index", "userData_meterics"];
+  const possibleSuffixes = ["_logs", "_data"];
+  const [files, setFiles] = useState(null);
+
+
+  const handleInputChange = (e) => {
+    const value = e.target.value;
+    setIndexName(value);
+    console.log("Typed:", value);
+    console.log("Current suggestions:", suggestions);
+
+    if (value.trim() !== "") {
+      const generated = possibleSuffixes.map((suffix) => suffix);
+      setSuggestions(generated);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  console.log("aaaaab", inputsFormat.inputs[each - 1])
+
+  useEffect(() => {
+    setTempSourceType(inputsFormat.inputs[each - 1].sourceType || "")
+  }, [inputsFormat.inputs[each - 1].sourceType])
+
+  useEffect(() => {
+    setInputsFormat((prev) => {
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        index: inputsFormat.indexName,
+      };
+      return {
+        ...prev,
+        inputs: updatedInputs,
+      };
+    });
+  }, [inputsFormat.indexName]);
+
+  // const handleAddCustomField = () => {
+  //   // setInputCustomFields([...inputCustomFields, { key: "", value: "" }]);
+  //   if (newkey !== "" && value !== "") {
+  //     setInputsFormat((prev) => {
+  //       const updatedInputs = [...prev.inputs];
+  //       console.log("update", updatedInputs[each - 1]);
+
+  //       const updatedCustomInputs = [
+  //         ...updatedInputs[each - 1].customFields,
+  //         { [newkey]: value }
+  //       ];
+
+  //       updatedInputs[each - 1] = {
+  //         ...updatedInputs[each - 1],
+  //         customFields: updatedCustomInputs
+  //       };
+
+  //       return {
+  //         ...prev,
+  //         inputs: updatedInputs
+  //       };
+  //     });
+  //   }
+  //   else {
+  //     setInputsFormat((prev) => {
+  //       const updatedInputs = [...prev.inputs];
+  //       console.log("update", updatedInputs[each - 1]);
+
+  //       const updatedCustomInputs = [
+  //         ...updatedInputs[each - 1].customFields,
+  //         {}
+  //       ];
+
+  //       updatedInputs[each - 1] = {
+  //         ...updatedInputs[each - 1],
+  //         customFields: updatedCustomInputs
+  //       };
+
+  //       return {
+  //         ...prev,
+  //         inputs: updatedInputs
+  //       };
+  //     });
+  //   }
+  //   setNewKey("");
+  //   setValue("");
+
+  // };
 
   const handleAddCustomField = () => {
-    setInputCustomFields([...inputCustomFields, { key: "", value: "" }]);
+    const trimmedKey = newkey.trim();
+    const trimmedValue = value.trim();
+    // Empty validation
+    if (!trimmedKey) {
+      setCustomFieldError("Key Cannot be empty");
+      return;
+    }
+    if (!trimmedValue) {
+      setCustomFieldError("Value Cannot be empty");
+      return;
+    }
+    //Duplicate Validation
+    // const isDuplicate = inputsFormat.inputs[each - 1].customFields.some(
+    //   (field) => Object.keys(field)[0] === trimmedKey
+    // );
+    // if (isDuplicate) {
+    //   setCustomFieldError("Duplicate key is not allowed");
+    //   return;
+    // }
+
+    // 🔹 Normalize key
+    const keyToCheck = trimmedKey.toLowerCase();
+
+    //Check customFields
+    const customFields =
+      inputsFormat.inputs?.[each - 1]?.customFields || [];
+
+    const isDuplicateCustomField = customFields.some((field) => {
+      const [key] = Object.keys(field);
+      return key?.toLowerCase() === keyToCheck;
+    });
+
+    if (isDuplicateCustomField) {
+      setCustomFieldError("Duplicate key already exists in custom fields");
+      return;
+    }
+
+    //Check input-level fields
+    const inputFields = inputsFormat.inputs?.[each - 1] || {};
+
+    const isDuplicateInputField = Object.keys(inputFields).some(
+      (key) => key.toLowerCase() === keyToCheck
+    );
+
+    if (isDuplicateInputField) {
+      setCustomFieldError("Key conflicts with existing input field");
+      return;
+    }
+
+
+    setCustomFieldError("");
+    setInputsFormat((prev) => {
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        customFields: [
+          ...updatedInputs[each - 1].customFields,
+          { [trimmedKey]: trimmedValue },
+        ],
+      };
+      return {
+        ...prev,
+        inputs: updatedInputs,
+      };
+    });
+    setNewKey("");
+    setValue("");
+  };
+
+  const handleUpdateCustomField = (index) => {
+    const { key, value } = editCustomField[index] || {};
+
+    const trimmedKey = key?.trim();
+    const trimmedValue = value?.trim();
+
+    //Empty validation
+    if (!trimmedKey) {
+      setCustomFieldRowErrors((prev) => ({
+        ...prev,
+        [index]: "Key cannot be empty",
+      }));
+      return;
+    }
+
+    if (!trimmedValue) {
+      setCustomFieldRowErrors((prev) => ({
+        ...prev,
+        [index]: "Value cannot be empty",
+      }));
+      return;
+    }
+
+    //Duplicate validation
+    const isDuplicate = inputsFormat.inputs[each - 1].customFields.some(
+      (field, i) => i !== index && Object.keys(field)[0] === trimmedKey
+    );
+
+    if (isDuplicate) {
+      setCustomFieldRowErrors((prev) => ({
+        ...prev,
+        [index]: "Duplicate key is not allowed",
+      }));
+      return;
+    }
+
+    //Clear error for this row
+    setCustomFieldRowErrors((prev) => {
+      const copy = { ...prev };
+      delete copy[index];
+      return copy;
+    });
+
+    //Update only this row
+    setInputsFormat((prev) => {
+      const updatedInputs = [...prev.inputs];
+      const updatedFields = [...updatedInputs[each - 1].customFields];
+
+      updatedFields[index] = { [trimmedKey]: trimmedValue };
+
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        customFields: updatedFields,
+      };
+
+      return {
+        ...prev,
+        inputs: updatedInputs,
+      };
+    });
+
+    // Clear edit cache for this row
+    setEditCustomField((prev) => {
+      const copy = { ...prev };
+      delete copy[index];
+      return copy;
+    });
+  };
+
+  const deleteCustomField = (delVal) => {
+    const updatedCustomFileds = inputsFormat.inputs[
+      each - 1
+    ].customFields.filter((each, index) => index !== delVal);
+    console.log("updatedCustomFileds", updatedCustomFileds);
+    setInputsFormat((prev) => {
+      const updatedInputs = [...prev.inputs];
+      console.log("update", updatedInputs[each - 1]);
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        customFields: updatedCustomFileds,
+      };
+
+      return {
+        ...prev,
+        inputs: updatedInputs,
+      };
+    });
   };
 
   const handleRemoveCustomField = (index) => {
@@ -35,71 +309,321 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
   //   setCustomField(true);
   //   setCancelCustomField(false);
   // }
-  const item = inputsFormat.customInput[each - 1];
-  // console.log(inputsFormat);
+  const item = inputsFormat.inputs[each - 1];
+  const committedSourceType = item.sourceType;
+  const hasProps = Boolean(inputsFormat.props[committedSourceType]);
+
+  console.log("itemsinput : ", inputsFormat.inputs);
+
+  const addNewIndex = (value) => {
+    setInputsFormat((prev) => {
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = { ...updatedInputs[each - 1], index: value };
+      return {
+        ...prev,
+        inputs: updatedInputs,
+        indexConfig: {
+          ...prev.indexConfig,
+          [value]: {
+            hotPath: "",
+            coldPath: "",
+            thawedPath: "",
+            MAXsize: "",
+            retentionTime: "",
+            customFields: [],
+          },
+        },
+      };
+    });
+  };
 
   const updateIputs = (e) => {
     const { name, value } = e.target;
     console.log("name", name);
     console.log("value", value);
     setInputsFormat((prev) => {
-      const updated = [...prev.customInput];
-      updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
-      return { ...prev, customInput: updated };
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = { ...updatedInputs[each - 1], [name]: value };
+      return {
+        ...prev,
+        inputs: updatedInputs,
+      };
     });
-    if (name === "sourceType") {
-      setInputsFormat((prev) => {
-        const updated = [...prev.props];
-        updated[each - 1] = { ...updated[each - 1], [name]: value }; // update only sourceType
-        return { ...prev, props: updated };
-      });
-    }
   };
+
+  // const addProps = () => {
+  //   let sourceTypeData = inputsFormat.inputs[each - 1].sourceType;
+  //   if (sourceTypeData.trim() === "") {
+  //     alert("Please fill source file");
+  //     return;
+  //   }
+
+  //   let sType = inputsFormat.inputs[each - 1].sourceType;
+  //   console.log(sType);
+
+  //   setInputsFormat((prev) => {
+  //     let updateProps = { ...prev.props };
+  //     updateProps = {
+  //       ...updateProps,
+  //       [sType]: {
+  //         timePrefix: "",
+  //         timeFormat: "YYYY-MM-DD HH:mm:ss",
+  //         dateTime: "AUTO",
+  //         maximum_lookHead: "",
+  //         lineBreaker: "newline",
+  //         shouldLine: "",
+  //         truncate: "",
+  //       },
+  //     };
+  //     return {
+  //       ...prev,
+  //       props: updateProps,
+  //       // props: updatedProps,
+  //     };
+  //   });
+  // };
+
+  const updateProps = () => {
+    const trimmedSourceType = tempSourceType.trim();
+    setInputsFormat((prev) => {
+      let updateProps = { ...prev.props };
+      let sType = Object.keys(updateProps)[0];
+      let pProp = updateProps[sType];
+      console.log("pProp", pProp);
+      //       const updated = Object.fromEntries(
+      //   Object.entries(pProp).filter(([key]) => key !== val)
+      // );
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        sourceType: trimmedSourceType,
+      };
+      updateProps = { [trimmedSourceType]: pProp };
+      return {
+        ...prev,
+        inputs: updatedInputs,
+        props: updateProps,
+        // props: updatedProps,
+      };
+    })
+  }
+
+  const addProps = () => {
+    const trimmedSourceType = tempSourceType.trim();
+
+    if (!trimmedSourceType) {
+      alert("Source Type cannot be empty");
+      return;
+    }
+
+    // ✅ Commit source type ONLY here
+    setInputsFormat((prev) => {
+      const updatedInputs = [...prev.inputs];
+      updatedInputs[each - 1] = {
+        ...updatedInputs[each - 1],
+        sourceType: trimmedSourceType,
+      };
+
+      return {
+        ...prev,
+        inputs: updatedInputs,
+        props: {
+          ...prev.props,
+          [trimmedSourceType]: {
+            timePrefix: "",
+            timeFormat: "YYYY-MM-DD HH:mm:ss",
+            dateTime: "AUTO",
+            maximum_lookHead: 50,
+            lineBreaker: "",
+            shouldLine: false,
+            truncate: 100,
+          },
+        },
+      };
+    });
+  };
+
+  useEffect(() => {
+    addProps();
+  }, [tempSourceType])
+
+  const addField = () => {
+    let sTypeField = inputsFormat.inputs[each - 1].customFields;
+    console.log("file : ", sTypeField);
+
+    setInputsFormat((prev) => {
+      let updateField = { ...prev.inputs };
+      updateField = {
+        ...updateField,
+        [sTypeField]: {
+          inputKey: "",
+          inputValue: "",
+        },
+      };
+      return {
+        ...prev,
+        props: updateField,
+        // props: updatedProps,
+      };
+    });
+  };
+
+  console.log(inputsFormat);
+
+  console.log("length : ", inputsFormat.inputs.length);
 
   return (
     <div>
-      <div className="flex flex-col shadow-md rounded-2xl p-6 w-full">
-        <div className="flex flex-wrap gap-6 mb-4">
-          <div className="flex flex-col w-1/4 min-w-[200px]">
-            <label className="text-sm font-medium text-gray-700 mb-1">
-              File Path
+      <div className="  ">
+        <div className="flex flex-wrap gap-2 ">
+          <div className="flex flex-col w-48 min-w-[150px]">
+            <div className="flex flex-col">
+              <label htmlFor="existingAppName" className="font-medium mb-1">
+                Select Protocol
+              </label>
+              <select
+                name="protocol"
+                value={item.protocol}
+                onChange={(e) => updateIputs(e)}
+                id="existingAppName"
+                className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2">
+                <option>TCP</option>
+                <option>UDP</option>
+              </select>
+            </div>
+            {/* <label className="text-sm font-medium text-gray-700 mb-1">
+              Input Stanza
             </label>
             <input
-              // value={inputsConfigData.filePath}
               value={item.filePath}
-              // onChange={(e) =>
-              //   setInputsConfigData((prev) => ({
-              //     ...prev,
-              //     filePath: e.target.value,
-              //   }))
-              // }
               name="filePath"
               onChange={(e) => updateIputs(e)}
               type="text"
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter file path"
-            />
+              placeholder="protocol://port"
+            /> */}
           </div>
-          <div className="flex flex-col w-1/4 min-w-[200px]">
+          <div className="flex flex-col w-48 min-w-[150px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
-              Source Type
+              Port
             </label>
+
             <input
-              // onChange={(e) =>
-              //   setInputsConfigData((prev) => ({
-              //     ...prev,
-              //     sourceType: e.target.value,
-              //   }))
-              // }
-              name="sourceType"
-              value={item.sourceType}
-              onChange={(e) => updateIputs(e)}
               type="text"
+              value={item.filePath}
+              name="filePath"
+              onChange={(e) => updateIputs(e)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter source type"
             />
           </div>
-          <div className="flex flex-col w-1/4 min-w-[200px]">
+          <div className="flex flex-col w-48 min-w-[150px]">
+            <label className="text-sm font-medium text-gray-700 mb-1">
+              File Path
+            </label>
+
+            <input
+              type="text"
+              value={item.filePaths}
+              name="filePaths"
+              onChange={(e) => updateIputs(e)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter source type"
+            />
+          </div>
+          <div className="flex flex-col w-48 min-w-[150px]">
+            <label className="text-sm font-medium text-gray-700 mb-1">
+              Component Name
+            </label>
+
+            <input
+              type="text"
+              name="componentName"
+              value={item.componentName}
+              onChange={(e) => updateIputs(e)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter source type"
+            />
+          </div>
+          <div className="flex flex-col w-48 min-w-[150px]">
+            <label className="text-sm font-medium text-gray-700 mb-1">
+              White List
+            </label>
+
+            <input
+              type="text"
+              name="whiteList"
+              value={item.whiteList}
+              onChange={(e) => updateIputs(e)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter source type"
+            />
+          </div>
+          <div className="flex flex-col w-48 min-w-[150px]">
+            <label className="text-sm font-medium text-gray-700 mb-1">
+              Black List
+            </label>
+
+            <input
+              type="text"
+              name="blackList"
+              value={item.blackList}
+              onChange={(e) => updateIputs(e)}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter source type"
+            />
+          </div>
+          {/* <div className="flex flex-col w-48">
+            <label
+              htmlFor="appIndex"
+              className=" text-sm font-medium text-gray-700  mb-1"
+            >
+              Index (from App Name)
+            </label>
+            <input
+              id="appIndex"
+              type="text"
+              value={inputsFormat.indexName || ""}
+              readOnly
+              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+              placeholder="App Name’s index"
+            />
+          </div> */}
+          {/* <div className="flex flex-col w-48">
+            <label
+              htmlFor="whitelist"
+              className=" text-sm font-medium text-gray-700  mb-1"
+            >
+              WhiteList
+            </label>
+            <input
+              id="whitelist"
+              name="whiteList" 
+              type="text"
+              value={item.whiteList || ""}
+              onChange={(e) => updateIputs(e)}
+              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+              placeholder="whitelist"
+            />
+          </div>
+          <div className="flex flex-col w-48">
+            <label
+              htmlFor="blacklist"
+              className=" text-sm font-medium text-gray-700  mb-1"
+            >
+              BlackList
+            </label>
+            <input
+              id="blacklist"
+              name="blackList"
+              type="text"
+              value={item.blackList || ""}
+              onChange={(e) => updateIputs(e)}
+              className="border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 px-3 py-2"
+              placeholder="blacklist"
+            />
+          </div> */}
+          {/* <div className="flex flex-col w-1/4 min-w-[200px]">
             <label className="text-sm font-medium text-gray-700 mb-1">
               Index (Optional)
             </label>
@@ -117,59 +641,352 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
               className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter index"
             />
-          </div>
-          <div className="flex items-end">
-            <button
-              onClick={() => cancelConfig(each)}
-              className="px-4 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
-            >
-              Cancel
-            </button>
+          </div> */}
+
+          {/* <div className="flex flex-col rounded-lg p-4 space-y-3">
+            <div className="flex space-x-6">
+              
+              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                <input
+                  type="radio"
+                  name="indexMode"
+                  value="existing"
+                  checked={mode === "existing"}
+                  onChange={() => {
+                    setMode("existing");
+                    
+                  }}
+                  className="accent-blue-600"
+                />
+                <span>Existing Index</span>
+              </label>
+
+              
+              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                <input
+                  type="radio"
+                  name="indexMode"
+                  value="new"
+                  checked={mode === "new"}
+                  onChange={() => {
+                    setMode("new");
+                    
+                  }}
+                  className="accent-blue-600"
+                />
+                <span>New Index</span>
+              </label>
+
+              
+              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                <input
+                  type="radio"
+                  name="indexMode"
+                  value="appName"
+                  checked={mode === "appName"}
+                  onChange={(e) => {
+                    const selectedIndex = e.target.value;
+                    setMode("appName");
+                  }}
+                  className="accent-blue-600"
+                />
+                <span>As of App Name</span>
+              </label>
+            </div>
+
+            
+            {mode === "appName" && (
+              <div className="flex flex-col w-48">
+                <label htmlFor="appIndex" className=" text-sm font-medium text-gray-700  mb-1">
+                  Index (from App Name)
+                </label>
+                <input
+                  id="appIndex"
+                  type="text"
+                  value={inputsFormat.indexName || ""}
+                  readOnly
+                  className="border border-gray-400 rounded-md px-3 py-2"
+                  placeholder="App Name’s index"
+                />
+              </div>
+            )}
+
+            {mode === "existing" && (
+              <div className="flex flex-col w-48">
+                <label htmlFor="existingIndex" className="text-sm font-medium text-gray-700 mb-1">
+                  Select Existing Index
+                </label>
+                <select
+                  id="existingIndex"
+                  className="border border-gray-400 rounded-md px-3 py-2"
+                  
+                  name="index"
+                  onChange={(e) => updateIputs(e)}
+                >
+                  <option value="">-- Choose an index --</option>
+                  {existingIndexes.map((index) => (
+                    <option key={index} value={index}>
+                      {index}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {mode === "new" && (
+              <div className="flex flex-col relative w-48">
+                <label htmlFor="newIndex" className="text-sm font-medium text-gray-700 mb-1">
+                  Enter New Index
+                </label>
+                <input
+                  id="newIndex"
+                  value={indexName}
+                  onChange={handleInputChange}
+                  placeholder="Enter index name"
+                  className="border border-gray-400 rounded-md px-3 py-2"
+                />
+               
+                {suggestions.length > 0 && inputsFormat.inputs[each-1].index !== indexName && (
+                  <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md mt-1 max-h-40 overflow-y-auto z-10">
+                    {suggestions.map((sug) => (
+                      <li
+                        key={sug}
+                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          addNewIndex(indexName + sug),
+                          setIndexName(indexName + sug)
+                        }}
+                      >
+                        {indexName}
+                        <span className="text-gray-400">{sug}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+          </div> */}
+
+          <div className="flex flex-col">
+            <div className="flex flex-row gap-2 mt-6">
+              {/* {inputsFormat.inputs[each-1].sourceType} */}
+              {/* <button
+                onClick={addProps}
+                className=" bg-blue-500 text-white px-3 py-2 rounded-lg shadow hover:bg-blue-600 cursor-pointer"
+              >
+                Add Props
+              </button> */}
+
+              {!hasProps ? (
+                /*ADD MODE */
+                <button
+                  onClick={addProps}
+                  disabled={!tempSourceType.trim()}
+                  className={`px-3 py-2 rounded-lg shadow text-white
+              ${tempSourceType.trim()
+                      ? "bg-blue-500 hover:bg-blue-600 cursor-pointer"
+                      : "bg-gray-300 cursor-not-allowed"
+                    }`}
+                >
+                  Add Props
+                </button>
+              ) : (
+                /* UPDATE MODE */
+                // <button
+                //   onClick={updateProps}
+                //   className="px-3 py-2 rounded-lg shadow bg-green-500 text-white hover:bg-green-600"
+                // >
+                //   Update Props
+                // </button>
+                <div></div>
+              )}
+
+              {/* <button
+                onClick={() => { cancelConfig(each) }}
+                className=" px-3 py-2 cursor-pointer rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition"
+              >
+                Cancel
+              </button> */}
+            </div>
           </div>
         </div>
+
+
+
+
+
         <div className=" border-gray-200 pt-4">
-          <h3 className="text-lg font-semibold text-gray-800 mb-3">
+          <h3 className="text-lg font-semibold text-gray-800 mb-1.9">
             Custom Fields
           </h3>
 
-          {inputCustomFields.length > 0 ? (
-            inputCustomFields.map((field, index) => (
-              <div className="grid grid-cols-[1fr_3fr_1fr] gap-2.5 mb-2.5">
-                <input
-                  type="text"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Key"
-                />
-                <input
-                  type="text"
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Value"
-                />
-                <button
-                  onClick={() => handleRemoveCustomField(index)}
-                  className="p-2 ml-4 max-w-20 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition cursor-pointer"
-                >
-                  Cancel
-                </button>
-              </div>
-            ))
+          <div className="flex flex-row gap-2">
+            <div>
+              <input
+                onChange={(e) => setNewKey(e.target.value)}
+                value={newkey}
+                type="text"
+                className="px-3 py-2 mr-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
+                placeholder="Key"
+              />
+              <input
+                onChange={(e) => setValue(e.target.value)}
+                value={value}
+                type="text"
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 w-48"
+                placeholder="Value"
+              />
+              {customFieldError && (
+                <p className="text-sm text-red-500 mt-1 ml-1">
+                  {customFieldError}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <button
+                onClick={handleAddCustomField}
+                className="p-2 ml-2 max-w-20 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition cursor-pointer"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+
+
+          {inputsFormat.inputs[each - 1].customFields.length > 0 ? (
+            inputsFormat.inputs[each - 1].customFields.map((field, index) => {
+              const originalKey = Object.keys(field)[0];
+              const originalValue = field[originalKey];
+
+              const currentEdit = editCustomField[index] || {
+                key: originalKey,
+                value: originalValue,
+              };
+
+              return (
+                <div key={index}>
+                  <div className="flex flex-row gap-2 mt-2 items-center">
+                    <input
+                      type="text"
+                      value={currentEdit.key}
+                      className="px-3 py-2 w-48 border border-gray-300 rounded-lg"
+                      onChange={(e) => {
+                        setEditCustomField((prev) => ({
+                          ...prev,
+                          [index]: {
+                            ...currentEdit,
+                            key: e.target.value,
+                          },
+                        }));
+                      }}
+                      placeholder="Key"
+                    />
+
+                    <input
+                      type="text"
+                      value={currentEdit.value}
+                      className="px-3 py-2 w-48 border border-gray-300 rounded-lg"
+                      onChange={(e) => {
+                        setEditCustomField((prev) => ({
+                          ...prev,
+                          [index]: {
+                            ...currentEdit,
+                            value: e.target.value,
+                          },
+                        }));
+                      }}
+                      placeholder="Value"
+                    />
+
+                    {/* ✅ Update button only when row is changed */}
+                    {(currentEdit.key !== originalKey ||
+                      currentEdit.value !== originalValue) && (
+                        <button
+                          onClick={() => handleUpdateCustomField(index)}
+                          className="px-3 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600"
+                        >
+                          Update
+                        </button>
+                      )}
+
+                    <button
+                      onClick={() => deleteCustomField(index)}
+                      className="px-3 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+
+                  {/* Row-level error */}
+                  {customFieldRowErrors[index] && (
+                    <p className="text-sm text-red-500 mt-1 ml-1">
+                      {customFieldRowErrors[index]}
+                    </p>
+                  )}
+                </div>
+              );
+            })
           ) : (
-            <p className="text-sm mb-2.5">No Custom fields added yet.</p>
+            <p className="text-sm mt-2 ml-1"></p>
           )}
-          <button
-            onClick={handleAddCustomField}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 cursor-pointer"
-          >
-            Add Custom Field
-          </button>
         </div>
       </div>
-      <h2 className="items-center font-semibold text-xl mt-1 mb-1">
-        Props Config Per Source Type
+
+      <h2 className="text font-semibold text-gray-800">
+        Upload sample log file
       </h2>
-      <hr className="text-blue-500" />
+      {/* <div className="flex items-center gap-4">
+              <input
+                onChange={(e) => setFiles(e.target.files[0])}
+                type="file"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div> */}
+      <div className="flex items-center gap-4">
+        <input
+          onChange={(e) => setFiles(e.target.files[0])}
+          type="file"
+          className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+
+      {item.protocol !== "" && item.port !== "" && <div>
+        <h2 className="text-xl font-bold">Inputs stanza:</h2>
+        <pre className="p-1 bg-gray-100 rounded-2xl border overflow-auto">
+          {`
+[[monitor://${item.filePaths}]
+indexName=${inputsFormat.indexName}
+sourceType=${item.sourceType}
+disabled=0
+Component Name= ${item.componentName}
+followTail = 0
+ignoreOlderThan = 7d
+alwaysOpenFile = 0
+crcSalt =
+initCrcLength = 256
+whiteList=${item.whiteList}
+blackList=${item.blackList}
+`}
+        </pre>
+      </div>}
+
+      {/* {inputsFormat.inputs[each-1].index &&
+                
+                  <IndexConfig key={inputsFormat.inputs[each-1].index} indexName={inputsFormat.inputs[each-1].index} inputsFormat={inputsFormat} setInputsFormat={setInputsFormat} />
+                
+              } */}
+
+      {/* <div className="flex items-center gap-4">
+              <input
+                onChange={(e) => setFiles(e.target.files[0])}
+                type="file"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+       */}
       <div>
-        {item.sourceType !== "" && (
+        {inputsFormat.props[inputsFormat.inputs[each - 1].sourceType] && (
           <PropsConfigPerSource
             key={each}
             each={each}
@@ -177,10 +994,13 @@ const InputConfig = ({ cancelConfig, each, inputsFormat, setInputsFormat, handle
             inputsFormat={inputsFormat}
             setInputsFormat={setInputsFormat}
             handleTransforms={handleTransforms}
+            files={files}
           />
         )}
       </div>
       {/* <TransformsConfig/> */}
+
+
     </div>
   );
 };
